@@ -1,9 +1,6 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
+@custom-variant dark (&:where(.dark, .dark *));
 
 @theme inline {
   --color-background: var(--background);
@@ -12,15 +9,58 @@
   --font-mono: var(--font-geist-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+:root {
+  --background: #fafafa;
+  --foreground: #18181b;
+  --editor-bg: #ffffff;
+  --editor-fg: #27272a;
+  --editor-line-number: #a1a1aa;
+  --editor-gutter-bg: #f4f4f5;
+  --editor-selection: rgba(139, 92, 246, 0.22);
+  --editor-active-line: rgba(0, 0, 0, 0.035);
+  --editor-cursor: #8b5cf6;
+  --json-key: #0f766e;
+  --json-string: #b45309;
+  --json-number: #1d4ed8;
+  --json-boolean: #b45309;
+  --json-null: #b45309;
+  --json-property: #7c3aed;
+}
+
+.dark {
+  --background: #09090b;
+  --foreground: #f4f4f5;
+  --editor-bg: #101012;
+  --editor-fg: #e4e4e7;
+  --editor-line-number: #52525b;
+  --editor-gutter-bg: #0e0e10;
+  --editor-selection: rgba(139, 92, 246, 0.3);
+  --editor-active-line: rgba(255, 255, 255, 0.04);
+  --editor-cursor: #a78bfa;
+  --json-key: #2dd4bf;
+  --json-string: #fbbf24;
+  --json-number: #818cf8;
+  --json-boolean: #fbbf24;
+  --json-null: #fbbf24;
+  --json-property: #c4b5fd;
+}
+
+html {
+  height: 100%;
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+  min-height: 100%;
+}
+
+* {
+  scrollbar-width: thin;
+  scrollbar-color: rgb(113 113 122 / 0.4) transparent;
+}
+
+::selection {
+  background: var(--editor-selection);
 }
