@@ -1,11 +1,12 @@
 import { detectInput } from "@/lib/detection/detectInput";
 import type { TransformationResult } from "@/types/transformation";
 import { failResult, okResult } from "@/lib/transformers/builders";
+import { formatJwtOutput } from "@/lib/jwt/format";
 
 /**
  * Auto-detection pipeline used by the IDE mode:
- * JSON → pretty-print · Base64 → decode (+ pretty-print decoded JSON) ·
- * otherwise keep the input untouched.
+ * JWT → decode header + payload · JSON → pretty-print ·
+ * Base64 → decode (+ pretty-print decoded JSON) · otherwise keep the input untouched.
  */
 export function autoTransform(input: string): TransformationResult {
   if (!input.trim()) {
@@ -15,6 +16,16 @@ export function autoTransform(input: string): TransformationResult {
   const detected = detectInput(input);
 
   switch (detected.status) {
+    case "jwt":
+      return okResult(
+        input,
+        formatJwtOutput(detected.value),
+        "JWT_DECODE",
+        "JWT",
+        "JWT decoded — header and payload shown",
+        "JWT",
+      );
+
     case "json":
       return okResult(
         input,

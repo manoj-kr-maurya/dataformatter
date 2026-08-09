@@ -57,10 +57,15 @@ export function usePersistedState<T>(
     [key, fallback],
   );
 
+  // SSR + hydration must render the same default the server rendered. Using a
+  // fixed server snapshot (never reading localStorage) keeps the first client
+  // render identical to the server HTML; the stored value hydrates right after.
+  const getServerSnapshot = useCallback(() => fallback, [fallback]);
+
   const snapshot = useSyncExternalStore(
     subscribe,
     getSnapshot,
-    getSnapshot,
+    getServerSnapshot,
   );
 
   const value = (() => {

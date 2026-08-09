@@ -4,6 +4,7 @@ import { jsonMinifier } from "@/lib/transformers/jsonMinifier";
 import { base64Decoder } from "@/lib/transformers/base64Decoder";
 import { base64ToJson } from "@/lib/transformers/base64ToJson";
 import { jsonToBase64 } from "@/lib/transformers/jsonToBase64";
+import { jwtDecoder } from "@/lib/transformers/jwtDecoder";
 import { encodeBase64 } from "@/lib/base64/encode";
 
 describe("jsonFormatter", () => {
@@ -94,5 +95,24 @@ describe("jsonToBase64", () => {
     const result = jsonToBase64("not json");
     expect(result.success).toBe(false);
     expect(result.message).toContain("Invalid JSON");
+  });
+});
+
+describe("jwtDecoder", () => {
+  const TOKEN =
+    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c";
+
+  it("decodes header and payload", () => {
+    const result = jwtDecoder(TOKEN);
+    expect(result.success).toBe(true);
+    expect(result.transformation).toBe("JWT_DECODE");
+    expect(result.output).toContain('"alg": "HS256"');
+    expect(result.output).toContain('"name": "John Doe"');
+  });
+
+  it("fails on a malformed token", () => {
+    const result = jwtDecoder("not.a.jwt-token-with-valid-json");
+    expect(result.success).toBe(false);
+    expect(result.message).toContain("Invalid JWT");
   });
 });

@@ -1,21 +1,30 @@
 import { detectBase64 } from "@/lib/detection/detectBase64";
 import { detectJson } from "@/lib/detection/detectJson";
+import { detectJwt } from "@/lib/detection/detectJwt";
+import type { ParsedJwt } from "@/lib/jwt/decode";
 
 export type DetectOutcome =
   | { status: "empty" }
+  | { status: "jwt"; value: ParsedJwt }
   | { status: "json"; value: unknown }
   | { status: "base64"; decoded: string; decodedIsJson: boolean; jsonValue?: unknown }
   | { status: "unknown" };
 
 /**
  * Deterministic detection priority:
- *  1. Valid JSON  → JSON
- *  2. Valid Base64 (robust) → BASE64 (with decoded payload inspected for JSON)
- *  3. Otherwise   → UNKNOWN (input left untouched)
+ *  1. JWT (header.payload.signature)           → JWT
+ *  2. Valid JSON                               → JSON
+ *  3. Valid Base64 (robust)                    → BASE64 (with decoded payload inspected for JSON)
+ *  4. Otherwise                                → UNKNOWN (input left untouched)
  */
 export function detectInput(input: string): DetectOutcome {
   if (!input.trim()) {
     return { status: "empty" };
+  }
+
+  const jwt = detectJwt(input);
+  if (jwt.isJwt && jwt.value !== undefined) {
+    return { status: "jwt", value: jwt.value };
   }
 
   const json = detectJson(input);

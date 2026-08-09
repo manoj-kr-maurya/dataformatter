@@ -3,6 +3,38 @@ import { detectInput } from "@/lib/detection/detectInput";
 import { detectBase64 } from "@/lib/detection/detectBase64";
 
 describe("detectInput priority", () => {
+  it("detects JWT tokens ahead of everything else", () => {
+    const outcome = detectInput(
+      "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c",
+    );
+    expect(outcome.status).toBe("jwt");
+    if (outcome.status === "jwt") {
+      expect(outcome.value.header).toEqual({ alg: "HS256", typ: "JWT" });
+    }
+  });
+
+  it("detects JWTs pasted with a Bearer authorization prefix", () => {
+    const outcome = detectInput(
+      "bearer eyJhbGciOiJIUzI1NiJ9.eyJuYW1lIjoiSm9obiJ9.someSignatureHere",
+    );
+    expect(outcome.status).toBe("jwt");
+  });
+
+  it("detects JWTs embedded in arbitrary surrounding text like jwt.io", () => {
+    const outcome = detectInput(
+      "abcd eyJhbGciOiJIUzI1NiJ9.eyJuYW1lIjoiSm9obiJ9.someSignatureHere please verify",
+    );
+    expect(outcome.status).toBe("jwt");
+    if (outcome.status === "jwt") {
+      expect(outcome.value.payload.name).toBe("John");
+    }
+  });
+
+  it("does not treat 3-part junk or JSON as a JWT", () => {
+    expect(detectInput("a.b.c").status).not.toBe("jwt");
+    expect(detectInput('{"a":1}').status).toBe("json");
+  });
+
   it("detects valid JSON first", () => {
     const outcome = detectInput('{"name":"John"}');
     expect(outcome.status).toBe("json");
