@@ -1,7 +1,35 @@
 import { describe, expect, it } from "vitest";
 import { autoTransform } from "@/lib/processing/autoTransform";
 
+const HS256_TOKEN =
+  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c";
+
 describe("autoTransform", () => {
+  it("decodes a JWT into formatted HEADER and PAYLOAD sections", () => {
+    const result = autoTransform(HS256_TOKEN);
+    expect(result.success).toBe(true);
+    expect(result.transformation).toBe("JWT_DECODE");
+    expect(result.detectedType).toBe("JWT");
+    expect(result.output).toBe(
+      'HEADER\n{\n  "alg": "HS256",\n  "typ": "JWT"\n}\n\n' +
+        'PAYLOAD\n{\n  "sub": "1234567890",\n  "name": "John Doe",\n  "iat": 1516239022\n}',
+    );
+    expect(result.message).toBe("JWT decoded — header and payload shown");
+  });
+  it("decodes a JWT pasted with a Bearer prefix", () => {
+    const result = autoTransform(`Bearer ${HS256_TOKEN}`);
+    expect(result.success).toBe(true);
+    expect(result.transformation).toBe("JWT_DECODE");
+    expect(result.output).toContain('"name": "John Doe"');
+  });
+
+  it("decodes a JWT embedded in surrounding text", () => {
+    const result = autoTransform(`unrelated prefix text ${HS256_TOKEN} and suffix`);
+    expect(result.success).toBe(true);
+    expect(result.transformation).toBe("JWT_DECODE");
+    expect(result.output).toContain('"name": "John Doe"');
+  });
+
   it("keeps empty input with a waiting message", () => {
     const result = autoTransform("");
     expect(result.success).toBe(true);

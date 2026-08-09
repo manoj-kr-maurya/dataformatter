@@ -7,6 +7,7 @@ import { Workspace } from "@/components/workspace/workspace";
 
 const RAW_B64 = "eyJmb28iOiJiYXIifQ==";
 const PRETTY = "{\n  \"foo\": \"bar\"\n}";
+const JWT = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c";
 
 function editors(container?: HTMLElement): EditorView[] {
   const root = container ?? document.body;
@@ -86,6 +87,50 @@ describe("Workspace — single view (default)", () => {
     );
     expect(editorDoc(view)).toBe("just some text");
   });
+
+it("decodes a pasted JWT into formatted header and payload", async () => {
+    const { container } = render(<Workspace />);
+    const view = await waitForEditor(container);
+    setText(view, JWT);
+
+    await waitFor(
+      () => {
+        expect(editorDoc(view)).toContain("HEADER\n");
+        expect(editorDoc(view)).toContain('"alg": "HS256"');
+        expect(editorDoc(view)).toContain("\"name\": \"John Doe\"");
+      },
+      { timeout: 2500 },
+    );
+    expect(screen.getByRole("status")).toHaveTextContent("JWT decoded — header and payload shown");
+  });
+
+  it("decodes a JWT pasted with a Bearer prefix", async () => {
+    const { container } = render(<Workspace />);
+    const view = await waitForEditor(container);
+    setText(view, `Bearer ${JWT}`);
+
+    await waitFor(
+      () => {
+        expect(editorDoc(view)).toContain("\"name\": \"John Doe\"");
+      },
+      { timeout: 2500 },
+    );
+    expect(screen.getByRole("status")).toHaveTextContent("JWT decoded — header and payload shown");
+  });
+
+  it("decodes a JWT embedded in surrounding text", async () => {
+    const { container } = render(<Workspace />);
+    const view = await waitForEditor(container);
+    setText(view, `abcd ${JWT} please verify`);
+
+    await waitFor(
+      () => {
+        expect(editorDoc(view)).toContain("\"name\": \"John Doe\"");
+      },
+      { timeout: 2500 },
+    );
+    expect(screen.getByRole("status")).toHaveTextContent("JWT decoded — header and payload shown");
+  });
 });
 
 describe("Workspace — split view", () => {
@@ -144,6 +189,55 @@ describe("Workspace — manual tools and Auto Detect toggle", () => {
       { timeout: 2500 },
     );
     expect(screen.getByRole("status")).toHaveTextContent("JSON minified");
+  });
+
+  it("Base64 Encode works with Auto Detect turned OFF", async () => {
+    const user = userEvent.setup();
+    const { container } = render(<Workspace />);
+
+    const view = await waitForEditor(container);
+
+    // Turn auto-detection off first, then pick the Base64 Encode tool.
+    await user.click(screen.getByRole("switch", { name: /Auto Detect/i }));
+    await user.click(screen.getByRole("tab", { name: /Base64 Encode/i }));
+
+    setText(view, "hello");
+
+    await waitFor(
+      () => {
+        expect(editorDoc(view)).toBe("aGVsbG8=");
+      },
+      { timeout: 2500 },
+    );
+    expect(screen.getByRole("status")).toHaveTextContent("Base64 encoded");
+  });
+
+  it("Base64 Encode still applies after a Restore Original click, while Auto-detect is off", async () => {
+    const user = userEvent.setup();
+    const { container } = render(<Workspace />);
+
+    const view = await waitForEditor(container);
+
+    // 1. Paste JSON, wait for the auto-pretty-print, then restore the original raw text.
+    setText(view, '{"a":1}');
+    await waitFor(
+      () => expect(editorDoc(view)).toBe('{\n  "a": 1\n}'),
+      { timeout: 2500 },
+    );
+    await user.click(screen.getByRole("button", { name: /Restore Original/i }));
+    expect(editorDoc(view)).toBe('{"a":1}');
+
+    // 2. Turn auto-detect off and pick Base64 Encode — the tool output must show,
+    //    not be swallowed by the earlier "restore" flag.
+    await user.click(screen.getByRole("switch", { name: /Auto Detect/i }));
+    await user.click(screen.getByRole("tab", { name: /Base64 Encode/i }));
+
+    await waitFor(
+      () => {
+        expect(editorDoc(view)).toBe("eyJhIjoxfQ==");
+      },
+      { timeout: 2500 },
+    );
   });
 
   it("turning Auto Detect off stops auto-processing and keeps raw input", async () => {

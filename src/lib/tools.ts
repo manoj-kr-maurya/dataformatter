@@ -6,6 +6,7 @@ import { base64ToJson } from "@/lib/transformers/base64ToJson";
 import { jsonFormatter } from "@/lib/transformers/jsonFormatter";
 import { jsonMinifier } from "@/lib/transformers/jsonMinifier";
 import { jsonToBase64 } from "@/lib/transformers/jsonToBase64";
+import { jwtDecoder } from "@/lib/transformers/jwtDecoder";
 
 export const AUTO_DETECT = "AUTO_DETECT" as const;
 
@@ -18,6 +19,7 @@ export const MANUAL_TOOLS: Record<ToolType, Transformer> = {
   BASE64_DECODE: base64Decoder,
   BASE64_TO_JSON: base64ToJson,
   JSON_TO_BASE64: jsonToBase64,
+  JWT_DECODE: jwtDecoder,
 };
 
 export const TOOL_META: Record<ToolType, { label: string; description: string }> = {
@@ -27,6 +29,7 @@ export const TOOL_META: Record<ToolType, { label: string; description: string }>
   BASE64_DECODE: { label: "Base64 Decode", description: "Decode Base64 back to text." },
   BASE64_TO_JSON: { label: "Base64 → JSON", description: "Decode Base64 and require valid JSON." },
   JSON_TO_BASE64: { label: "JSON → Base64", description: "Validate JSON and encode it as Base64." },
+  JWT_DECODE: { label: "JWT Decode", description: "Decode a JWT header and payload (no signature verification)." },
 };
 
 export const MANUAL_TOOL_ORDER: ToolType[] = [
@@ -36,6 +39,7 @@ export const MANUAL_TOOL_ORDER: ToolType[] = [
   "BASE64_DECODE",
   "BASE64_TO_JSON",
   "JSON_TO_BASE64",
+  "JWT_DECODE",
 ];
 
 /**

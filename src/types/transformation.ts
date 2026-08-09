@@ -1,4 +1,4 @@
-export type DetectedType = "JSON" | "BASE64" | "TEXT" | "UNKNOWN";
+export type DetectedType = "JSON" | "BASE64" | "JWT" | "TEXT" | "UNKNOWN";
 
 export type TransformationKind =
   | "NONE"
@@ -7,7 +7,8 @@ export type TransformationKind =
   | "BASE64_ENCODE"
   | "BASE64_DECODE"
   | "BASE64_TO_JSON"
-  | "JSON_TO_BASE64";
+  | "JSON_TO_BASE64"
+  | "JWT_DECODE";
 
 /**
  * Generic, UI-independent result produced by every transformation —

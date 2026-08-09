@@ -103,6 +103,16 @@ export function Workspace() {
     setDisplayed(raw);
   }, []);
 
+  const handleModeChange = useCallback(
+    (next: ToolMode) => {
+      // Switching tools is an explicit new intent — end any "restore original"
+      // hold, otherwise manual-tool output would never reach the editor.
+      restoredRef.current = false;
+      setMode(next);
+    },
+    [],
+  );
+
   const handleViewChange = useCallback(
     (next: ViewMode) => {
       if (next === "single") {
@@ -209,7 +219,7 @@ export function Workspace() {
     <div className="flex min-h-0 flex-1 flex-col gap-3 px-3 py-3 sm:px-4">
       <div className="flex shrink-0 flex-wrap items-center justify-between gap-x-4 gap-y-2">
         <div className="flex flex-wrap items-center gap-2">
-          <ToolTabs mode={mode} onSelect={setMode} autoEnabled={autoOn} />
+          <ToolTabs mode={mode} onSelect={handleModeChange} autoEnabled={autoOn} />
           <AutoDetectToggle enabled={autoOn} onChange={setAutoOn} />
         </div>
         <ViewToggle view={view} onChange={handleViewChange} />

@@ -6,7 +6,8 @@ export type ToolType =
   | "BASE64_ENCODE"
   | "BASE64_DECODE"
   | "BASE64_TO_JSON"
-  | "JSON_TO_BASE64";
+  | "JSON_TO_BASE64"
+  | "JWT_DECODE";
 
 export type ToolMode = "AUTO_DETECT" | ToolType;
 

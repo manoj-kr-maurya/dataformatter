@@ -1,33 +1,25 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useLayoutEffect } from "react";
 import { MoonIcon, SunIcon } from "@/components/ui/icons";
+import { usePersistedState } from "@/hooks/usePersistedState";
 
 type Theme = "light" | "dark";
 
 const STORAGE_KEY = "devtools-theme";
 
-function getInitialTheme(): Theme {
-  if (typeof window === "undefined") {
-    return "dark";
-  }
-  const stored = window.localStorage.getItem(STORAGE_KEY);
-  if (stored === "light" || stored === "dark") {
-    return stored;
-  }
-  return window.matchMedia("(prefers-color-scheme: light)").matches ? "light" : "dark";
-}
-
-function applyTheme(theme: Theme) {
-  document.documentElement.classList.toggle("dark", theme === "dark");
-}
-
+/**
+ * Theme toggle backed by `usePersistedState` (hydration-safe via
+ * `useSyncExternalStore`) with the `dark` class applied in a layout effect:
+ * this runs during hydration, before the first paint, so no `beforeInteractive`
+ * <script> element — and therefore no React "script tag" console warning — is
+ * needed while still avoiding a flash of the wrong theme.
+ */
 export function ThemeToggle() {
-  const [theme, setTheme] = useState<Theme>(getInitialTheme);
+  const [theme, setTheme] = usePersistedState<Theme>(STORAGE_KEY, "dark");
 
-  useEffect(() => {
-    applyTheme(theme);
-    window.localStorage.setItem(STORAGE_KEY, theme);
+  useLayoutEffect(() => {
+    document.documentElement.classList.toggle("dark", theme === "dark");
   }, [theme]);
 
   const next = theme === "dark" ? "light" : "dark";

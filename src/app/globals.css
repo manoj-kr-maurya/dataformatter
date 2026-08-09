@@ -61,6 +61,19 @@ body {
   scrollbar-color: rgb(113 113 122 / 0.4) transparent;
 }
 
+/*
+ * Keep the CodeMirror editor contained to its flex cell. @uiw/react-codemirror
+ * wraps the editor in a plain `.cm-theme` div without a height, so `height:
+ * 100%` on `.cm-editor` resolves against an auto-sized parent, the view grows
+ * to its full content, and the overflow-hidden cell clips it with nothing to
+ * scroll. Make the wrapper exactly fill the cell so the `.cm-scroller` does the
+ * scrolling instead.
+ */
+.code-editor .cm-theme {
+  height: 100%;
+  overflow: hidden;
+}
+
 ::selection {
   background: var(--editor-selection);
 }
