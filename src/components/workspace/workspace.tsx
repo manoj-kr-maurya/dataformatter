@@ -216,7 +216,7 @@ export function Workspace() {
   })();
 
   return (
-    <div className="flex min-h-0 flex-1 flex-col gap-3 px-3 py-3 sm:px-4">
+    <div className="flex min-h-0 flex-1 flex-col gap-2 px-3 py-2 sm:px-4">
       <div className="flex shrink-0 flex-wrap items-center justify-between gap-x-4 gap-y-2">
         <div className="flex flex-wrap items-center gap-2">
           <ToolTabs mode={mode} onSelect={handleModeChange} autoEnabled={autoOn} />
@@ -232,6 +232,7 @@ export function Workspace() {
             onChange={handleSingleChange}
             language={singleLanguage}
             characters={displayedCounts.characters}
+            words={displayedCounts.words}
             lines={displayedCounts.lines}
             canRestore={displayed !== userInput && userInput.trim() !== ""}
             onPaste={pasteFromClipboard}
@@ -249,12 +250,14 @@ export function Workspace() {
             onInputChange={handleUserChange}
             inputLanguage="text"
             inputCharacters={inputCounts.characters}
+            inputWords={inputCounts.words}
             inputLines={inputCounts.lines}
             onPaste={pasteFromClipboard}
             onClearInput={clearAll}
             output={outputText}
             outputLanguage={outputLanguage}
             outputCharacters={outputCounts.characters}
+            outputWords={outputCounts.words}
             outputLines={outputCounts.lines}
             onCopy={() => void copyToClipboard(outputText)}
             onDownload={() => {

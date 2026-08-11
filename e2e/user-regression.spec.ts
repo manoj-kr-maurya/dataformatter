@@ -199,4 +199,78 @@ test.describe("user-regression", () => {
     await expect(page.getByRole("button", { name: "Switch to dark mode" })).toBeVisible();
     await expect(html).not.toHaveClass(/dark/);
   });
+
+  test("single view expands to fullscreen and collapses with Escape", async ({ page }) => {
+    await page.goto("/");
+    await typeIntoEditor(page, JSON.stringify(jsonSample));
+    const section = page.locator("section").filter({ hasText: "Input / Output" });
+    const wrapper = section.locator("..");
+    await expect(wrapper).toHaveCSS("position", "static");
+
+    await page.getByRole("button", { name: "Enter fullscreen" }).click();
+    await expect(wrapper).toHaveCSS("position", "fixed");
+
+    // Nothing may show through the fullscreen overlay — every viewport corner
+    // must resolve to the fullscreen panel, never to the app chrome behind it.
+    const covering = await page.evaluate(() => {
+      const panel = [...document.querySelectorAll("section")].find((s) =>
+        s.textContent?.includes("Input / Output"),
+      );
+      if (!panel) return false;
+      const inPanel = (x: number, y: number) =>
+        document.elementFromPoint(x, y)?.closest("section") === panel;
+      return (
+        inPanel(2, 2) &&
+        inPanel(innerWidth - 2, 2) &&
+        inPanel(2, innerHeight - 2) &&
+        inPanel(innerWidth - 2, innerHeight - 2)
+      );
+    });
+    expect(covering).toBe(true);
+
+    await page.keyboard.press("Escape");
+    await expect(wrapper).toHaveCSS("position", "static");
+  });
+
+  test("words count is shown in the Single view header", async ({ page }) => {
+    await page.goto("/");
+    await typeIntoEditor(page, JSON.stringify(jsonSample));
+    await expect(statusOf(page)).toHaveText("JSON detected and pretty-printed");
+    const header = page.locator("header").filter({ hasText: "words" });
+    await expect(header).toContainText("5 words");
+    await expect(header).toContainText("7 lines");
+  });
+
+  test("Cmd/Ctrl+F opens the editor search panel and finds matches", async ({ page }) => {
+    await page.goto("/");
+    await typeIntoEditor(page, JSON.stringify(jsonSample));
+    await page.keyboard.press(`${MOD_OR_CTRL}+F`);
+    const searchPanel = page.locator(".cm-search");
+    await expect(searchPanel).toBeVisible();
+    await searchPanel.locator("input").first().fill("Ada");
+    await expect(searchPanel).toContainText("match");
+  });
+
+  test("Cmd/Ctrl+Enter copies the full editor contents", async ({ page }) => {
+    await page.goto("/");
+    await typeIntoEditor(page, JSON.stringify(jsonSample));
+    await expect(statusOf(page)).toHaveText("JSON detected and pretty-printed");
+    await page.keyboard.press(`${MOD_OR_CTRL}+Enter`);
+    await expect
+      .poll(() => page.evaluate(() => navigator.clipboard.readText()))
+      .toBe(prettyJson);
+  });
+
+  test("dropping a JSON file loads and transforms it", async ({ page }) => {
+    await page.goto("/");
+    const dataTransfer = await page.evaluateHandle((content: string) => {
+      const dt = new DataTransfer();
+      dt.items.add(new File([content], "data.json", { type: "application/json" }));
+      return dt;
+    }, JSON.stringify(jsonSample));
+    await page.locator(".cm-content").first().dispatchEvent("drop", { dataTransfer });
+
+    await expect(statusOf(page)).toHaveText("JSON detected and pretty-printed");
+    await expect(page.locator(".cm-content").first()).toContainText('"name": "Ada"');
+  });
 });
