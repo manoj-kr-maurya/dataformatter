@@ -50,8 +50,12 @@ function statusOf(page: Page) {
 }
 
 test.describe("user-regression", () => {
-  test.beforeEach(async ({ context }) => {
+  test.beforeEach(async ({ context, page }) => {
     await context.grantPermissions(["clipboard-read", "clipboard-write"]);
+    // Never let the one-time thank-you dialog interrupt these flows.
+    await page.addInitScript(() => {
+      window.localStorage.setItem("devtools-thanks-shown", "1");
+    });
   });
 
   test("boots with no console errors and no hydration mismatch", async ({ page }) => {

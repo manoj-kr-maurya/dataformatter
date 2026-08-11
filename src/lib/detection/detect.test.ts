@@ -3,7 +3,7 @@ import { detectInput } from "@/lib/detection/detectInput";
 import { detectBase64 } from "@/lib/detection/detectBase64";
 
 describe("detectInput priority", () => {
-  it("detects JWT tokens ahead of everything else", () => {
+  it("detects JWT tokens (checked after JSON and Base64)", () => {
     const outcome = detectInput(
       "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c",
     );
@@ -37,6 +37,13 @@ describe("detectInput priority", () => {
 
   it("detects valid JSON first", () => {
     const outcome = detectInput('{"name":"John"}');
+    expect(outcome.status).toBe("json");
+  });
+
+  it("treats JSON that merely contains a JWT as JSON, not JWT", () => {
+    const outcome = detectInput(
+      '{"access_token":"eyJhbGciOiJIUzI1NiJ9.eyJuYW1lIjoiSm9obiJ9.someSignatureHere"}',
+    );
     expect(outcome.status).toBe("json");
   });
 

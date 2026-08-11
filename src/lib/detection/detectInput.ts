@@ -12,19 +12,14 @@ export type DetectOutcome =
 
 /**
  * Deterministic detection priority:
- *  1. JWT (header.payload.signature)           → JWT
- *  2. Valid JSON                               → JSON
- *  3. Valid Base64 (robust)                    → BASE64 (with decoded payload inspected for JSON)
+ *  1. Valid JSON                               → JSON
+ *  2. Valid Base64 (robust)                    → BASE64 (with decoded payload inspected for JSON)
+ *  3. JWT (header.payload.signature)           → JWT
  *  4. Otherwise                                → UNKNOWN (input left untouched)
  */
 export function detectInput(input: string): DetectOutcome {
   if (!input.trim()) {
     return { status: "empty" };
-  }
-
-  const jwt = detectJwt(input);
-  if (jwt.isJwt && jwt.value !== undefined) {
-    return { status: "jwt", value: jwt.value };
   }
 
   const json = detectJson(input);
@@ -41,6 +36,11 @@ export function detectInput(input: string): DetectOutcome {
       decodedIsJson: decodedJson.isJson,
       jsonValue: decodedJson.isJson ? decodedJson.value : undefined,
     };
+  }
+
+  const jwt = detectJwt(input);
+  if (jwt.isJwt && jwt.value !== undefined) {
+    return { status: "jwt", value: jwt.value };
   }
 
   return { status: "unknown" };

@@ -5,8 +5,8 @@ import { formatJwtOutput } from "@/lib/jwt/format";
 
 /**
  * Auto-detection pipeline used by the IDE mode:
- * JWT → decode header + payload · JSON → pretty-print ·
- * Base64 → decode (+ pretty-print decoded JSON) · otherwise keep the input untouched.
+ * JSON → pretty-print · Base64 → decode (+ pretty-print decoded JSON) ·
+ * JWT → decode header + payload · otherwise keep the input untouched.
  */
 export function autoTransform(input: string): TransformationResult {
   if (!input.trim()) {

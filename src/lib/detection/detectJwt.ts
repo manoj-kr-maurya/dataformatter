@@ -6,7 +6,7 @@ export interface JwtDetection {
 }
 
 /**
- * JWT detection sits ahead of JSON and Base64 in the auto-detect priority:
+ * JWT detection runs last in the auto-detect priority (after JSON and Base64):
  * a token is `${header}.${payload}.${signature}` where the header and payload
  * are base64url-encoded JSON objects. When the full input is not a single
  * token, an embedded token is looked for (mirroring jwt.io).
