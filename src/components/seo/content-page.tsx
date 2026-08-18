@@ -7,6 +7,8 @@ export const TOOL_LINKS: Array<{ href: string; label: string }> = [
   { href: "/encode-decode", label: "Encoding Tools" },
   { href: "/base64", label: "Base64 Tools" },
   { href: "/json-converter", label: "JSON Converters" },
+  { href: "/parsers", label: "Parsers" },
+  { href: "/random-generators", label: "Random Tools" },
   { href: "/json-formatter", label: "JSON Formatter" },
   { href: "/base64-encoder", label: "Base64 Encoder" },
   { href: "/base64-decoder", label: "Base64 Decoder" },

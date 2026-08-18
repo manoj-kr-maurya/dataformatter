@@ -37,6 +37,7 @@ import { jsonToXml } from "@/lib/transformers/jsonToXml";
 import { jsonToYaml } from "@/lib/transformers/jsonToYaml";
 import { jsonUrlDecoder } from "@/lib/transformers/jsonUrlDecoder";
 import { jsonUrlEncoder } from "@/lib/transformers/jsonUrlEncoder";
+import { jsonParser } from "@/lib/transformers/jsonParser";
 import { jwtDecoder } from "@/lib/transformers/jwtDecoder";
 import { octalToBase64 } from "@/lib/transformers/octalToBase64";
 import { pngToBase64 } from "@/lib/transformers/pngToBase64";
@@ -45,10 +46,43 @@ import { urlDecoder } from "@/lib/transformers/urlDecoder";
 import { urlEncoder } from "@/lib/transformers/urlEncoder";
 import { utf8Converter } from "@/lib/transformers/utf8Converter";
 import { utf8Decoder } from "@/lib/transformers/utf8Decoder";
+import { urlParser } from "@/lib/transformers/urlParser";
+import { xmlParser } from "@/lib/transformers/xmlParser";
+import { yamlParser } from "@/lib/transformers/yamlParser";
 import { xmlToBase64 } from "@/lib/transformers/xmlToBase64";
 import { xmlUrlDecoder } from "@/lib/transformers/xmlUrlDecoder";
 import { xmlUrlEncoder } from "@/lib/transformers/xmlUrlEncoder";
 import { yamlToBase64 } from "@/lib/transformers/yamlToBase64";
+import {
+  randomAlphanumericGenerator,
+  randomBitmapGenerator,
+  randomCsvGenerator,
+  randomJsonGenerator,
+  randomNamePicker,
+  randomRegexGenerator,
+  randomStringGenerator,
+  randomTsvGenerator,
+  randomXmlGenerator,
+  shuffleLines,
+} from "@/lib/transformers/randomTextData";
+import {
+  randomDecimalGenerator,
+  randomFractionGenerator,
+  randomIntegerGenerator,
+  randomIntegerRangeGenerator,
+  randomNumberGenerator,
+  randomPrimeGenerator,
+} from "@/lib/transformers/randomNumbers";
+import {
+  randomBinaryGenerator,
+  randomByteGenerator,
+  randomDateGenerator,
+  randomHexGenerator,
+  randomIp,
+  randomMacGenerator,
+  randomTimeGenerator,
+  randomUuidGenerator,
+} from "@/lib/transformers/randomValues";
 
 export const AUTO_DETECT = "AUTO_DETECT" as const;
 
@@ -104,6 +138,34 @@ export const MANUAL_TOOLS: Record<ToolType, Transformer> = {
   UTF8_CONVERTER: utf8Converter,
   UTF8_DECODE: utf8Decoder,
   HEX_TO_UTF8: hexToUtf8,
+  URL_PARSE: urlParser,
+  JSON_PARSE: jsonParser,
+  XML_PARSE: xmlParser,
+  YAML_PARSE: yamlParser,
+  RANDOM_IP: randomIp,
+  RANDOM_TIME: randomTimeGenerator,
+  RANDOM_UUID: randomUuidGenerator,
+  RANDOM_JSON: randomJsonGenerator,
+  RANDOM_XML: randomXmlGenerator,
+  RANDOM_REGEX: randomRegexGenerator,
+  RANDOM_CSV: randomCsvGenerator,
+  RANDOM_NUMBER: randomNumberGenerator,
+  RANDOM_INTEGER: randomIntegerGenerator,
+  RANDOM_PRIME: randomPrimeGenerator,
+  RANDOM_DATE: randomDateGenerator,
+  RANDOM_BITMAP: randomBitmapGenerator,
+  RANDOM_NAME_PICKER: randomNamePicker,
+  SHUFFLE_LINES: shuffleLines,
+  RANDOM_MAC: randomMacGenerator,
+  RANDOM_HEX: randomHexGenerator,
+  RANDOM_TSV: randomTsvGenerator,
+  RANDOM_STRING: randomStringGenerator,
+  RANDOM_FRACTION: randomFractionGenerator,
+  RANDOM_INTEGER_RANGE: randomIntegerRangeGenerator,
+  RANDOM_BINARY: randomBinaryGenerator,
+  RANDOM_BYTE: randomByteGenerator,
+  RANDOM_DECIMAL: randomDecimalGenerator,
+  RANDOM_ALPHANUMERIC: randomAlphanumericGenerator,
 };
 
 export const TOOL_META: Record<ToolType, { label: string; description: string }> = {
@@ -243,6 +305,118 @@ export const TOOL_META: Record<ToolType, { label: string; description: string }>
     label: "Hex to UTF8",
     description: "Decode a hex string into UTF-8 text.",
   },
+  URL_PARSE: {
+    label: "URL Parser",
+    description: "Break a URL into protocol, host, path, query and parameters.",
+  },
+  JSON_PARSE: {
+    label: "JSON Parser",
+    description: "Parse JSON into a type-annotated tree.",
+  },
+  XML_PARSE: {
+    label: "XML Parser",
+    description: "Parse XML into an element tree with attributes and text.",
+  },
+  YAML_PARSE: {
+    label: "YAML Parser",
+    description: "Parse YAML into a JSON object.",
+  },
+  RANDOM_IP: {
+    label: "Random IP Address",
+    description: "Generate random IPv4 addresses.",
+  },
+  RANDOM_TIME: {
+    label: "Random Time Generator",
+    description: "Generate random times of day (HH:MM:SS).",
+  },
+  RANDOM_UUID: {
+    label: "Random UUID Generator",
+    description: "Generate random RFC 4122 UUIDs.",
+  },
+  RANDOM_JSON: {
+    label: "Random JSON Generator",
+    description: "Generate random JSON objects.",
+  },
+  RANDOM_XML: {
+    label: "Random XML Generator",
+    description: "Generate a random XML document.",
+  },
+  RANDOM_REGEX: {
+    label: "Random Data from Regex",
+    description: "Generate random data that matches a regex.",
+  },
+  RANDOM_CSV: {
+    label: "Random CSV Generator",
+    description: "Generate a CSV file of random words.",
+  },
+  RANDOM_NUMBER: {
+    label: "Random Number Generator",
+    description: "Generate random numbers.",
+  },
+  RANDOM_INTEGER: {
+    label: "Random Integer Generator",
+    description: "Generate random integers.",
+  },
+  RANDOM_PRIME: {
+    label: "Random Prime Generator",
+    description: "Generate random prime numbers.",
+  },
+  RANDOM_DATE: {
+    label: "Random Date Generator",
+    description: "Generate random ISO dates.",
+  },
+  RANDOM_BITMAP: {
+    label: "Random Bitmap Generator",
+    description: "Generate a grid of random bitmap pixels.",
+  },
+  RANDOM_NAME_PICKER: {
+    label: "Random Name Picker",
+    description: "Pick a random name from a comma/newline list.",
+  },
+  SHUFFLE_LINES: {
+    label: "Text Lines Shuffler",
+    description: "Randomly re-order the lines of your text.",
+  },
+  RANDOM_MAC: {
+    label: "MAC Address Generator",
+    description: "Generate random MAC addresses.",
+  },
+  RANDOM_HEX: {
+    label: "Random Hex Generator",
+    description: "Generate random hex strings.",
+  },
+  RANDOM_TSV: {
+    label: "Random TSV Generator",
+    description: "Generate a TSV file of random words.",
+  },
+  RANDOM_STRING: {
+    label: "Random String Generator",
+    description: "Generate random letter strings.",
+  },
+  RANDOM_FRACTION: {
+    label: "Random Fraction Generator",
+    description: "Generate random fractions.",
+  },
+  RANDOM_INTEGER_RANGE: {
+    label: "Random Integer Range Generator",
+    description: "Generate random integers within a range.",
+  },
+  RANDOM_BINARY: {
+    label: "Random Binary Generator",
+    description: "Generate random binary strings.",
+  },
+  RANDOM_BYTE: {
+    label: "Random Byte Generator",
+    description: "Generate random byte values.",
+  },
+  RANDOM_DECIMAL: {
+    label: "Random Decimal Generator",
+    description: "Generate random decimal numbers.",
+  },
+  RANDOM_ALPHANUMERIC: {
+    label: "Random Alphanumeric Generator",
+    description: "Generate random alphanumeric strings.",
+  },
 };
 
 /** Manual tools shown on the home page (/). */
@@ -312,6 +486,42 @@ export const JSON_CONVERTER_TOOL_ORDER: ToolType[] = [
   "JSON_TO_HTML",
 ];
 
+/** Parser tools shown on /parsers. */
+export const PARSER_TOOL_ORDER: ToolType[] = [
+  "URL_PARSE",
+  "JSON_PARSE",
+  "XML_PARSE",
+  "YAML_PARSE",
+];
+
+/** Random generator tools shown on /random-generators. */
+export const RANDOM_GENERATOR_TOOL_ORDER: ToolType[] = [
+  "RANDOM_IP",
+  "RANDOM_TIME",
+  "RANDOM_UUID",
+  "RANDOM_JSON",
+  "RANDOM_XML",
+  "RANDOM_REGEX",
+  "RANDOM_CSV",
+  "RANDOM_NUMBER",
+  "RANDOM_INTEGER",
+  "RANDOM_PRIME",
+  "RANDOM_DATE",
+  "RANDOM_BITMAP",
+  "RANDOM_NAME_PICKER",
+  "SHUFFLE_LINES",
+  "RANDOM_MAC",
+  "RANDOM_HEX",
+  "RANDOM_TSV",
+  "RANDOM_STRING",
+  "RANDOM_FRACTION",
+  "RANDOM_INTEGER_RANGE",
+  "RANDOM_BINARY",
+  "RANDOM_BYTE",
+  "RANDOM_DECIMAL",
+  "RANDOM_ALPHANUMERIC",
+];
+
 function dedupe(tools: ToolType[]): ToolType[] {
   return Array.from(new Set(tools));
 }
@@ -322,6 +532,8 @@ export const MANUAL_TOOL_ORDER: ToolType[] = dedupe([
   ...ENCODE_DECODE_TOOL_ORDER,
   ...BASE64_TOOL_ORDER,
   ...JSON_CONVERTER_TOOL_ORDER,
+  ...PARSER_TOOL_ORDER,
+  ...RANDOM_GENERATOR_TOOL_ORDER,
 ]);
 
 /**
@@ -379,6 +591,39 @@ export const TOOL_GROUPS: ToolGroup[] = [
   {
     label: "Conversions",
     tools: ["BASE64_TO_JSON", "JSON_TO_BASE64"],
+  },
+  {
+    label: "Parsers",
+    tools: ["URL_PARSE", "JSON_PARSE", "XML_PARSE", "YAML_PARSE"],
+  },
+  {
+    label: "Random Tools",
+    tools: [
+      "RANDOM_IP",
+      "RANDOM_TIME",
+      "RANDOM_UUID",
+      "RANDOM_JSON",
+      "RANDOM_XML",
+      "RANDOM_REGEX",
+      "RANDOM_CSV",
+      "RANDOM_NUMBER",
+      "RANDOM_INTEGER",
+      "RANDOM_PRIME",
+      "RANDOM_DATE",
+      "RANDOM_BITMAP",
+      "RANDOM_NAME_PICKER",
+      "SHUFFLE_LINES",
+      "RANDOM_MAC",
+      "RANDOM_HEX",
+      "RANDOM_TSV",
+      "RANDOM_STRING",
+      "RANDOM_FRACTION",
+      "RANDOM_INTEGER_RANGE",
+      "RANDOM_BINARY",
+      "RANDOM_BYTE",
+      "RANDOM_DECIMAL",
+      "RANDOM_ALPHANUMERIC",
+    ],
   },
   {
     label: "Base64 Tools",

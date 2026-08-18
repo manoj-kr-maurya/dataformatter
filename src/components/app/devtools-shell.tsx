@@ -11,17 +11,19 @@ import type { ToolMode, ToolType } from "@/types/tools";
 
 interface DevToolsShellProps {
   tools: ToolType[];
-  activeHref: "/" | "/encode-decode" | "/base64" | "/json-converter";
+  activeHref: "/" | "/encode-decode" | "/base64" | "/json-converter" | "/parsers" | "/random-generators";
 }
 
 const NAV_LINKS: Array<{
-  href: "/" | "/encode-decode" | "/base64" | "/json-converter";
+  href: "/" | "/encode-decode" | "/base64" | "/json-converter" | "/parsers" | "/random-generators";
   label: string;
 }> = [
   { href: "/", label: "DevTools Home" },
   { href: "/encode-decode", label: "Encoding Tools" },
   { href: "/base64", label: "Base64 Tools" },
   { href: "/json-converter", label: "JSON Converters" },
+  { href: "/parsers", label: "Parsers" },
+  { href: "/random-generators", label: "Random Tools" },
 ];
 
 export function DevToolsShell({ tools, activeHref }: DevToolsShellProps) {
