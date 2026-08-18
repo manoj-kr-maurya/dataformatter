@@ -4,7 +4,7 @@ import { useMemo, useState, type DragEvent } from "react";
 import CodeMirror from "@uiw/react-codemirror";
 import { json } from "@codemirror/lang-json";
 import { search } from "@codemirror/search";
-import { keymap } from "@codemirror/view";
+import { keymap, EditorView } from "@codemirror/view";
 import { Prec, type Extension } from "@codemirror/state";
 import type { Language } from "@/types/tools";
 import { editorTheme, jsonHighlightStyle } from "@/components/editor/codemirror-theme";
@@ -18,6 +18,7 @@ interface CodeEditorProps {
   placeholder?: string;
   ariaLabel: string;
   maxFileBytes?: number;
+  wordWrap?: boolean;
 }
 
 const baseExtensions = [jsonHighlightStyle];
@@ -30,6 +31,7 @@ export function CodeEditor({
   placeholder,
   ariaLabel,
   maxFileBytes = 5 * 1024 * 1024,
+  wordWrap = false,
 }: CodeEditorProps) {
   const [dragging, setDragging] = useState(false);
 
@@ -53,9 +55,12 @@ export function CodeEditor({
     if (language === "json") {
       list.push(json());
     }
+    if (wordWrap) {
+      list.push(EditorView.lineWrapping);
+    }
     list.push(...baseExtensions);
     return list;
-  }, [language]);
+  }, [language, wordWrap]);
 
   function handleDragOver(event: DragEvent<HTMLDivElement>) {
     const hasFiles = Array.from(event.dataTransfer.types ?? []).includes("Files");

@@ -26,6 +26,7 @@ import { jsonDecoder } from "@/lib/transformers/jsonDecoder";
 import { jsonEncoder } from "@/lib/transformers/jsonEncoder";
 import { jsonFormatter } from "@/lib/transformers/jsonFormatter";
 import { jsonMinifier } from "@/lib/transformers/jsonMinifier";
+import { jsonSorter } from "@/lib/transformers/jsonSorter";
 import { jsonToBase64 } from "@/lib/transformers/jsonToBase64";
 import { jsonToCsv } from "@/lib/transformers/jsonToCsv";
 import { jsonToExcel } from "@/lib/transformers/jsonToExcel";
@@ -139,6 +140,7 @@ export type Transformer = (input: string) => TransformationResult;
 export const MANUAL_TOOLS: Record<ToolType, Transformer> = {
   JSON_FORMAT: jsonFormatter,
   JSON_MINIFY: jsonMinifier,
+  SORT_KEYS: jsonSorter,
   JSON_ENCODE: jsonEncoder,
   JSON_DECODE: jsonDecoder,
   BASE32_ENCODE: base32Encoder,
@@ -259,6 +261,7 @@ export const MANUAL_TOOLS: Record<ToolType, Transformer> = {
 export const TOOL_META: Record<ToolType, { label: string; description: string }> = {
   JSON_FORMAT: { label: "JSON Format", description: "Prettify JSON with 2-space indentation." },
   JSON_MINIFY: { label: "JSON Minify", description: "Compress JSON into a single line." },
+  SORT_KEYS: { label: "Sort JSON Keys", description: "Sort the keys of every JSON object alphabetically." },
   JSON_ENCODE: {
     label: "JSON Encode Online",
     description: "Escape text as a JSON string literal (with quotes and escapes).",
@@ -871,7 +874,7 @@ export const TOOL_GROUPS: ToolGroup[] = [
   },
   {
     label: "JSON Tools",
-    tools: ["JSON_FORMAT", "JSON_MINIFY"],
+    tools: ["JSON_FORMAT", "JSON_MINIFY", "SORT_KEYS"],
   },
   {
     label: "JSON Converters",

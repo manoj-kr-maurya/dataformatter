@@ -4,11 +4,12 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { AutoDetectToggle } from "@/components/workspace/auto-detect-toggle";
 import { SingleView } from "@/components/workspace/single-view";
 import { SplitView } from "@/components/workspace/split-view";
-import { ViewToggle } from "@/components/workspace/view-toggle";
+import { WorkspaceToolbar } from "@/components/workspace/workspace-toolbar";
 import {
   TransformStatus,
   type StatusKind,
 } from "@/components/status/transform-status";
+import { useFullscreen } from "@/components/editor/fullscreen";
 import { useAutoProcessing } from "@/hooks/useAutoProcessing";
 import { usePersistedState } from "@/hooks/usePersistedState";
 import { copyToClipboard } from "@/lib/clipboard/copy";
@@ -25,15 +26,18 @@ interface StatusData {
 
 interface WorkspaceProps {
   mode: ToolMode;
+  onSelectTool: (mode: ToolMode) => void;
 }
 
 function outputFilename(detectedType: TransformationResult["detectedType"]): string {
   return detectedType === "JSON" ? "devtools-output.json" : "devtools-output.txt";
 }
 
-export function Workspace({ mode }: WorkspaceProps) {
+export function Workspace({ mode, onSelectTool }: WorkspaceProps) {
   const [view, setView] = usePersistedState<ViewMode>("devtools-view-mode", "single");
   const [autoOn, setAutoOn] = usePersistedState<boolean>("devtools-auto-mode", true);
+  const [wordWrap, setWordWrap] = usePersistedState<boolean>("devtools-word-wrap", false);
+  const { isFullscreen, toggle, overlayClassName } = useFullscreen();
 
   // Raw text the user entered. Never rewritten by transformations.
   const [userInput, setUserInput] = useState("");
@@ -214,13 +218,18 @@ export function Workspace({ mode }: WorkspaceProps) {
   })();
 
   return (
-    <div className="flex min-h-0 flex-1 flex-col gap-2 px-3 py-2 sm:px-4">
-      <div className="flex shrink-0 flex-wrap items-center justify-between gap-x-4 gap-y-2">
-        <AutoDetectToggle enabled={autoOn} onChange={setAutoOn} />
-        <ViewToggle view={view} onChange={handleViewChange} />
-      </div>
+    <div className="flex min-h-0 min-w-0 flex-1 flex-col">
+      <WorkspaceToolbar
+        view={view}
+        onViewChange={handleViewChange}
+        isFullscreen={isFullscreen}
+        onToggleFullscreen={toggle}
+        onSelectTool={onSelectTool}
+        wordWrap={wordWrap}
+        onToggleWordWrap={() => setWordWrap((current) => !current)}
+      />
 
-      <div className="flex min-h-0 flex-1 flex-col">
+      <div className="flex min-h-0 flex-1 flex-col px-3 py-2 sm:px-4">
         {view === "single" ? (
           <SingleView
             value={displayed}
@@ -238,6 +247,9 @@ export function Workspace({ mode }: WorkspaceProps) {
               const detected = result?.success ? result.detectedType : "TEXT";
               downloadText(outputFilename(detected), displayedRef.current);
             }}
+            isFullscreen={isFullscreen}
+            overlayClassName={overlayClassName}
+            wordWrap={wordWrap}
           />
         ) : (
           <SplitView
@@ -260,12 +272,17 @@ export function Workspace({ mode }: WorkspaceProps) {
               downloadText(outputFilename(detected), outputText);
             }}
             onClearOutput={clearOutput}
+            isFullscreen={isFullscreen}
+            wordWrap={wordWrap}
           />
         )}
       </div>
 
-      <div className="shrink-0">
-        <TransformStatus status={status} />
+      <div className="flex shrink-0 items-center justify-between gap-3 border-t border-zinc-200 bg-zinc-50/80 px-3 py-1.5 dark:border-zinc-800 dark:bg-zinc-900/40">
+        <AutoDetectToggle enabled={autoOn} onChange={setAutoOn} />
+        <div className="flex min-w-0 flex-1 justify-end">
+          <TransformStatus status={status} />
+        </div>
       </div>
     </div>
   );
