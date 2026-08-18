@@ -83,6 +83,54 @@ import {
   randomTimeGenerator,
   randomUuidGenerator,
 } from "@/lib/transformers/randomValues";
+import {
+  binaryToStringConverter,
+  hexToStringConverter,
+  numberToWordsConverter,
+  stringToBinaryConverter,
+  stringToHexConverter,
+  wordsToNumberConverter,
+} from "@/lib/transformers/stringConvert";
+import {
+  caseConverter,
+  delimitedTextExtractor,
+  removeAccents,
+  removeDuplicateLines,
+  removeEmptyLines,
+  removeExtraSpaces,
+  removeLineBreaks,
+  removeLinesContaining,
+  removePunctuation,
+  removeWhitespace,
+  reverseString,
+  sortTextLines,
+  stringBuilder,
+  textRepeater,
+  upsideDownText,
+  wordCounter,
+  wordFrequencyCounter,
+  wordRepeater,
+  wordSorter,
+} from "@/lib/transformers/stringClean";
+import {
+  ntlmHashGenerator,
+  passwordGenerator,
+  randomWordGenerator,
+} from "@/lib/transformers/stringGenerate";
+import {
+  md5HashGenerator,
+  sha1HashGenerator,
+  sha224HashGenerator,
+  sha256HashGenerator,
+  sha384HashGenerator,
+  sha512_224HashGenerator,
+  sha512_256HashGenerator,
+  sha512HashGenerator,
+  sha3_224HashGenerator,
+  sha3_256HashGenerator,
+  sha3_384HashGenerator,
+  sha3_512HashGenerator,
+} from "@/lib/transformers/cryptoTools";
 
 export const AUTO_DETECT = "AUTO_DETECT" as const;
 
@@ -166,6 +214,46 @@ export const MANUAL_TOOLS: Record<ToolType, Transformer> = {
   RANDOM_BYTE: randomByteGenerator,
   RANDOM_DECIMAL: randomDecimalGenerator,
   RANDOM_ALPHANUMERIC: randomAlphanumericGenerator,
+  UPSIDE_DOWN_TEXT: upsideDownText,
+  RANDOM_WORD: randomWordGenerator,
+  NTLM_HASH: ntlmHashGenerator,
+  PASSWORD_GENERATOR: passwordGenerator,
+  STRING_BUILDER: stringBuilder,
+  NUMBER_TO_WORDS: numberToWordsConverter,
+  WORDS_TO_NUMBER: wordsToNumberConverter,
+  WORD_COUNTER: wordCounter,
+  WORD_REPEATER: wordRepeater,
+  REVERSE_STRING: reverseString,
+  STRING_TO_HEX: stringToHexConverter,
+  HEX_TO_STRING: hexToStringConverter,
+  STRING_TO_BINARY: stringToBinaryConverter,
+  BINARY_TO_STRING: binaryToStringConverter,
+  CASE_CONVERTER: caseConverter,
+  DELIMITED_TEXT_EXTRACTOR: delimitedTextExtractor,
+  REMOVE_ACCENTS: removeAccents,
+  REMOVE_DUPLICATE_LINES: removeDuplicateLines,
+  REMOVE_EMPTY_LINES: removeEmptyLines,
+  REMOVE_EXTRA_SPACES: removeExtraSpaces,
+  REMOVE_WHITESPACE: removeWhitespace,
+  REMOVE_LINE_BREAKS: removeLineBreaks,
+  REMOVE_LINES_CONTAINING: removeLinesContaining,
+  SORT_TEXT_LINES: sortTextLines,
+  WORD_SORTER: wordSorter,
+  WORD_FREQUENCY_COUNTER: wordFrequencyCounter,
+  TEXT_REPEATER: textRepeater,
+  REMOVE_PUNCTUATION: removePunctuation,
+  MD5_HASH: md5HashGenerator,
+  SHA1_HASH: sha1HashGenerator,
+  SHA224_HASH: sha224HashGenerator,
+  SHA256_HASH: sha256HashGenerator,
+  SHA384_HASH: sha384HashGenerator,
+  SHA512_HASH: sha512HashGenerator,
+  SHA512_224_HASH: sha512_224HashGenerator,
+  SHA512_256_HASH: sha512_256HashGenerator,
+  SHA3_224_HASH: sha3_224HashGenerator,
+  SHA3_256_HASH: sha3_256HashGenerator,
+  SHA3_384_HASH: sha3_384HashGenerator,
+  SHA3_512_HASH: sha3_512HashGenerator,
 };
 
 export const TOOL_META: Record<ToolType, { label: string; description: string }> = {
@@ -417,6 +505,166 @@ export const TOOL_META: Record<ToolType, { label: string; description: string }>
     label: "Random Alphanumeric Generator",
     description: "Generate random alphanumeric strings.",
   },
+  UPSIDE_DOWN_TEXT: {
+    label: "Upside Down Text",
+    description: "Flip text upside down using Unicode upside-down characters.",
+  },
+  RANDOM_WORD: {
+    label: "Random Word Generator",
+    description: "Generate random words.",
+  },
+  NTLM_HASH: {
+    label: "NTLM Hash Generator",
+    description: "Generate the NTLM hash of a password (MD4 of UTF-16LE).",
+  },
+  PASSWORD_GENERATOR: {
+    label: "Password Generator",
+    description: "Generate strong random passwords.",
+  },
+  STRING_BUILDER: {
+    label: "String Builder",
+    description: "Join strings on the following lines with a separator on the first line.",
+  },
+  NUMBER_TO_WORDS: {
+    label: "Number to Words",
+    description: "Convert numbers into their English word form.",
+  },
+  WORDS_TO_NUMBER: {
+    label: "Words to Number",
+    description: "Convert English number words back into numbers.",
+  },
+  WORD_COUNTER: {
+    label: "Word Counter",
+    description: "Count the words, characters and lines in your text.",
+  },
+  WORD_REPEATER: {
+    label: "Word Repeater",
+    description: "Repeat every word a given number of times (leading number = count).",
+  },
+  REVERSE_STRING: {
+    label: "Reverse String",
+    description: "Reverse the characters in your text.",
+  },
+  STRING_TO_HEX: {
+    label: "String to Hex",
+    description: "Convert text into a hex dump of its UTF-8 bytes.",
+  },
+  HEX_TO_STRING: {
+    label: "Hex to String",
+    description: "Convert hex bytes back into UTF-8 text.",
+  },
+  STRING_TO_BINARY: {
+    label: "String to Binary",
+    description: "Convert text into 8-bit binary for each UTF-8 byte.",
+  },
+  BINARY_TO_STRING: {
+    label: "Binary to String",
+    description: "Convert 8-bit binary groups back into UTF-8 text.",
+  },
+  CASE_CONVERTER: {
+    label: "Case Converter",
+    description: "Convert case: prefix text with a style such as title, snake or kebab.",
+  },
+  DELIMITED_TEXT_EXTRACTOR: {
+    label: "Delimited Text Extractor",
+    description: "Extract text between start and end delimiters (delimiters on the first two lines).",
+  },
+  REMOVE_ACCENTS: {
+    label: "Remove Accents",
+    description: "Strip diacritics such as é, ñ and ü from your text.",
+  },
+  REMOVE_DUPLICATE_LINES: {
+    label: "Remove Duplicate Lines",
+    description: "Remove duplicated lines, keeping the first occurrence of each.",
+  },
+  REMOVE_EMPTY_LINES: {
+    label: "Remove Empty Lines",
+    description: "Remove blank lines from your text.",
+  },
+  REMOVE_EXTRA_SPACES: {
+    label: "Remove Extra Spaces",
+    description: "Collapse runs of spaces to a single space and trim lines.",
+  },
+  REMOVE_WHITESPACE: {
+    label: "Remove Whitespace",
+    description: "Remove all whitespace including spaces, tabs and newlines.",
+  },
+  REMOVE_LINE_BREAKS: {
+    label: "Remove Line Breaks",
+    description: "Replace newlines with a single space.",
+  },
+  REMOVE_LINES_CONTAINING: {
+    label: "Remove Lines Containing",
+    description: "Remove every line that contains a word (word on the first line).",
+  },
+  SORT_TEXT_LINES: {
+    label: "Sort Text Lines",
+    description: "Sort the lines of your text alphabetically.",
+  },
+  WORD_SORTER: {
+    label: "Word Sorter",
+    description: "Sort the words in your text alphabetically, one per line.",
+  },
+  WORD_FREQUENCY_COUNTER: {
+    label: "Word Frequency Counter",
+    description: "Count how often each word appears in your text.",
+  },
+  TEXT_REPEATER: {
+    label: "Text Repeater",
+    description: "Repeat text a given number of times (leading number = count).",
+  },
+  REMOVE_PUNCTUATION: {
+    label: "Remove Punctuation",
+    description: "Remove all punctuation and symbols from your text.",
+  },
+  MD5_HASH: {
+    label: "MD5 Hash",
+    description: "Compute the 128-bit MD5 digest of your text.",
+  },
+  SHA1_HASH: {
+    label: "SHA-1 Hash",
+    description: "Compute the 160-bit SHA-1 digest of your text.",
+  },
+  SHA224_HASH: {
+    label: "SHA-224 Hash",
+    description: "Compute the 224-bit SHA-224 digest of your text.",
+  },
+  SHA256_HASH: {
+    label: "SHA-256 Hash",
+    description: "Compute the 256-bit SHA-256 digest of your text.",
+  },
+  SHA384_HASH: {
+    label: "SHA-384 Hash",
+    description: "Compute the 384-bit SHA-384 digest of your text.",
+  },
+  SHA512_HASH: {
+    label: "SHA-512 Hash",
+    description: "Compute the 512-bit SHA-512 digest of your text.",
+  },
+  SHA512_224_HASH: {
+    label: "SHA-512/224 Hash",
+    description: "Compute the 224-bit SHA-512/224 digest of your text.",
+  },
+  SHA512_256_HASH: {
+    label: "SHA-512/256 Hash",
+    description: "Compute the 256-bit SHA-512/256 digest of your text.",
+  },
+  SHA3_224_HASH: {
+    label: "SHA3-224 Hash",
+    description: "Compute the 224-bit SHA-3 (Keccak) digest of your text.",
+  },
+  SHA3_256_HASH: {
+    label: "SHA3-256 Hash",
+    description: "Compute the 256-bit SHA-3 (Keccak) digest of your text.",
+  },
+  SHA3_384_HASH: {
+    label: "SHA3-384 Hash",
+    description: "Compute the 384-bit SHA-3 (Keccak) digest of your text.",
+  },
+  SHA3_512_HASH: {
+    label: "SHA3-512 Hash",
+    description: "Compute the 512-bit SHA-3 (Keccak) digest of your text.",
+  },
 };
 
 /** Manual tools shown on the home page (/). */
@@ -522,6 +770,54 @@ export const RANDOM_GENERATOR_TOOL_ORDER: ToolType[] = [
   "RANDOM_ALPHANUMERIC",
 ];
 
+/** String utility tools shown on /string-functions. */
+export const STRING_FUNCTION_TOOL_ORDER: ToolType[] = [
+  "UPSIDE_DOWN_TEXT",
+  "RANDOM_WORD",
+  "NTLM_HASH",
+  "PASSWORD_GENERATOR",
+  "STRING_BUILDER",
+  "NUMBER_TO_WORDS",
+  "WORDS_TO_NUMBER",
+  "WORD_COUNTER",
+  "WORD_REPEATER",
+  "REVERSE_STRING",
+  "STRING_TO_HEX",
+  "HEX_TO_STRING",
+  "STRING_TO_BINARY",
+  "BINARY_TO_STRING",
+  "CASE_CONVERTER",
+  "DELIMITED_TEXT_EXTRACTOR",
+  "REMOVE_ACCENTS",
+  "REMOVE_DUPLICATE_LINES",
+  "REMOVE_EMPTY_LINES",
+  "REMOVE_EXTRA_SPACES",
+  "REMOVE_WHITESPACE",
+  "REMOVE_LINE_BREAKS",
+  "REMOVE_LINES_CONTAINING",
+  "SORT_TEXT_LINES",
+  "WORD_SORTER",
+  "WORD_FREQUENCY_COUNTER",
+  "TEXT_REPEATER",
+  "REMOVE_PUNCTUATION",
+];
+
+/** Hash tools shown on /cryptography-tools. */
+export const CRYPTOGRAPHY_TOOL_ORDER: ToolType[] = [
+  "MD5_HASH",
+  "SHA1_HASH",
+  "SHA224_HASH",
+  "SHA256_HASH",
+  "SHA384_HASH",
+  "SHA512_HASH",
+  "SHA512_224_HASH",
+  "SHA512_256_HASH",
+  "SHA3_224_HASH",
+  "SHA3_256_HASH",
+  "SHA3_384_HASH",
+  "SHA3_512_HASH",
+];
+
 function dedupe(tools: ToolType[]): ToolType[] {
   return Array.from(new Set(tools));
 }
@@ -534,6 +830,8 @@ export const MANUAL_TOOL_ORDER: ToolType[] = dedupe([
   ...JSON_CONVERTER_TOOL_ORDER,
   ...PARSER_TOOL_ORDER,
   ...RANDOM_GENERATOR_TOOL_ORDER,
+  ...STRING_FUNCTION_TOOL_ORDER,
+  ...CRYPTOGRAPHY_TOOL_ORDER,
 ]);
 
 /**
@@ -626,6 +924,39 @@ export const TOOL_GROUPS: ToolGroup[] = [
     ],
   },
   {
+    label: "String Functions",
+    tools: [
+      "UPSIDE_DOWN_TEXT",
+      "RANDOM_WORD",
+      "NTLM_HASH",
+      "PASSWORD_GENERATOR",
+      "STRING_BUILDER",
+      "NUMBER_TO_WORDS",
+      "WORDS_TO_NUMBER",
+      "WORD_COUNTER",
+      "WORD_REPEATER",
+      "REVERSE_STRING",
+      "STRING_TO_HEX",
+      "HEX_TO_STRING",
+      "STRING_TO_BINARY",
+      "BINARY_TO_STRING",
+      "CASE_CONVERTER",
+      "DELIMITED_TEXT_EXTRACTOR",
+      "REMOVE_ACCENTS",
+      "REMOVE_DUPLICATE_LINES",
+      "REMOVE_EMPTY_LINES",
+      "REMOVE_EXTRA_SPACES",
+      "REMOVE_WHITESPACE",
+      "REMOVE_LINE_BREAKS",
+      "REMOVE_LINES_CONTAINING",
+      "SORT_TEXT_LINES",
+      "WORD_SORTER",
+      "WORD_FREQUENCY_COUNTER",
+      "TEXT_REPEATER",
+      "REMOVE_PUNCTUATION",
+    ],
+  },
+  {
     label: "Base64 Tools",
     tools: [
       "IMAGE_TO_BASE64",
@@ -645,6 +976,23 @@ export const TOOL_GROUPS: ToolGroup[] = [
       "HEX_TO_BASE64",
       "BASE64_TO_HEX",
       "OCTAL_TO_BASE64",
+    ],
+  },
+  {
+    label: "Cryptography",
+    tools: [
+      "MD5_HASH",
+      "SHA1_HASH",
+      "SHA224_HASH",
+      "SHA256_HASH",
+      "SHA384_HASH",
+      "SHA512_HASH",
+      "SHA512_224_HASH",
+      "SHA512_256_HASH",
+      "SHA3_224_HASH",
+      "SHA3_256_HASH",
+      "SHA3_384_HASH",
+      "SHA3_512_HASH",
     ],
   },
   {

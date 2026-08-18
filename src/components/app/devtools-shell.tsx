@@ -11,11 +11,27 @@ import type { ToolMode, ToolType } from "@/types/tools";
 
 interface DevToolsShellProps {
   tools: ToolType[];
-  activeHref: "/" | "/encode-decode" | "/base64" | "/json-converter" | "/parsers" | "/random-generators";
+  activeHref:
+    | "/"
+    | "/encode-decode"
+    | "/base64"
+    | "/json-converter"
+    | "/parsers"
+    | "/random-generators"
+    | "/string-functions"
+    | "/cryptography-tools";
 }
 
 const NAV_LINKS: Array<{
-  href: "/" | "/encode-decode" | "/base64" | "/json-converter" | "/parsers" | "/random-generators";
+  href:
+    | "/"
+    | "/encode-decode"
+    | "/base64"
+    | "/json-converter"
+    | "/parsers"
+    | "/random-generators"
+    | "/string-functions"
+    | "/cryptography-tools";
   label: string;
 }> = [
   { href: "/", label: "DevTools Home" },
@@ -24,6 +40,8 @@ const NAV_LINKS: Array<{
   { href: "/json-converter", label: "JSON Converters" },
   { href: "/parsers", label: "Parsers" },
   { href: "/random-generators", label: "Random Tools" },
+  { href: "/string-functions", label: "String Functions" },
+  { href: "/cryptography-tools", label: "Cryptography" },
 ];
 
 export function DevToolsShell({ tools, activeHref }: DevToolsShellProps) {
