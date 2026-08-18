@@ -37,6 +37,12 @@ async function typeIntoEditor(page: Page, text: string) {
   await page.keyboard.insertText(text);
 }
 
+async function selectTool(page: Page, branch: string, label: string) {
+  await page.getByRole("button", { name: "Select tool" }).click();
+  await page.getByRole("menuitem", { name: branch, exact: true }).click();
+  await page.getByRole("menuitem", { name: label, exact: true }).click();
+}
+
 async function editorScrollBox(page: Page, index = 0) {
   const scroller = page.locator(".cm-scroller").nth(index);
   return {
@@ -61,7 +67,7 @@ test.describe("user-regression", () => {
   test("boots with no console errors and no hydration mismatch", async ({ page }) => {
     const errors = await trackErrors(page);
     await page.goto("/");
-    await expect(page.getByText("DevTools", { exact: true })).toBeVisible();
+    await expect(page.getByRole("button", { name: "Select tool" })).toBeVisible();
     await page.waitForTimeout(1500);
     expect(errors.filter((e) => !/React DevTools/i.test(e))).toEqual([]);
   });
@@ -93,12 +99,12 @@ test.describe("user-regression", () => {
     await expect(statusOf(page)).toHaveText("JSON detected and pretty-printed");
     await page.getByRole("button", { name: "Restore Original" }).click();
 
-    await page.getByRole("tab", { name: "JSON Minify" }).click();
+    await selectTool(page, "JSON Tools", "JSON Minify");
     await expect(statusOf(page)).toHaveText("JSON minified");
     await expect(page.locator(".cm-content").first()).toHaveText(JSON.stringify(jsonSample));
 
     const raw = JSON.stringify(jsonSample);
-    await page.getByRole("tab", { name: "Base64 Encode" }).click();
+    await selectTool(page, "Conversions", "JSON → Base64");
     await expect(page.locator(".cm-content").first()).toHaveText(
       Buffer.from(raw).toString("base64"),
     );

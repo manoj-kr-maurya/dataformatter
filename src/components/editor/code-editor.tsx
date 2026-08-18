@@ -85,6 +85,15 @@ export function CodeEditor({
     if (file.size > maxFileBytes) {
       return;
     }
+    if (file.type.startsWith("image/")) {
+      const dataUrl = await new Promise<string>((resolve) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(String(reader.result ?? ""));
+        reader.readAsDataURL(file);
+      });
+      onChange?.(dataUrl);
+      return;
+    }
     const text = await file.text();
     onChange?.(text);
   }

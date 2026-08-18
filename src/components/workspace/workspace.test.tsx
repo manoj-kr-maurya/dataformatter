@@ -3,7 +3,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { render, screen, waitFor, cleanup } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { EditorView } from "@codemirror/view";
-import { Workspace } from "@/components/workspace/workspace";
+import { DevToolsShell } from "@/components/app/devtools-shell";
+import { ENCODE_DECODE_TOOL_ORDER, HOME_TOOL_ORDER } from "@/lib/tools";
 
 const RAW_B64 = "eyJmb28iOiJiYXIifQ==";
 const PRETTY = "{\n  \"foo\": \"bar\"\n}";
@@ -31,6 +32,20 @@ async function waitForEditor(container: HTMLElement): Promise<EditorView> {
   return editors(container)[0];
 }
 
+function renderShell(tools: typeof HOME_TOOL_ORDER | typeof ENCODE_DECODE_TOOL_ORDER = HOME_TOOL_ORDER) {
+  return render(<DevToolsShell tools={tools} activeHref="/" />);
+}
+
+async function selectTool(
+  user: ReturnType<typeof userEvent.setup>,
+  branch: string,
+  name: string | RegExp,
+) {
+  await user.click(screen.getByRole("button", { name: "Select tool" }));
+  await user.click(screen.getByRole("menuitem", { name: branch }));
+  await user.click(screen.getByRole("menuitem", { name }));
+}
+
 beforeEach(() => {
   localStorage.clear();
 });
@@ -42,7 +57,7 @@ afterEach(() => {
 
 describe("Workspace — single view (default)", () => {
   it("auto-detects Base64 JSON and pretty-prints it in place", async () => {
-    const { container } = render(<Workspace />);
+    const { container } = renderShell();
 
     const view = await waitForEditor(container);
     setText(view, RAW_B64);
@@ -59,7 +74,7 @@ describe("Workspace — single view (default)", () => {
 
   it("Restore Original returns the editor to the raw pasted text", async () => {
     const user = userEvent.setup();
-    const { container } = render(<Workspace />);
+    const { container } = renderShell();
 
     const view = await waitForEditor(container);
     setText(view, RAW_B64);
@@ -76,7 +91,7 @@ describe("Workspace — single view (default)", () => {
   });
 
   it("keeps the original text when an unknown value is pasted", async () => {
-    const { container } = render(<Workspace />);
+    const { container } = renderShell();
     const view = await waitForEditor(container);
     setText(view, "just some text");
     await waitFor(
@@ -89,7 +104,7 @@ describe("Workspace — single view (default)", () => {
   });
 
 it("decodes a pasted JWT into formatted header and payload", async () => {
-    const { container } = render(<Workspace />);
+    const { container } = renderShell();
     const view = await waitForEditor(container);
     setText(view, JWT);
 
@@ -105,7 +120,7 @@ it("decodes a pasted JWT into formatted header and payload", async () => {
   });
 
   it("decodes a JWT pasted with a Bearer prefix", async () => {
-    const { container } = render(<Workspace />);
+    const { container } = renderShell();
     const view = await waitForEditor(container);
     setText(view, `Bearer ${JWT}`);
 
@@ -119,7 +134,7 @@ it("decodes a pasted JWT into formatted header and payload", async () => {
   });
 
   it("decodes a JWT embedded in surrounding text", async () => {
-    const { container } = render(<Workspace />);
+    const { container } = renderShell();
     const view = await waitForEditor(container);
     setText(view, `abcd ${JWT} please verify`);
 
@@ -136,7 +151,7 @@ it("decodes a pasted JWT into formatted header and payload", async () => {
 describe("Workspace — split view", () => {
   it("renders input and output panes and applies transforms", async () => {
     const user = userEvent.setup();
-    const { container } = render(<Workspace />);
+    const { container } = renderShell();
 
     const view = await waitForEditor(container);
     setText(view, RAW_B64);
@@ -160,14 +175,14 @@ describe("Workspace — split view", () => {
 
   it("persists the Split preference across re-renders", async () => {
     const user = userEvent.setup();
-    const { container } = render(<Workspace />);
+    const { container } = renderShell();
     await waitForEditor(container);
     await user.click(screen.getByRole("button", { name: /Split/i }));
 
     expect(JSON.parse(localStorage.getItem("devtools-view-mode") ?? "null")).toBe("split");
 
     cleanup();
-    const second = render(<Workspace />);
+    const second = renderShell();
     await waitFor(() => expect(editors(second.container).length).toBe(2));
   });
 });
@@ -175,12 +190,12 @@ describe("Workspace — split view", () => {
 describe("Workspace — manual tools and Auto Detect toggle", () => {
   it("runs a manual tool even when typing, without auto-detection", async () => {
     const user = userEvent.setup();
-    const { container } = render(<Workspace />);
+    const { container } = renderShell();
 
     const view = await waitForEditor(container);
     setText(view, '{\n  "a": 1,\n  "b": [1, 2]\n}');
 
-    await user.click(screen.getByRole("tab", { name: /JSON Minify/i }));
+    await selectTool(user, "JSON Tools", /JSON Minify/i);
 
     await waitFor(
       () => {
@@ -193,13 +208,13 @@ describe("Workspace — manual tools and Auto Detect toggle", () => {
 
   it("Base64 Encode works with Auto Detect turned OFF", async () => {
     const user = userEvent.setup();
-    const { container } = render(<Workspace />);
+    const { container } = renderShell(ENCODE_DECODE_TOOL_ORDER);
 
     const view = await waitForEditor(container);
 
     // Turn auto-detection off first, then pick the Base64 Encode tool.
     await user.click(screen.getByRole("switch", { name: /Auto Detect/i }));
-    await user.click(screen.getByRole("tab", { name: /Base64 Encode/i }));
+    await selectTool(user, "Encoding Tools", /Base64 Encode/i);
 
     setText(view, "hello");
 
@@ -214,7 +229,7 @@ describe("Workspace — manual tools and Auto Detect toggle", () => {
 
   it("Base64 Encode still applies after a Restore Original click, while Auto-detect is off", async () => {
     const user = userEvent.setup();
-    const { container } = render(<Workspace />);
+    const { container } = renderShell(ENCODE_DECODE_TOOL_ORDER);
 
     const view = await waitForEditor(container);
 
@@ -230,7 +245,7 @@ describe("Workspace — manual tools and Auto Detect toggle", () => {
     // 2. Turn auto-detect off and pick Base64 Encode — the tool output must show,
     //    not be swallowed by the earlier "restore" flag.
     await user.click(screen.getByRole("switch", { name: /Auto Detect/i }));
-    await user.click(screen.getByRole("tab", { name: /Base64 Encode/i }));
+    await selectTool(user, "Encoding Tools", /Base64 Encode/i);
 
     await waitFor(
       () => {
@@ -242,7 +257,7 @@ describe("Workspace — manual tools and Auto Detect toggle", () => {
 
   it("turning Auto Detect off stops auto-processing and keeps raw input", async () => {
     const user = userEvent.setup();
-    const { container } = render(<Workspace />);
+    const { container } = renderShell();
 
     const view = await waitForEditor(container);
     setText(view, RAW_B64);

@@ -4,7 +4,6 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { AutoDetectToggle } from "@/components/workspace/auto-detect-toggle";
 import { SingleView } from "@/components/workspace/single-view";
 import { SplitView } from "@/components/workspace/split-view";
-import { ToolTabs } from "@/components/workspace/tool-tabs";
 import { ViewToggle } from "@/components/workspace/view-toggle";
 import {
   TransformStatus,
@@ -24,14 +23,17 @@ interface StatusData {
   text: string;
 }
 
+interface WorkspaceProps {
+  mode: ToolMode;
+}
+
 function outputFilename(detectedType: TransformationResult["detectedType"]): string {
   return detectedType === "JSON" ? "devtools-output.json" : "devtools-output.txt";
 }
 
-export function Workspace() {
+export function Workspace({ mode }: WorkspaceProps) {
   const [view, setView] = usePersistedState<ViewMode>("devtools-view-mode", "single");
   const [autoOn, setAutoOn] = usePersistedState<boolean>("devtools-auto-mode", true);
-  const [mode, setMode] = useState<ToolMode>("AUTO_DETECT");
 
   // Raw text the user entered. Never rewritten by transformations.
   const [userInput, setUserInput] = useState("");
@@ -52,6 +54,12 @@ export function Workspace() {
   useEffect(() => {
     userInputRef.current = userInput;
   }, [userInput]);
+
+  // Switching tools is an explicit new intent — end any "restore original"
+  // hold, otherwise manual-tool output would never reach the editor.
+  useEffect(() => {
+    restoredRef.current = false;
+  }, [mode]);
 
   const applyResultToDisplay = useCallback((current: TransformationResult | null) => {
     if (!current) {
@@ -102,16 +110,6 @@ export function Workspace() {
     displayedRef.current = raw;
     setDisplayed(raw);
   }, []);
-
-  const handleModeChange = useCallback(
-    (next: ToolMode) => {
-      // Switching tools is an explicit new intent — end any "restore original"
-      // hold, otherwise manual-tool output would never reach the editor.
-      restoredRef.current = false;
-      setMode(next);
-    },
-    [],
-  );
 
   const handleViewChange = useCallback(
     (next: ViewMode) => {
@@ -218,10 +216,7 @@ export function Workspace() {
   return (
     <div className="flex min-h-0 flex-1 flex-col gap-2 px-3 py-2 sm:px-4">
       <div className="flex shrink-0 flex-wrap items-center justify-between gap-x-4 gap-y-2">
-        <div className="flex flex-wrap items-center gap-2">
-          <ToolTabs mode={mode} onSelect={handleModeChange} autoEnabled={autoOn} />
-          <AutoDetectToggle enabled={autoOn} onChange={setAutoOn} />
-        </div>
+        <AutoDetectToggle enabled={autoOn} onChange={setAutoOn} />
         <ViewToggle view={view} onChange={handleViewChange} />
       </div>
 

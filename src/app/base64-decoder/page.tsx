@@ -67,7 +67,7 @@ export default function Base64DecoderPage() {
 
       <Faq items={faqs} />
 
-      <Cta label="Open the free Base64 Decoder tool" href="/" />
+      <Cta label="Open the free Base64 Decoder tool" href="/encode-decode" />
     </ContentPage>
   );
 }
