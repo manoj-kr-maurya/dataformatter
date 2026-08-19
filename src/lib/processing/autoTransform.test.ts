@@ -14,7 +14,7 @@ describe("autoTransform", () => {
       'HEADER\n{\n  "alg": "HS256",\n  "typ": "JWT"\n}\n\n' +
         'PAYLOAD\n{\n  "sub": "1234567890",\n  "name": "John Doe",\n  "iat": 1516239022\n}',
     );
-    expect(result.message).toBe("JWT decoded — header and payload shown");
+    expect(result.message).toBe("Detected: JWT — decoded header and payload (signature not verified)");
   });
   it("decodes a JWT pasted with a Bearer prefix", () => {
     const result = autoTransform(`Bearer ${HS256_TOKEN}`);
@@ -49,7 +49,7 @@ describe("autoTransform", () => {
     expect(result.transformation).toBe("JSON_FORMAT");
     expect(result.detectedType).toBe("JSON");
     expect(result.output).toBe('{\n  "name": "John",\n  "age": 30\n}');
-    expect(result.message).toBe("JSON detected and pretty-printed");
+    expect(result.message).toBe("Detected: JSON — pretty-printed");
   });
 
   it("pretty-prints nested JSON and arrays", () => {
@@ -74,7 +74,7 @@ describe("autoTransform", () => {
     expect(result.transformation).toBe("BASE64_DECODE");
     expect(result.detectedType).toBe("TEXT");
     expect(result.output).toBe("Hello World");
-    expect(result.message).toBe("Base64 decoded to plain text");
+    expect(result.message).toBe("Detected: Base64 — decoded to plain text");
   });
 
   it("decodes Base64 and pretty-prints embedded JSON", () => {
@@ -83,7 +83,7 @@ describe("autoTransform", () => {
     expect(result.transformation).toBe("BASE64_TO_JSON");
     expect(result.detectedType).toBe("JSON");
     expect(result.output).toBe('{\n  "name": "John",\n  "age": 30\n}');
-    expect(result.message).toBe("Base64 decoded and JSON pretty-printed");
+    expect(result.message).toBe("Detected: Base64 — decoded to JSON");
   });
 
   it("decodes unpadded Base64", () => {
@@ -99,7 +99,7 @@ describe("autoTransform", () => {
     expect(result.success).toBe(false);
     expect(result.output).toBe(input);
     expect(result.originalInput).toBe(input);
-    expect(result.message).toContain("Unable to automatically detect");
+    expect(result.message).toContain("Unable to confidently detect a format");
   });
 
   it("is idempotent on JSON output — reformatting its own output stays JSON", () => {

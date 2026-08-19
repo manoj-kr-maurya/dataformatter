@@ -22,7 +22,7 @@ export function autoTransform(input: string): TransformationResult {
         formatJwtOutput(detected.value),
         "JWT_DECODE",
         "JWT",
-        "JWT decoded — header and payload shown",
+        "Detected: JWT — decoded header and payload (signature not verified)",
         "JWT",
       );
 
@@ -32,7 +32,7 @@ export function autoTransform(input: string): TransformationResult {
         JSON.stringify(detected.value, null, 2),
         "JSON_FORMAT",
         "JSON",
-        "JSON detected and pretty-printed",
+        "Detected: JSON — pretty-printed",
         "JSON",
       );
 
@@ -43,7 +43,7 @@ export function autoTransform(input: string): TransformationResult {
           JSON.stringify(detected.jsonValue, null, 2),
           "BASE64_TO_JSON",
           "JSON",
-          "Base64 decoded and JSON pretty-printed",
+          "Detected: Base64 — decoded to JSON",
           "BASE64",
         );
       }
@@ -52,14 +52,14 @@ export function autoTransform(input: string): TransformationResult {
         detected.decoded,
         "BASE64_DECODE",
         "TEXT",
-        "Base64 decoded to plain text",
+        "Detected: Base64 — decoded to plain text",
         "BASE64",
       );
 
     case "unknown":
       return failResult(
         input,
-        "Unable to automatically detect a format. Paste valid JSON or Base64.",
+        "Unable to confidently detect a format. Choose a manual tool or check the input.",
         "UNKNOWN",
         "UNKNOWN",
       );

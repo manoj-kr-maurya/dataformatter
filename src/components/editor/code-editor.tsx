@@ -9,6 +9,7 @@ import { Prec, type Extension } from "@codemirror/state";
 import type { Language } from "@/types/tools";
 import { editorTheme, jsonHighlightStyle } from "@/components/editor/codemirror-theme";
 import { copyToClipboard } from "@/lib/clipboard/copy";
+import { openGoToLine } from "@/lib/editor/go-to-line";
 
 interface CodeEditorProps {
   value: string;
@@ -46,6 +47,14 @@ export function CodeEditor({
             key: "Mod-Enter",
             run: (view) => {
               void copyToClipboard(view.state.doc.toString());
+              return true;
+            },
+          },
+          {
+            // Go to line (Cmd/Ctrl + Shift + L).
+            key: "Mod-Shift-L",
+            run: () => {
+              openGoToLine();
               return true;
             },
           },

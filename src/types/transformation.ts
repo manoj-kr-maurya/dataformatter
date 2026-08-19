@@ -4,6 +4,7 @@ export type TransformationKind =
   | "NONE"
   | "JSON_FORMAT"
   | "JSON_MINIFY"
+  | "JSON_VALIDATE"
   | "JSON_ENCODE"
   | "JSON_DECODE"
   | "BASE32_ENCODE"
@@ -138,6 +139,11 @@ export interface TransformationResult {
   originalInput: string;
   /** Human readable status message, colour + prepended icon by the UI. */
   message: string;
+  /** Optional parser error location — lets the UI offer "Go to error". */
+  errorLine?: number;
+  errorColumn?: number;
+  /** 1-based character offset of the error, when known. */
+  errorPosition?: number;
 }
 
 export interface TransformState {

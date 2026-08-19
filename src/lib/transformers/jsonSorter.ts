@@ -1,6 +1,6 @@
 import { parseJson } from "@/lib/json/validate";
 import type { TransformationResult } from "@/types/transformation";
-import { failResult, okResult } from "@/lib/transformers/builders";
+import { jsonFailResult, okResult } from "@/lib/transformers/builders";
 
 function sortValue(value: unknown): unknown {
   if (Array.isArray(value)) {
@@ -19,12 +19,15 @@ function sortValue(value: unknown): unknown {
 export function jsonSorter(input: string): TransformationResult {
   const trimmed = input.trim();
   if (!trimmed) {
-    return failResult(input, "There is no JSON to sort.", "UNKNOWN", "JSON");
+    return jsonFailResult(input, {
+      title: "Invalid JSON",
+      message: "There is no JSON to sort.",
+    });
   }
 
   const parsed = parseJson(trimmed);
   if (!parsed.ok) {
-    return failResult(input, `${parsed.error.title}: ${parsed.error.message}`, "JSON", "JSON");
+    return jsonFailResult(input, parsed.error);
   }
 
   return okResult(
@@ -32,7 +35,7 @@ export function jsonSorter(input: string): TransformationResult {
     JSON.stringify(sortValue(parsed.value), null, 2),
     "JSON_FORMAT",
     "JSON",
-    "JSON keys sorted",
+    "JSON keys sorted recursively",
     "JSON",
   );
 }

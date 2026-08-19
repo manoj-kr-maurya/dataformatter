@@ -13,6 +13,7 @@ import {
 import type { Language } from "@/types/tools";
 
 interface SingleViewProps {
+  title: string;
   value: string;
   onChange: (value: string) => void;
   language: Language;
@@ -25,6 +26,8 @@ interface SingleViewProps {
   onRestore: () => void;
   onClear: () => void;
   onDownload: () => void;
+  feedback: string | null;
+  defaultHint: string;
   isFullscreen: boolean;
   overlayClassName: string;
   wordWrap: boolean;
@@ -35,6 +38,7 @@ const SAMPLE_BASE64 = "aGVsbG8="; // "hello"
 const PLACEHOLDER = "Paste or type JSON, Base64, or plain text…";
 
 export function SingleView({
+  title,
   value,
   onChange,
   language,
@@ -47,6 +51,8 @@ export function SingleView({
   onRestore,
   onClear,
   onDownload,
+  feedback,
+  defaultHint,
   isFullscreen,
   overlayClassName,
   wordWrap,
@@ -54,7 +60,7 @@ export function SingleView({
   return (
     <div className={isFullscreen ? `${overlayClassName} pt-10 min-h-0` : "h-full min-h-0"}>
       <Panel
-        title="Input / Output"
+        title={title}
         headerExtra={
           <>
             {value === "" && (
@@ -88,7 +94,7 @@ export function SingleView({
             onChange={onChange}
             language={language}
             wordWrap={wordWrap}
-            ariaLabel="Input / Output editor"
+            ariaLabel={`${title} editor`}
             placeholder={value ? PLACEHOLDER : ""}
           />
           {value === "" && (
@@ -138,8 +144,13 @@ export function SingleView({
               },
             ]}
           />
-          <span className="hidden whitespace-nowrap font-mono text-[11px] text-zinc-400 sm:inline dark:text-zinc-500">
-            ⌘F find · ⌘↵ copy
+          <span
+            title={feedback ?? defaultHint}
+            className={`hidden truncate whitespace-nowrap font-mono text-[11px] sm:inline ${
+              feedback ? "text-emerald-600 dark:text-emerald-400" : "text-zinc-400 dark:text-zinc-500"
+            }`}
+          >
+            {feedback ?? defaultHint}
           </span>
         </footer>
       </Panel>

@@ -13,7 +13,7 @@ export function base64ToJson(input: string): TransformationResult {
   if (!parsed.ok) {
     return failResult(
       input,
-      "Decoded Base64 is not valid JSON.",
+      "Decoded successfully, but the decoded content is not valid JSON.",
       decoded.value ? "TEXT" : "UNKNOWN",
       "BASE64",
     );

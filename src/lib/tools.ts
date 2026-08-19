@@ -1,5 +1,6 @@
 import type { ToolMode, ToolType, TransformationResult } from "@/types/tools";
 import { autoTransform } from "@/lib/processing/autoTransform";
+import { failResult } from "@/lib/transformers/builders";
 import { base32Decoder } from "@/lib/transformers/base32Decoder";
 import { base32Encoder } from "@/lib/transformers/base32Encoder";
 import { base58Decoder } from "@/lib/transformers/base58Decoder";
@@ -39,6 +40,7 @@ import { jsonToYaml } from "@/lib/transformers/jsonToYaml";
 import { jsonUrlDecoder } from "@/lib/transformers/jsonUrlDecoder";
 import { jsonUrlEncoder } from "@/lib/transformers/jsonUrlEncoder";
 import { jsonParser } from "@/lib/transformers/jsonParser";
+import { jsonValidator } from "@/lib/transformers/jsonValidator";
 import { jwtDecoder } from "@/lib/transformers/jwtDecoder";
 import { octalToBase64 } from "@/lib/transformers/octalToBase64";
 import { pngToBase64 } from "@/lib/transformers/pngToBase64";
@@ -190,6 +192,7 @@ export const MANUAL_TOOLS: Record<ToolType, Transformer> = {
   HEX_TO_UTF8: hexToUtf8,
   URL_PARSE: urlParser,
   JSON_PARSE: jsonParser,
+  JSON_VALIDATE: jsonValidator,
   XML_PARSE: xmlParser,
   YAML_PARSE: yamlParser,
   RANDOM_IP: randomIp,
@@ -403,6 +406,10 @@ export const TOOL_META: Record<ToolType, { label: string; description: string }>
   JSON_PARSE: {
     label: "JSON Parser",
     description: "Parse JSON into a type-annotated tree.",
+  },
+  JSON_VALIDATE: {
+    label: "Validate JSON",
+    description: "Check JSON validity without modifying the input.",
   },
   XML_PARSE: {
     label: "XML Parser",
@@ -874,7 +881,7 @@ export const TOOL_GROUPS: ToolGroup[] = [
   },
   {
     label: "JSON Tools",
-    tools: ["JSON_FORMAT", "JSON_MINIFY", "SORT_KEYS"],
+    tools: ["JSON_FORMAT", "JSON_MINIFY", "JSON_VALIDATE", "SORT_KEYS"],
   },
   {
     label: "JSON Converters",
@@ -1016,7 +1023,20 @@ export function transform(
   if (mode === AUTO_DETECT) {
     return autoEnabled ? autoTransform(input) : autoTransformOffResult(input);
   }
-  return MANUAL_TOOLS[mode](input);
+  const transformer = MANUAL_TOOLS[mode];
+  try {
+    return transformer(input);
+  } catch (error) {
+    // A transformer must never crash the whole editor — surface a clean error.
+    return failResult(
+      input,
+      error instanceof Error && error.message
+        ? `Operation failed: ${error.message}`
+        : "Operation failed on this input.",
+      "UNKNOWN",
+      "UNKNOWN",
+    );
+  }
 }
 
 function autoTransformOffResult(input: string): TransformationResult {

@@ -11,6 +11,7 @@ import { CodeEditor } from "@/components/editor/code-editor";
 import { Panel } from "@/components/editor/panel";
 import { EditorActions } from "@/components/controls/editor-actions";
 import { CopyIcon, DownloadIcon, PasteIcon, TrashIcon } from "@/components/ui/icons";
+import { usePersistedState } from "@/hooks/usePersistedState";
 import type { Language } from "@/types/tools";
 
 interface SplitViewProps {
@@ -29,9 +30,12 @@ interface SplitViewProps {
   outputLines: number;
   outputWords: number;
 
-  onCopy: () => void;
+  onCopyInput: () => void;
+  onCopyOutput: () => void;
   onDownload: () => void;
   onClearOutput: () => void;
+
+  feedback: string | null;
 
   isFullscreen: boolean;
   wordWrap: boolean;
@@ -58,13 +62,15 @@ export function SplitView({
   outputCharacters,
   outputLines,
   outputWords,
-  onCopy,
+  onCopyInput,
+  onCopyOutput,
   onDownload,
   onClearOutput,
+  feedback,
   isFullscreen,
   wordWrap,
 }: SplitViewProps) {
-  const [ratio, setRatio] = useState(0.5);
+  const [ratio, setRatio] = usePersistedState<number>("devtools-split-ratio", 0.5);
   const [isRow, setIsRow] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const draggingRef = useRef(false);
@@ -107,8 +113,12 @@ export function SplitView({
     }
   }
 
-  const panelStyle = (part: "input" | "output") =>
-    isRow ? { flexGrow: part === "input" ? ratio : 1 - ratio, flexBasis: "0%" } : undefined;
+  const panelStyle = (part: "input" | "output") => {
+    const safeRatio = clampRatio(ratio);
+    return isRow
+      ? { flexGrow: part === "input" ? safeRatio : 1 - safeRatio, flexBasis: "0%" }
+      : undefined;
+  };
 
   return (
     <div
@@ -154,7 +164,13 @@ export function SplitView({
                 onClick: onClearInput,
                 disabled: !input,
               },
-              { key: "copy", label: "Copy", icon: <CopyIcon className="h-4 w-4" />, onClick: onCopy, disabled: !input },
+              {
+                key: "copy-input",
+                label: "Copy",
+                icon: <CopyIcon className="h-4 w-4" />,
+                onClick: onCopyInput,
+                disabled: !input,
+              },
             ]}
           />
           <span className="hidden font-mono text-[11px] text-zinc-400 sm:inline dark:text-zinc-500">
@@ -208,10 +224,10 @@ export function SplitView({
           <EditorActions
             actions={[
               {
-                key: "copy",
+                key: "copy-output",
                 label: "Copy",
                 icon: <CopyIcon className="h-4 w-4" />,
-                onClick: onCopy,
+                onClick: onCopyOutput,
                 disabled: !output,
               },
               {
@@ -230,8 +246,13 @@ export function SplitView({
               },
             ]}
           />
-          <span className="hidden font-mono text-[11px] text-zinc-400 sm:inline dark:text-zinc-500">
-            ⌘F find
+          <span
+            title={feedback ?? "⌘F find"}
+            className={`hidden truncate font-mono text-[11px] sm:inline ${
+              feedback ? "text-emerald-600 dark:text-emerald-400" : "text-zinc-400 dark:text-zinc-500"
+            }`}
+          >
+            {feedback ?? "⌘F find"}
           </span>
         </footer>
       </Panel>

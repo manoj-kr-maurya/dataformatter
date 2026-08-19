@@ -69,9 +69,12 @@ const SECTION_TOOLS: Record<PageHref, ToolType[]> = {
 interface SidebarProps {
   activeHref: PageHref;
   onSelectTool: (mode: ToolMode) => void;
+  /** Mobile drawer visibility; the drawer is only rendered below `sm`. */
+  open?: boolean;
+  onClose?: () => void;
 }
 
-export function Sidebar({ activeHref, onSelectTool }: SidebarProps) {
+export function Sidebar({ activeHref, onSelectTool, open = false, onClose }: SidebarProps) {
   const [openSection, setOpenSection] = useState<PageHref>(activeHref);
   const [picked, setPicked] = useState(false);
   const panelRef = useRef<HTMLDivElement>(null);
@@ -167,7 +170,59 @@ export function Sidebar({ activeHref, onSelectTool }: SidebarProps) {
   }
 
   return (
-    <nav
+    <>
+      {/* Mobile drawer nav — only below `sm`, where the rail is hidden. */}
+      {open && (
+        <div
+          className="fixed inset-0 z-40 lg:hidden"
+          role="dialog"
+          aria-modal="true"
+          aria-label="Tools navigation"
+        >
+          <div
+            className="absolute inset-0 bg-zinc-900/30"
+            onClick={onClose}
+            aria-hidden="true"
+          />
+          <div className="absolute inset-y-0 left-0 top-12 w-72 overflow-y-auto border-r border-zinc-200 bg-white p-3 shadow-xl dark:border-zinc-800 dark:bg-zinc-900">
+            {NAV_LINKS.map(({ href, label, Icon }) => {
+              const active = href === activeHref;
+              return (
+                <div key={href} className="mb-4">
+                  <Link
+                    href={href}
+                    aria-current={active ? "page" : undefined}
+                    onClick={onClose}
+                    className={`flex items-center gap-2.5 rounded-md px-3 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-800 ${
+                      active ? "font-semibold" : ""
+                    }`}
+                  >
+                    <Icon className="h-4 w-4 shrink-0 text-zinc-400 dark:text-zinc-500" />
+                    {label}
+                  </Link>
+                  <ul className="ml-3 mt-1 space-y-0.5 border-l border-zinc-200 pl-3 dark:border-zinc-800">
+                    {SECTION_TOOLS[href].map((id) => (
+                      <li key={id}>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            onSelectTool(id);
+                            onClose?.();
+                          }}
+                          className="w-full rounded-md px-2 py-1.5 text-left text-xs text-zinc-500 hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-zinc-100"
+                        >
+                          {TOOL_META[id].label}
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+      <nav
       aria-label="Pages"
       onMouseLeave={() => {
         setOpenSection(activeHref);
@@ -261,6 +316,7 @@ export function Sidebar({ activeHref, onSelectTool }: SidebarProps) {
         </div>
       )}
     </nav>
+    </>
   );
 }
 

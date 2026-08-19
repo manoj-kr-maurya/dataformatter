@@ -129,6 +129,49 @@ test("fly-out flips left on narrow screens, no page overflow, and scrolls intern
   expect(overflow).toBeLessThanOrEqual(1);
 });
 
+test("privacy notice lives in the header and is suppressed on narrow screens", async ({ page }) => {
+  await page.addInitScript(() => {
+    window.localStorage.setItem("devtools-thanks-shown", "1");
+  });
+  await page.goto("/");
+
+  await expect(
+    page
+      .locator("header")
+      .getByText("Your data stays in your browser. Nothing is uploaded to our servers."),
+  ).toBeVisible();
+
+  // On a narrow viewport the full sentence is hidden to keep the header uncluttered.
+  await page.setViewportSize({ width: 480, height: 800 });
+  await expect(
+    page.getByText("Your data stays in your browser. Nothing is uploaded to our servers."),
+  ).toBeHidden();
+});
+
+test("mobile drawer opens from the header and a tool choice closes it", async ({ page }) => {
+  await page.addInitScript(() => {
+    window.localStorage.setItem("devtools-thanks-shown", "1");
+  });
+  await page.setViewportSize({ width: 480, height: 800 });
+  await page.goto("/");
+
+  const hamburger = page.getByRole("button", { name: "Open tools navigation" });
+  await expect(hamburger).toBeVisible();
+  await hamburger.click();
+
+  const drawer = page.getByRole("dialog", { name: "Tools navigation" });
+  await expect(drawer).toBeVisible();
+  await expect(drawer.getByRole("link", { name: "DevTools Home" })).toHaveAttribute(
+    "aria-current",
+    "page",
+  );
+
+  // Picking a tool from the drawer selects it and closes the drawer.
+  await drawer.getByRole("button", { name: "JSON Format" }).click();
+  await expect(drawer).toBeHidden();
+  await expect(page.locator("header").getByText("JSON Format", { exact: true })).toBeVisible();
+});
+
 test("base64 encode round-trips within the encode-decode view", async ({ page }) => {
   await page.addInitScript(() => {
     window.localStorage.setItem("devtools-thanks-shown", "1");

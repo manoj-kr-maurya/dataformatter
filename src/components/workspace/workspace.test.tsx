@@ -69,7 +69,7 @@ describe("Workspace — single view (default)", () => {
       { timeout: 2500 },
     );
 
-    expect(screen.getByRole("status")).toHaveTextContent("Base64 decoded and JSON pretty-printed");
+    expect(screen.getByRole("status")).toHaveTextContent("Detected: Base64 — decoded to JSON");
   });
 
   it("Restore Original returns the editor to the raw pasted text", async () => {
@@ -96,7 +96,7 @@ describe("Workspace — single view (default)", () => {
     setText(view, "just some text");
     await waitFor(
       () => {
-        expect(screen.getByRole("status")).toHaveTextContent("Unable to automatically detect");
+        expect(screen.getByRole("status")).toHaveTextContent("Unable to confidently detect a format");
       },
       { timeout: 2500 },
     );
@@ -116,7 +116,7 @@ it("decodes a pasted JWT into formatted header and payload", async () => {
       },
       { timeout: 2500 },
     );
-    expect(screen.getByRole("status")).toHaveTextContent("JWT decoded — header and payload shown");
+    expect(screen.getByRole("status")).toHaveTextContent("Detected: JWT — decoded header and payload");
   });
 
   it("decodes a JWT pasted with a Bearer prefix", async () => {
@@ -130,7 +130,7 @@ it("decodes a pasted JWT into formatted header and payload", async () => {
       },
       { timeout: 2500 },
     );
-    expect(screen.getByRole("status")).toHaveTextContent("JWT decoded — header and payload shown");
+    expect(screen.getByRole("status")).toHaveTextContent("Detected: JWT — decoded header and payload");
   });
 
   it("decodes a JWT embedded in surrounding text", async () => {
@@ -144,7 +144,7 @@ it("decodes a pasted JWT into formatted header and payload", async () => {
       },
       { timeout: 2500 },
     );
-    expect(screen.getByRole("status")).toHaveTextContent("JWT decoded — header and payload shown");
+    expect(screen.getByRole("status")).toHaveTextContent("Detected: JWT — decoded header and payload");
   });
 });
 

@@ -3,6 +3,7 @@ export type Language = "text" | "json";
 export type ToolType =
   | "JSON_FORMAT"
   | "JSON_MINIFY"
+  | "JSON_VALIDATE"
   | "SORT_KEYS"
   | "JSON_ENCODE"
   | "JSON_DECODE"
