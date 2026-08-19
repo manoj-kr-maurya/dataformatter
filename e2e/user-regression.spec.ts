@@ -128,12 +128,20 @@ test.describe("user-regression", () => {
     await expect(editor).toContainText('"sub": "123"');
   });
 
-  test("Copy button copies the transformed output (not raw input)", async ({ page }) => {
+  test("Copy button copies the transformed output and shows a ✓ Copied confirmation", async ({
+    page,
+  }) => {
     await page.goto("/");
     await typeIntoEditor(page, JSON.stringify(jsonSample));
     await expect(statusOf(page)).toHaveText("Detected: JSON — pretty-printed");
     await page.getByRole("button", { name: "Copy" }).click();
     expect(await page.evaluate(() => navigator.clipboard.readText())).toBe(prettyJson);
+
+    // The button itself flips to a success state, then reverts after ~1.6s.
+    const copyButton = page.getByRole("button", { name: "✓ Copied" });
+    await expect(copyButton).toBeVisible();
+    await expect(copyButton).toHaveClass(/text-emerald-700/);
+    await expect(page.getByRole("button", { name: "Copy" })).toBeVisible({ timeout: 4000 });
   });
 
   test("Clear empties the editor and shows the empty-state message", async ({ page }) => {

@@ -25,7 +25,7 @@ test.describe("parsers", () => {
 
   test("nav highlights the Parsers page", async ({ page }) => {
     await page.goto("/parsers");
-    await expect(page.getByRole("link", { name: "Parsers" })).toHaveAttribute(
+    await expect(page.getByRole("link", { name: "Parsers", exact: true })).toHaveAttribute(
       "aria-current",
       "page",
     );

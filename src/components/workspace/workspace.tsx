@@ -55,9 +55,9 @@ function outputFilename(result: TransformationResult | null, fallback: string): 
   }
 }
 
-const COPY_OK_MESSAGE = "✓ Copied";
 const COPY_FAIL_MESSAGE = "Clipboard blocked — copy manually with Ctrl/Cmd+C";
 const PASTE_FAIL_MESSAGE = "Clipboard unavailable — paste manually with Ctrl/Cmd+V";
+const COPY_FEEDBACK_MS = 1600;
 
 export function Workspace({ mode, onSelectTool }: WorkspaceProps) {
   const [view, setView] = usePersistedState<ViewMode>("devtools-view-mode", "single");
@@ -71,12 +71,15 @@ export function Workspace({ mode, onSelectTool }: WorkspaceProps) {
   const [displayed, setDisplayed] = useState("");
   // Transient clipboard feedback shown in the editor action bar.
   const [feedback, setFeedback] = useState<string | null>(null);
+  // Transient "✓ Copied" state shown directly on the Copy button.
+  const [copied, setCopied] = useState(false);
 
   const userInputRef = useRef("");
   const displayedRef = useRef("");
   const lastProgrammaticRef = useRef<string | null>(null);
   const restoredRef = useRef(false);
   const feedbackTimerRef = useRef<number | null>(null);
+  const copiedTimerRef = useRef<number | null>(null);
 
   const { result, isProcessing } = useAutoProcessing({
     input: userInput,
@@ -106,6 +109,9 @@ export function Workspace({ mode, onSelectTool }: WorkspaceProps) {
     return () => {
       if (feedbackTimerRef.current !== null) {
         window.clearTimeout(feedbackTimerRef.current);
+      }
+      if (copiedTimerRef.current !== null) {
+        window.clearTimeout(copiedTimerRef.current);
       }
     };
   }, []);
@@ -196,9 +202,36 @@ export function Workspace({ mode, onSelectTool }: WorkspaceProps) {
   const copyWithFeedback = useCallback(
     async (text: string) => {
       const ok = await copyToClipboard(text);
-      showFeedback(ok ? COPY_OK_MESSAGE : COPY_FAIL_MESSAGE);
+      if (ok) {
+        setCopied(true);
+        if (copiedTimerRef.current !== null) {
+          window.clearTimeout(copiedTimerRef.current);
+        }
+        copiedTimerRef.current = window.setTimeout(() => setCopied(false), COPY_FEEDBACK_MS);
+      } else {
+        showFeedback(COPY_FAIL_MESSAGE);
+      }
     },
     [showFeedback],
+  );
+
+  // Share the output with the Web Share API when the browser supports it; the
+  // copy button is the fallback path on desktop.
+  const shareOutput = useCallback(
+    async (text: string) => {
+      if (typeof navigator.share === "function") {
+        try {
+          await navigator.share({ title: "DataFormatter", text });
+          return;
+        } catch (error) {
+          if ((error as Error)?.name === "AbortError") {
+            return; // the user dismissed the share sheet
+          }
+        }
+      }
+      await copyWithFeedback(text);
+    },
+    [copyWithFeedback],
   );
 
   const clearAll = useCallback(() => {
@@ -209,13 +242,7 @@ export function Workspace({ mode, onSelectTool }: WorkspaceProps) {
     setUserInput("");
     setDisplayed("");
     setFeedback(null);
-  }, []);
-
-  const clearOutput = useCallback(() => {
-    restoredRef.current = false;
-    displayedRef.current = "";
-    lastProgrammaticRef.current = null;
-    setDisplayed("");
+    setCopied(false);
   }, []);
 
   // Derived values shared by both views — the transformation engine is single-sourced.
@@ -337,6 +364,7 @@ export function Workspace({ mode, onSelectTool }: WorkspaceProps) {
               );
             }}
             feedback={feedback}
+            copied={copied}
             defaultHint="⌘F find · ⌘↵ copy"
             isFullscreen={isFullscreen}
             overlayClassName={overlayClassName}
@@ -352,7 +380,6 @@ export function Workspace({ mode, onSelectTool }: WorkspaceProps) {
             inputLines={inputCounts.lines}
             onPaste={pasteFromClipboard}
             onClearInput={clearAll}
-            onCopyInput={() => void copyWithFeedback(userInput)}
             output={outputText}
             outputLanguage={outputLanguage}
             outputCharacters={outputCounts.characters}
@@ -366,8 +393,9 @@ export function Workspace({ mode, onSelectTool }: WorkspaceProps) {
                 outputLanguage === "json" ? "application/json" : "text/plain",
               );
             }}
-            onClearOutput={clearOutput}
+            onShare={() => void shareOutput(outputText)}
             feedback={feedback}
+            copied={copied}
             isFullscreen={isFullscreen}
             wordWrap={wordWrap}
           />

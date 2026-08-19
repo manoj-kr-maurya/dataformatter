@@ -25,7 +25,7 @@ test.describe("random-generators", () => {
 
   test("nav highlights the Random Tools page", async ({ page }) => {
     await page.goto("/random-generators");
-    await expect(page.getByRole("link", { name: "Random Tools" })).toHaveAttribute(
+    await expect(page.getByRole("link", { name: "Random", exact: true })).toHaveAttribute(
       "aria-current",
       "page",
     );

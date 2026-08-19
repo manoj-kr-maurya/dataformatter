@@ -30,7 +30,7 @@ test.describe("json-converter", () => {
 
   test("nav highlights the JSON Converters page", async ({ page }) => {
     await page.goto("/json-converter");
-    await expect(page.getByRole("link", { name: "JSON Converters" })).toHaveAttribute(
+    await expect(page.getByRole("link", { name: "JSON", exact: true })).toHaveAttribute(
       "aria-current",
       "page",
     );

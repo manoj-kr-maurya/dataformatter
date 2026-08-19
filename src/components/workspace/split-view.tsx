@@ -10,7 +10,14 @@ import {
 import { CodeEditor } from "@/components/editor/code-editor";
 import { Panel } from "@/components/editor/panel";
 import { EditorActions } from "@/components/controls/editor-actions";
-import { CopyIcon, DownloadIcon, PasteIcon, TrashIcon } from "@/components/ui/icons";
+import {
+  CheckIcon,
+  CopyIcon,
+  DownloadIcon,
+  PasteIcon,
+  ShareIcon,
+  TrashIcon,
+} from "@/components/ui/icons";
 import { usePersistedState } from "@/hooks/usePersistedState";
 import type { Language } from "@/types/tools";
 
@@ -30,12 +37,12 @@ interface SplitViewProps {
   outputLines: number;
   outputWords: number;
 
-  onCopyInput: () => void;
   onCopyOutput: () => void;
   onDownload: () => void;
-  onClearOutput: () => void;
+  onShare: () => void;
 
   feedback: string | null;
+  copied: boolean;
 
   isFullscreen: boolean;
   wordWrap: boolean;
@@ -62,11 +69,11 @@ export function SplitView({
   outputCharacters,
   outputLines,
   outputWords,
-  onCopyInput,
   onCopyOutput,
   onDownload,
-  onClearOutput,
+  onShare,
   feedback,
+  copied,
   isFullscreen,
   wordWrap,
 }: SplitViewProps) {
@@ -153,22 +160,21 @@ export function SplitView({
             placeholder="Paste or type data…"
           />
         </div>
-        <footer className="flex shrink-0 items-center justify-between gap-2 border-t border-zinc-200 px-3 py-2 dark:border-zinc-800">
+        <footer className="flex h-11 shrink-0 items-center justify-between gap-2 border-t border-zinc-200 px-2.5 dark:border-zinc-800">
           <EditorActions
             actions={[
-              { key: "paste", label: "Paste", icon: <PasteIcon className="h-4 w-4" />, onClick: onPaste },
+              {
+                key: "paste",
+                label: "Paste",
+                icon: <PasteIcon className="h-4 w-4" />,
+                onClick: onPaste,
+                variant: "primary",
+              },
               {
                 key: "clear-input",
                 label: "Clear",
                 icon: <TrashIcon className="h-4 w-4" />,
                 onClick: onClearInput,
-                disabled: !input,
-              },
-              {
-                key: "copy-input",
-                label: "Copy",
-                icon: <CopyIcon className="h-4 w-4" />,
-                onClick: onCopyInput,
                 disabled: !input,
               },
             ]}
@@ -220,15 +226,16 @@ export function SplitView({
             placeholder="Transformed output appears here."
           />
         </div>
-        <footer className="flex shrink-0 items-center justify-between gap-2 border-t border-zinc-200 px-3 py-2 dark:border-zinc-800">
+        <footer className="flex h-11 shrink-0 items-center justify-between gap-2 border-t border-zinc-200 px-2.5 dark:border-zinc-800">
           <EditorActions
             actions={[
               {
                 key: "copy-output",
-                label: "Copy",
-                icon: <CopyIcon className="h-4 w-4" />,
+                label: copied ? "✓ Copied" : "Copy",
+                icon: copied ? <CheckIcon className="h-4 w-4" /> : <CopyIcon className="h-4 w-4" />,
                 onClick: onCopyOutput,
                 disabled: !output,
+                variant: copied ? "success" : "secondary",
               },
               {
                 key: "download",
@@ -238,10 +245,10 @@ export function SplitView({
                 disabled: !output,
               },
               {
-                key: "clear-output",
-                label: "Clear",
-                icon: <TrashIcon className="h-4 w-4" />,
-                onClick: onClearOutput,
+                key: "share",
+                label: "Share",
+                icon: <ShareIcon className="h-4 w-4" />,
+                onClick: onShare,
                 disabled: !output,
               },
             ]}

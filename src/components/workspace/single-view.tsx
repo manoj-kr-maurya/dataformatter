@@ -4,6 +4,7 @@ import { CodeEditor } from "@/components/editor/code-editor";
 import { Panel } from "@/components/editor/panel";
 import { EditorActions } from "@/components/controls/editor-actions";
 import {
+  CheckIcon,
   CopyIcon,
   DownloadIcon,
   PasteIcon,
@@ -27,6 +28,7 @@ interface SingleViewProps {
   onClear: () => void;
   onDownload: () => void;
   feedback: string | null;
+  copied: boolean;
   defaultHint: string;
   isFullscreen: boolean;
   overlayClassName: string;
@@ -52,6 +54,7 @@ export function SingleView({
   onClear,
   onDownload,
   feedback,
+  copied,
   defaultHint,
   isFullscreen,
   overlayClassName,
@@ -108,10 +111,16 @@ export function SingleView({
             </div>
           )}
         </div>
-        <footer className="flex shrink-0 items-center justify-between gap-2 border-t border-zinc-200 px-3 py-2 dark:border-zinc-800">
+        <footer className="flex h-11 shrink-0 items-center justify-between gap-2 border-t border-zinc-200 px-2.5 dark:border-zinc-800">
           <EditorActions
             actions={[
-              { key: "paste", label: "Paste", icon: <PasteIcon className="h-4 w-4" />, onClick: onPaste },
+              {
+                key: "paste",
+                label: "Paste",
+                icon: <PasteIcon className="h-4 w-4" />,
+                onClick: onPaste,
+                variant: "primary",
+              },
               {
                 key: "restore",
                 label: "Restore Original",
@@ -119,20 +128,6 @@ export function SingleView({
                 onClick: onRestore,
                 disabled: !canRestore,
                 title: canRestore ? "Show the original input you typed" : "Nothing to restore",
-              },
-              {
-                key: "copy",
-                label: "Copy",
-                icon: <CopyIcon className="h-4 w-4" />,
-                onClick: onCopy,
-                disabled: !value,
-              },
-              {
-                key: "download",
-                label: "Download",
-                icon: <DownloadIcon className="h-4 w-4" />,
-                onClick: onDownload,
-                disabled: !value,
               },
               {
                 key: "clear",
@@ -144,14 +139,35 @@ export function SingleView({
               },
             ]}
           />
-          <span
-            title={feedback ?? defaultHint}
-            className={`hidden truncate whitespace-nowrap font-mono text-[11px] sm:inline ${
-              feedback ? "text-emerald-600 dark:text-emerald-400" : "text-zinc-400 dark:text-zinc-500"
-            }`}
-          >
-            {feedback ?? defaultHint}
-          </span>
+          <div className="flex min-w-0 items-center gap-1.5">
+            <EditorActions
+              actions={[
+                {
+                  key: "copy",
+                  label: copied ? "✓ Copied" : "Copy",
+                  icon: copied ? <CheckIcon className="h-4 w-4" /> : <CopyIcon className="h-4 w-4" />,
+                  onClick: onCopy,
+                  disabled: !value,
+                  variant: copied ? "success" : "secondary",
+                },
+                {
+                  key: "download",
+                  label: "Download",
+                  icon: <DownloadIcon className="h-4 w-4" />,
+                  onClick: onDownload,
+                  disabled: !value,
+                },
+              ]}
+            />
+            <span
+              title={feedback ?? defaultHint}
+              className={`hidden truncate whitespace-nowrap font-mono text-[11px] sm:inline ${
+                feedback ? "text-emerald-600 dark:text-emerald-400" : "text-zinc-400 dark:text-zinc-500"
+              }`}
+            >
+              {feedback ?? defaultHint}
+            </span>
+          </div>
         </footer>
       </Panel>
     </div>

@@ -25,7 +25,7 @@ test.describe("base64-tools", () => {
 
   test("Hex to Base64 then Base64 to Hex round-trip", async ({ page }) => {
     await page.goto("/base64");
-    await expect(page.getByRole("link", { name: "Base64 Tools" })).toHaveAttribute(
+    await expect(page.getByRole("link", { name: "Base64", exact: true })).toHaveAttribute(
       "aria-current",
       "page",
     );

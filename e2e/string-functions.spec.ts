@@ -25,7 +25,7 @@ test.describe("string-functions", () => {
 
   test("nav highlights the String Functions page", async ({ page }) => {
     await page.goto("/string-functions");
-    await expect(page.getByRole("link", { name: "String Functions" })).toHaveAttribute(
+    await expect(page.getByRole("link", { name: "String", exact: true })).toHaveAttribute(
       "aria-current",
       "page",
     );

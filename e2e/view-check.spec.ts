@@ -34,6 +34,25 @@ test("menu lists encoding tools in a sideways branch and reflects the active one
   await expect(menuButton).toHaveAttribute("aria-expanded", "false");
   await expect(page.locator("header").getByText("Auto Detect", { exact: true })).toBeVisible();
 
+  // The rail is a slim, permanent icon+label column listing every tool
+  // category — none tucked away in an overflow popup — with the current page
+  // highlighted on the matching item.
+  await expect(page.getByRole("link", { name: "Home", exact: true })).toBeVisible();
+  await expect(page.getByRole("link", { name: "Base64", exact: true })).toBeVisible();
+  await expect(page.getByRole("button", { name: "JWT", exact: true })).toBeVisible();
+  await expect(page.getByRole("link", { name: "URL", exact: true })).toHaveAttribute(
+    "aria-current",
+    "page",
+  );
+  await expect(page.getByRole("link", { name: "Hash", exact: true })).toBeVisible();
+  await expect(page.getByRole("link", { name: "Parsers", exact: true })).toBeVisible();
+  await expect(page.getByRole("link", { name: "Random", exact: true })).toBeVisible();
+  await expect(page.getByRole("link", { name: "String", exact: true })).toBeVisible();
+  await expect(page.getByRole("status")).toBeVisible();
+  await expect(
+    page.getByText("Your data stays in your browser. Nothing is uploaded to our servers."),
+  ).toBeVisible();
+
   await menuButton.click();
   await expect(menuButton).toHaveAttribute("aria-expanded", "true");
 
@@ -52,20 +71,34 @@ test("menu lists encoding tools in a sideways branch and reflects the active one
   await expect(submenu).toBeVisible();
   expect(await submenu.getByRole("menuitem").allInnerTexts()).toEqual(EXPECTED_TOOLS);
 
-  // Header chrome is intact
-  await expect(page.getByRole("link", { name: "DevTools Home" })).toBeVisible();
-  await expect(page.getByRole("link", { name: "Encoding Tools" })).toHaveAttribute(
-    "aria-current",
-    "page",
-  );
-  await expect(page.getByRole("status")).toBeVisible();
-  await expect(
-    page.getByText("Your data stays in your browser. Nothing is uploaded to our servers."),
-  ).toBeVisible();
-
   await submenu.getByRole("menuitem", { name: "JSON Encode Online", exact: true }).click();
   await expect(menuButton).toHaveAttribute("aria-expanded", "false");
   await expect(page.locator("header").getByText("JSON Encode Online", { exact: true })).toBeVisible();
+});
+
+test("hovering a sidebar category reveals its internal tools", async ({ page }) => {
+  await page.addInitScript(() => {
+    window.localStorage.setItem("devtools-thanks-shown", "1");
+  });
+  await page.goto("/encode-decode");
+
+  // Hovering the URL (Encoding Tools) rail item opens a fly-out with its tools.
+  await page.getByRole("link", { name: "URL", exact: true }).hover();
+  const flyout = page.locator("[data-tool-flyout]");
+  await expect(flyout).toBeVisible();
+  await expect(flyout.getByRole("link", { name: "Encoding Tools" })).toBeVisible();
+  expect(await flyout.getByRole("button").allInnerTexts()).toEqual(
+    expect.arrayContaining(EXPECTED_TOOLS),
+  );
+
+  // Picking a tool from the fly-out selects it and closes the fly-out.
+  await flyout.getByRole("button", { name: "JSON Encode Online", exact: true }).click();
+  await expect(flyout).toBeHidden();
+  await expect(page.locator("header").getByText("JSON Encode Online", { exact: true })).toBeVisible();
+
+  // Hovering another category switches the fly-out to that category's tools.
+  await page.getByRole("link", { name: "Parsers", exact: true }).hover();
+  await expect(flyout.getByRole("button", { name: "JSON Parser", exact: true })).toBeVisible();
 });
 
 test("branches fly out to the side and close on an outside click", async ({ page }) => {
@@ -166,8 +199,9 @@ test("mobile drawer opens from the header and a tool choice closes it", async ({
     "page",
   );
 
-  // Picking a tool from the drawer selects it and closes the drawer.
-  await drawer.getByRole("button", { name: "JSON Format" }).click();
+  // Expanding a section reveals its tools; picking one closes the drawer.
+  await drawer.getByRole("button", { name: "Expand DevTools Home" }).click();
+  await drawer.getByRole("button", { name: "JSON Format", exact: true }).click();
   await expect(drawer).toBeHidden();
   await expect(page.locator("header").getByText("JSON Format", { exact: true })).toBeVisible();
 });
