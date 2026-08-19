@@ -2,28 +2,19 @@ import { useCallback, useSyncExternalStore } from "react";
 
 type Listener = () => void;
 
-const listeners = new Set<Listener>();
+const listenersByKey = new Map<string, Set<Listener>>();
 
-function emit(): void {
-  for (const listener of listeners) listener();
-}
-
-function onStorage(event: StorageEvent): void {
-  if (event.key === null) {
-    emit();
-    return;
+function getListeners(key: string): Set<Listener> {
+  let set = listenersByKey.get(key);
+  if (!set) {
+    set = new Set<Listener>();
+    listenersByKey.set(key, set);
   }
-  // A different tab changed or cleared this key — re-read it.
-  emit();
+  return set;
 }
 
-function subscribe(listener: Listener): () => void {
-  listeners.add(listener);
-  window.addEventListener("storage", onStorage);
-  return () => {
-    listeners.delete(listener);
-    window.removeEventListener("storage", onStorage);
-  };
+function emit(key: string): void {
+  for (const listener of getListeners(key)) listener();
 }
 
 function readRaw(key: string): string | null {
@@ -63,7 +54,16 @@ export function usePersistedState<T>(
   const getServerSnapshot = useCallback(() => fallback, [fallback]);
 
   const snapshot = useSyncExternalStore(
-    subscribe,
+    (listener) => {
+      const set = getListeners(key);
+      set.add(listener);
+      const onAnyStorage = () => listener();
+      window.addEventListener("storage", onAnyStorage);
+      return () => {
+        set.delete(listener);
+        window.removeEventListener("storage", onAnyStorage);
+      };
+    },
     getSnapshot,
     getServerSnapshot,
   );
@@ -85,7 +85,7 @@ export function usePersistedState<T>(
       } catch {
         // Storage unavailable — the in-memory value still takes effect.
       }
-      emit();
+      emit(key);
     },
     [key, value],
   );

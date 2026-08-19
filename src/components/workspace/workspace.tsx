@@ -1,7 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
-import { AutoDetectToggle } from "@/components/workspace/auto-detect-toggle";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { SingleView } from "@/components/workspace/single-view";
 import { SplitView } from "@/components/workspace/split-view";
 import { WorkspaceToolbar } from "@/components/workspace/workspace-toolbar";
@@ -131,6 +130,10 @@ export function Workspace({ mode, onSelectTool }: WorkspaceProps) {
     [result, setView],
   );
 
+  const onToggleAuto = useCallback(() => {
+    setAutoOn((current) => !current);
+  }, [setAutoOn]);
+
   const pasteFromClipboard = useCallback(async () => {
     try {
       const text = await navigator.clipboard.readText();
@@ -176,9 +179,9 @@ export function Workspace({ mode, onSelectTool }: WorkspaceProps) {
   const outputLanguage: Language =
     result?.success && result.detectedType === "JSON" ? "json" : "text";
 
-  const inputCounts = getTextCounts(userInput);
-  const outputCounts = getTextCounts(outputText);
-  const displayedCounts = getTextCounts(displayed);
+  const inputCounts = useMemo(() => getTextCounts(userInput), [userInput]);
+  const outputCounts = useMemo(() => getTextCounts(outputText), [outputText]);
+  const displayedCounts = useMemo(() => getTextCounts(displayed), [displayed]);
 
   const status: StatusData = (() => {
     if (mode === AUTO_DETECT) {
@@ -226,6 +229,8 @@ export function Workspace({ mode, onSelectTool }: WorkspaceProps) {
           isFullscreen={isFullscreen}
           onToggleFullscreen={toggle}
           onSelectTool={onSelectTool}
+          autoOn={autoOn}
+          onToggleAuto={onToggleAuto}
           wordWrap={wordWrap}
           onToggleWordWrap={() => setWordWrap((current) => !current)}
         />
@@ -280,11 +285,8 @@ export function Workspace({ mode, onSelectTool }: WorkspaceProps) {
         )}
       </div>
 
-      <div className="flex shrink-0 items-center justify-between gap-3 border-t border-zinc-200 bg-zinc-50/80 px-3 py-1.5 dark:border-zinc-800 dark:bg-zinc-900/40">
-        <AutoDetectToggle enabled={autoOn} onChange={setAutoOn} />
-        <div className="flex min-w-0 flex-1 justify-end">
-          <TransformStatus status={status} />
-        </div>
+      <div className="flex shrink-0 items-center justify-end gap-3 border-t border-zinc-200 bg-zinc-50/80 px-3 py-1.5 dark:border-zinc-800 dark:bg-zinc-900/40">
+        <TransformStatus status={status} />
       </div>
     </div>
   );

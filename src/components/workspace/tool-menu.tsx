@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, type KeyboardEvent as ReactKeyboardEvent } from "react";
 import { CheckIcon, ChevronIcon, MenuIcon } from "@/components/ui/icons";
 import { AUTO_DETECT, TOOL_GROUPS, TOOL_META } from "@/lib/tools";
 import type { ToolMode, ToolType } from "@/types/tools";
@@ -48,13 +48,16 @@ export function ToolMenu({ mode, onSelect, tools }: ToolMenuProps) {
   }, [open]);
 
   // Decide which way the fly-outs open: right by default, flipped left when
-  // the menu sits close to the right edge of the viewport.
+  // the menu sits close to the right edge of the viewport. Also hands keyboard
+  // focus to the active item so the menu is fully usable without a mouse.
   useEffect(() => {
     if (!open || !panelRef.current) {
       return;
     }
     const rect = panelRef.current.getBoundingClientRect();
     setFlip(rect.right + SUBMENU_WIDTH > window.innerWidth);
+    const activeItem = panelRef.current.querySelector<HTMLElement>('[aria-current="true"]');
+    (activeItem ?? panelRef.current.querySelector<HTMLElement>('[role="menuitem"]'))?.focus();
   }, [open]);
 
   const groups = useMemo(
@@ -76,6 +79,65 @@ export function ToolMenu({ mode, onSelect, tools }: ToolMenuProps) {
   const openBranch = (label: string) => {
     setBranch(label);
   };
+
+  // Arrow-key navigation: Up/Down move focus across the visible menu items,
+  // Right opens a group's fly-out and focuses its first tool, Left collapses a
+  // fly-out back to its group row, Tab closes the menu.
+  function handleMenuKeyDown(event: ReactKeyboardEvent<HTMLDivElement>) {
+    const root = panelRef.current;
+    if (!root) {
+      return;
+    }
+    const items = Array.from(root.querySelectorAll<HTMLElement>('[role="menuitem"]'));
+    const current = document.activeElement as HTMLElement | null;
+    const index = current ? items.indexOf(current) : -1;
+    const isInBranch = current?.closest<HTMLElement>('[role="menu"]') !== root;
+
+    if (event.key === "ArrowDown") {
+      event.preventDefault();
+      items[(index + 1) % items.length]?.focus();
+      return;
+    }
+    if (event.key === "ArrowUp") {
+      event.preventDefault();
+      items[(index - 1 + items.length) % items.length]?.focus();
+      return;
+    }
+    if (event.key === "ArrowRight") {
+      const row = current?.closest<HTMLElement>('button[aria-haspopup="menu"]');
+      if (row) {
+        event.preventDefault();
+        const label = row.textContent?.trim() ?? "";
+        setBranch(label);
+        requestAnimationFrame(() => {
+          const branchMenu = row.parentElement?.querySelector<HTMLElement>(
+            ':scope > [role="menu"]',
+          );
+          branchMenu
+            ?.querySelector<HTMLElement>('[role="menuitem"]')
+            ?.focus();
+        });
+      }
+      return;
+    }
+    if (event.key === "ArrowLeft") {
+      event.preventDefault();
+      if (isInBranch) {
+        const branchMenu = current?.closest<HTMLElement>('[role="menu"]');
+        const row = branchMenu?.parentElement?.querySelector<HTMLElement>(
+          'button[aria-haspopup="menu"]',
+        );
+        setBranch(null);
+        row?.focus();
+      } else {
+        close();
+      }
+      return;
+    }
+    if (event.key === "Tab") {
+      close();
+    }
+  }
 
   return (
     <div ref={wrapperRef} className="relative flex items-center gap-2">
@@ -105,7 +167,8 @@ export function ToolMenu({ mode, onSelect, tools }: ToolMenuProps) {
           ref={panelRef}
           role="menu"
           aria-label="Tools"
-          className="absolute left-0 top-full z-50 mt-2 w-64 rounded-lg border border-zinc-200 bg-white p-1 shadow-lg dark:border-zinc-800 dark:bg-zinc-900"
+          onKeyDown={handleMenuKeyDown}
+          className="menu-in absolute left-0 top-full z-50 mt-2 w-64 rounded-lg border border-zinc-200 bg-white p-1 shadow-lg dark:border-zinc-800 dark:bg-zinc-900"
         >
           <button
             type="button"
@@ -153,7 +216,7 @@ export function ToolMenu({ mode, onSelect, tools }: ToolMenuProps) {
                 {active && (
                   <div
                     role="menu"
-                    className={`absolute top-0 z-10 mt-1 w-64 max-h-[70vh] overflow-y-auto rounded-lg border border-zinc-200 bg-white p-1 shadow-lg dark:border-zinc-800 dark:bg-zinc-900 ${
+                    className={`menu-in absolute top-0 z-10 mt-1 w-64 max-h-[70vh] overflow-y-auto rounded-lg border border-zinc-200 bg-white p-1 shadow-lg dark:border-zinc-800 dark:bg-zinc-900 ${
                       flip ? "right-full" : "left-full"
                     }`}
                   >

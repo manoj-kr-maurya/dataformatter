@@ -5,14 +5,26 @@ export interface TextCounts {
 }
 
 export function countChars(value: string): number {
-  return Array.from(value).length;
+  let count = 0;
+  for (let i = 0; i < value.length; ) {
+    const codePoint = value.codePointAt(i) ?? 0;
+    i += codePoint > 0xffff ? 2 : 1;
+    count++;
+  }
+  return count;
 }
 
 export function countLines(value: string): number {
   if (!value) {
     return 0;
   }
-  return value.split("\n").length;
+  let lines = 1;
+  for (const char of value) {
+    if (char === "\n") {
+      lines++;
+    }
+  }
+  return lines;
 }
 
 export function countWords(value: string): number {

@@ -92,3 +92,33 @@ body {
 .slide-down {
   animation: slide-down 220ms ease-out;
 }
+
+/*
+ * Smooth theme switching: the transition class is added only for the brief
+ * moment the dark/light class flips, so color, background, and border changes
+ * animate gracefully instead of snapping in a single hard repaint. Removed
+ * again ~250 ms later so permanent CSS isn't slowed down.
+ */
+html.theme-transition,
+html.theme-transition * {
+  transition:
+    background-color 200ms ease,
+    border-color 200ms ease,
+    color 200ms ease !important;
+}
+
+@keyframes menu-in {
+  from {
+    opacity: 0;
+    transform: translateY(-6px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.menu-in {
+  transform-origin: top left;
+  animation: menu-in 140ms ease-out;
+}

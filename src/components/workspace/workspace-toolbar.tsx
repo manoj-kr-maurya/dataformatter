@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { FullscreenButton } from "@/components/editor/fullscreen";
+import { AutoDetectToggle } from "@/components/workspace/auto-detect-toggle";
 import { ViewToggle } from "@/components/workspace/view-toggle";
 import {
   BadgeCheckIcon,
@@ -11,7 +12,6 @@ import {
   SearchIcon,
   SortIcon,
   TreeIcon,
-  WandIcon,
   WrapIcon,
 } from "@/components/ui/icons";
 import { openEditorSearch } from "@/lib/editor/panel-search";
@@ -23,6 +23,8 @@ interface WorkspaceToolbarProps {
   isFullscreen: boolean;
   onToggleFullscreen: () => void;
   onSelectTool: (mode: ToolMode) => void;
+  autoOn: boolean;
+  onToggleAuto: () => void;
   wordWrap: boolean;
   onToggleWordWrap: () => void;
 }
@@ -31,13 +33,11 @@ function ActionButton({
   label,
   icon,
   onClick,
-  primary = false,
   title,
 }: {
   label: string;
   icon: ReactNode;
   onClick: () => void;
-  primary?: boolean;
   title?: string;
 }) {
   return (
@@ -45,11 +45,7 @@ function ActionButton({
       type="button"
       onClick={onClick}
       title={title}
-      className={`inline-flex h-7 shrink-0 items-center gap-1.5 rounded-md px-2 text-xs font-medium whitespace-nowrap transition-colors focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-violet-500 ${
-        primary
-          ? "bg-violet-600 text-white shadow-sm shadow-violet-600/20 hover:bg-violet-500"
-          : "text-zinc-500 hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-zinc-100"
-      }`}
+      className="inline-flex h-7 shrink-0 items-center gap-1.5 rounded-md px-2 text-xs font-medium whitespace-nowrap text-zinc-500 transition-colors hover:bg-zinc-100 hover:text-zinc-900 focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-violet-500 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-zinc-100"
     >
       {icon}
       {label}
@@ -89,6 +85,8 @@ export function WorkspaceToolbar({
   isFullscreen,
   onToggleFullscreen,
   onSelectTool,
+  autoOn,
+  onToggleAuto,
   wordWrap,
   onToggleWordWrap,
 }: WorkspaceToolbarProps) {
@@ -126,13 +124,7 @@ export function WorkspaceToolbar({
       className="flex shrink-0 items-center justify-between gap-2 border-b border-zinc-200 bg-zinc-50/80 px-3 py-1.5 dark:border-zinc-800 dark:bg-zinc-900/40"
     >
       <div className="flex min-w-0 items-center gap-1 overflow-x-auto">
-        <ActionButton
-          label="Format"
-          icon={<WandIcon className="h-3.5 w-3.5" />}
-          onClick={() => onSelectTool("JSON_FORMAT")}
-          primary
-          title="Prettify JSON (2-space)"
-        />
+        <AutoDetectToggle enabled={autoOn} onChange={onToggleAuto} />
         <ActionButton
           label="Minify"
           icon={<CompressIcon className="h-3.5 w-3.5" />}
