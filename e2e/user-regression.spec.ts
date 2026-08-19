@@ -220,8 +220,9 @@ test.describe("user-regression", () => {
     await page.getByRole("button", { name: "Enter fullscreen" }).click();
     await expect(wrapper).toHaveCSS("position", "fixed");
 
-    // Nothing may show through the fullscreen overlay — every viewport corner
-    // must resolve to the fullscreen panel, never to the app chrome behind it.
+    // The toolbar stays docked at the top of the viewport, and the fullscreen
+    // panel covers everything below it — bottom corners must resolve to the
+    // panel, and the exit control must be visible in the docked toolbar.
     const covering = await page.evaluate(() => {
       const panel = [...document.querySelectorAll("section")].find((s) =>
         s.textContent?.includes("Input / Output"),
@@ -230,13 +231,12 @@ test.describe("user-regression", () => {
       const inPanel = (x: number, y: number) =>
         document.elementFromPoint(x, y)?.closest("section") === panel;
       return (
-        inPanel(2, 2) &&
-        inPanel(innerWidth - 2, 2) &&
         inPanel(2, innerHeight - 2) &&
         inPanel(innerWidth - 2, innerHeight - 2)
       );
     });
     expect(covering).toBe(true);
+    await expect(page.getByRole("button", { name: "Exit fullscreen" })).toBeVisible();
 
     await page.keyboard.press("Escape");
     await expect(wrapper).toHaveCSS("position", "static");

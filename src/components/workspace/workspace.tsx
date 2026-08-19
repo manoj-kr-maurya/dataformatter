@@ -219,15 +219,17 @@ export function Workspace({ mode, onSelectTool }: WorkspaceProps) {
 
   return (
     <div className="flex min-h-0 min-w-0 flex-1 flex-col">
-      <WorkspaceToolbar
-        view={view}
-        onViewChange={handleViewChange}
-        isFullscreen={isFullscreen}
-        onToggleFullscreen={toggle}
-        onSelectTool={onSelectTool}
-        wordWrap={wordWrap}
-        onToggleWordWrap={() => setWordWrap((current) => !current)}
-      />
+      <div className={isFullscreen ? "fixed inset-x-0 top-0 z-[60]" : ""}>
+        <WorkspaceToolbar
+          view={view}
+          onViewChange={handleViewChange}
+          isFullscreen={isFullscreen}
+          onToggleFullscreen={toggle}
+          onSelectTool={onSelectTool}
+          wordWrap={wordWrap}
+          onToggleWordWrap={() => setWordWrap((current) => !current)}
+        />
+      </div>
 
       <div className="flex min-h-0 flex-1 flex-col px-3 py-2 sm:px-4">
         {view === "single" ? (

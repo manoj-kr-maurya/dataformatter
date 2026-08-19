@@ -52,7 +52,7 @@ export function SingleView({
   wordWrap,
 }: SingleViewProps) {
   return (
-    <div className={isFullscreen ? `${overlayClassName} min-h-0` : "h-full min-h-0"}>
+    <div className={isFullscreen ? `${overlayClassName} pt-10 min-h-0` : "h-full min-h-0"}>
       <Panel
         title="Input / Output"
         headerExtra={

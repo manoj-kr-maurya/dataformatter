@@ -115,7 +115,7 @@ export function SplitView({
       ref={containerRef}
       className={
         isFullscreen
-          ? "fixed inset-0 z-50 flex h-full min-h-0 flex-col gap-2 bg-white dark:bg-zinc-950 lg:flex-row"
+          ? "fixed inset-0 z-50 flex h-full min-h-0 flex-col gap-2 bg-white pt-10 dark:bg-zinc-950 lg:flex-row"
           : "flex h-full min-h-0 flex-col gap-2 lg:flex-row"
       }
     >
