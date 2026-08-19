@@ -180,7 +180,6 @@ export function CodeEditor({
         extensions={extensions}
         theme={editorTheme}
         readOnly={readOnly}
-        editable={!readOnly}
         placeholder={placeholder ?? ""}
         basicSetup={{
           lineNumbers: true,
