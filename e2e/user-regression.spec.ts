@@ -204,6 +204,31 @@ test.describe("user-regression", () => {
     expect(topScroll).toBeGreaterThan(0);
   });
 
+  test("pretty-printed JSON exposes collapse arrows that fold nested objects", async ({
+    page,
+  }) => {
+    await page.goto("/");
+    await typeIntoEditor(
+      page,
+      '{"user":{"name":"Ada","addr":{"city":"X"}},"tags":["a","b"]}',
+    );
+    await expect(statusOf(page)).toHaveText("Detected: JSON — pretty-printed");
+
+    // The fold gutter shows structural collapse arrows for nested objects.
+    const gutters = page.locator(".cm-foldGutter .cm-gutterElement");
+    await expect
+      .poll(() => gutters.locator("span").count(), { timeout: 15_000 })
+      .toBeGreaterThanOrEqual(3);
+
+    // Clicking the arrow next to the nested "addr" object (gutter line 3) collapses it.
+    await gutters.nth(3).click();
+    await expect.poll(() => page.locator(".cm-content").first().innerText()).not.toContain(
+      '"city": "X"',
+    );
+    // Sibling content stays intact.
+    await expect(page.locator(".cm-content").first()).toContainText('"name": "Ada"');
+  });
+
   test("theme toggle flips dark class immediately and survives reload", async ({ page }) => {
     await page.goto("/");
     const html = page.locator("html");
