@@ -3,13 +3,13 @@
 import { CodeEditor } from "@/components/editor/code-editor";
 import { Panel } from "@/components/editor/panel";
 import { EditorActions } from "@/components/controls/editor-actions";
+import { ShareMenu } from "@/components/ui/share-menu";
 import {
   CheckIcon,
   CopyIcon,
   DownloadIcon,
   PasteIcon,
   RestoreIcon,
-  ShareIcon,
   TrashIcon,
 } from "@/components/ui/icons";
 import type { Language } from "@/types/tools";
@@ -27,7 +27,8 @@ interface SingleViewProps {
   onCopy: () => void;
   onRestore: () => void;
   onClear: () => void;
-  onShare: () => void;
+  onCopyShareLink: () => void;
+  onNativeShare?: () => void;
   onDownload: () => void;
   feedback: string | null;
   copied: boolean;
@@ -54,7 +55,8 @@ export function SingleView({
   onCopy,
   onRestore,
   onClear,
-  onShare,
+  onCopyShareLink,
+  onNativeShare,
   onDownload,
   feedback,
   copied,
@@ -160,14 +162,12 @@ export function SingleView({
                   onClick: onDownload,
                   disabled: !value,
                 },
-                {
-                  key: "share",
-                  label: "Share",
-                  icon: <ShareIcon className="h-4 w-4" />,
-                  onClick: onShare,
-                  disabled: !value,
-                },
               ]}
+            />
+            <ShareMenu
+              onCopyLink={onCopyShareLink}
+              onNativeShare={onNativeShare}
+              disabled={!value}
             />
             <span
               title={feedback ?? defaultHint}

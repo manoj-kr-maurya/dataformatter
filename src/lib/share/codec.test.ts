@@ -1,5 +1,14 @@
 import { describe, expect, it } from "vitest";
-import { deflateCodec, rawCodec, shareCodecById, defaultShareCodec, encodeUtf8, decodeUtf8 } from "@/lib/share/codec";
+import {
+  deflateCodec,
+  deflateRawCodec,
+  rawCodec,
+  shareCodecById,
+  defaultShareCodec,
+  deflateRawAvailable,
+  encodeUtf8,
+  decodeUtf8,
+} from "@/lib/share/codec";
 import type { ShareCodec } from "@/lib/share/types";
 
 const samples: string[] = [
@@ -47,9 +56,33 @@ describe("rawCodec", () => {
   });
 });
 
+describe("deflateRawCodec", () => {
+  it("round-trips content exactly like deflate", async () => {
+    if (!deflateRawAvailable()) {
+      return;
+    }
+    for (const sample of samples) {
+      await roundTrip(deflateRawCodec, sample);
+    }
+  });
+
+  it("compresses at least as well as deflate (no zlib wrapper)", async () => {
+    if (!deflateRawAvailable()) {
+      return;
+    }
+    const repeated = "lorem ipsum dolor sit amet ".repeat(500);
+    const bytes = encodeUtf8(repeated);
+    const raw = await deflateRawCodec.compress(bytes);
+    const classic = await deflateCodec.compress(bytes);
+    // strict: raw deflate has no 6-byte zlib header + adler32 trailer
+    expect(raw.byteLength).toBeLessThan(classic.byteLength);
+  });
+});
+
 describe("shareCodecById", () => {
   it("resolves the built-in codecs by id", () => {
     expect(shareCodecById("d")?.id).toBe("d");
+    expect(shareCodecById("n")?.id).toBe("n");
     expect(shareCodecById("r")?.id).toBe("r");
   });
 
@@ -62,6 +95,6 @@ describe("shareCodecById", () => {
 describe("defaultShareCodec", () => {
   it("returns a codec with a known id", () => {
     const codec = defaultShareCodec();
-    expect(["d", "r"]).toContain(codec.id);
+    expect(["n", "d", "r"]).toContain(codec.id);
   });
 });

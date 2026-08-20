@@ -2,7 +2,7 @@ import { SHARE_HASH_PREFIX, SHARE_OPEN_FAILURE_MESSAGE } from "@/lib/share/types
 import type { SharePayload } from "@/lib/share/types";
 import { decodeBase64Url } from "@/lib/share/base64url";
 import { decodeUtf8, shareCodecById } from "@/lib/share/codec";
-import { validateSharePayload } from "@/lib/share/serializer";
+import { normalizeSharePayload } from "@/lib/share/serializer";
 
 export type ShareDecodeResult =
   | { status: "none"; payload?: undefined; message?: undefined }
@@ -59,11 +59,11 @@ export async function restoreFromShareUrl(url: string): Promise<ShareDecodeResul
     const decompressed = await codec.decompress(bytes);
     const json = decodeUtf8(decompressed);
     const parsed: unknown = JSON.parse(json);
-    const reason = validateSharePayload(parsed);
-    if (reason) {
+    const payload = normalizeSharePayload(parsed);
+    if (!payload) {
       return { status: "error", message: SHARE_OPEN_FAILURE_MESSAGE };
     }
-    return { status: "ok", payload: parsed as SharePayload };
+    return { status: "ok", payload };
   } catch {
     return { status: "error", message: SHARE_OPEN_FAILURE_MESSAGE };
   }
