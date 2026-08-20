@@ -294,6 +294,17 @@ test.describe("user-regression", () => {
     await expect(searchPanel).toContainText("match");
   });
 
+  test("Cmd/Ctrl+F opens search in the split output editor", async ({ page }) => {
+    await page.goto("/");
+    await page.getByRole("button", { name: "Split", exact: true }).click();
+    await typeIntoEditor(page, JSON.stringify(jsonSample));
+    await expect(statusOf(page)).toHaveText("Detected: JSON — pretty-printed");
+    await page.getByLabel("Output editor").getByRole("textbox").click();
+    await page.keyboard.press(`${MOD_OR_CTRL}+F`);
+    await expect(page.locator(".cm-search")).toBeVisible();
+    await expect(page.locator(".cm-search").locator("input").first()).toBeFocused();
+  });
+
   test("Cmd/Ctrl+Enter copies the full editor contents", async ({ page }) => {
     await page.goto("/");
     await typeIntoEditor(page, JSON.stringify(jsonSample));

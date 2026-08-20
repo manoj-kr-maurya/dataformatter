@@ -8,13 +8,17 @@ import {
   type StatusKind,
 } from "@/components/status/transform-status";
 import { useFullscreen } from "@/components/editor/fullscreen";
+import { ShareToast } from "@/components/ui/share-toast";
+import type { ShareNotice } from "@/components/ui/share-toast";
 import { useAutoProcessing } from "@/hooks/useAutoProcessing";
 import { usePersistedState } from "@/hooks/usePersistedState";
 import { copyToClipboard } from "@/lib/clipboard/copy";
 import { downloadText } from "@/lib/download";
 import { moveEditorToLineColumn } from "@/lib/editor/go-to-error";
-import { AUTO_DETECT, TOOL_META } from "@/lib/tools";
+import { createShareLink, isStoredOutputRequired, looksSensitive, SHARE_SCHEMA_VERSION } from "@/lib/share";
+import { AUTO_DETECT, TOOL_META, transform } from "@/lib/tools";
 import { getTextCounts } from "@/lib/text/counts";
+import type { SharePayload } from "@/lib/share";
 import type { Language, ToolMode, ViewMode } from "@/types/tools";
 import type { TransformationResult } from "@/types/transformation";
 
@@ -26,6 +30,8 @@ interface StatusData {
 interface WorkspaceProps {
   mode: ToolMode;
   onSelectTool: (mode: ToolMode) => void;
+  /** Data restored from the #/share URL fragment, if one is present. */
+  restorePayload?: SharePayload | null;
 }
 
 /** Operation-aware download name so files are meaningful, not always output.txt. */
@@ -59,7 +65,7 @@ const COPY_FAIL_MESSAGE = "Clipboard blocked — copy manually with Ctrl/Cmd+C";
 const PASTE_FAIL_MESSAGE = "Clipboard unavailable — paste manually with Ctrl/Cmd+V";
 const COPY_FEEDBACK_MS = 1600;
 
-export function Workspace({ mode, onSelectTool }: WorkspaceProps) {
+export function Workspace({ mode, onSelectTool, restorePayload }: WorkspaceProps) {
   const [view, setView] = usePersistedState<ViewMode>("devtools-view-mode", "single");
   const [autoOn, setAutoOn] = usePersistedState<boolean>("devtools-auto-mode", true);
   const [wordWrap, setWordWrap] = usePersistedState<boolean>("devtools-word-wrap", false);
@@ -73,6 +79,13 @@ export function Workspace({ mode, onSelectTool }: WorkspaceProps) {
   const [feedback, setFeedback] = useState<string | null>(null);
   // Transient "✓ Copied" state shown directly on the Copy button.
   const [copied, setCopied] = useState(false);
+  // Output restored from a share link — takes precedence over the derived
+  // result so the exact shared output is reproduced (e.g. random generators).
+  const [restoredOutput, setRestoredOutput] = useState<string | null>(null);
+  // Toast surfaced by the Share flow.
+  const [shareNotice, setShareNotice] = useState<ShareNotice | null>(null);
+  // Tool id the current restored output came from, so a different tool resets it.
+  const restoredModeRef = useRef<ToolMode>(mode);
 
   const userInputRef = useRef("");
   const displayedRef = useRef("");
@@ -80,6 +93,15 @@ export function Workspace({ mode, onSelectTool }: WorkspaceProps) {
   const restoredRef = useRef(false);
   const feedbackTimerRef = useRef<number | null>(null);
   const copiedTimerRef = useRef<number | null>(null);
+  const restoredOutputRef = useRef<string | null>(null);
+
+  const showShareNotice = useCallback((notice: ShareNotice) => {
+    setShareNotice(notice);
+  }, []);
+
+  useEffect(() => {
+    restoredOutputRef.current = restoredOutput;
+  }, [restoredOutput]);
 
   const { result, isProcessing } = useAutoProcessing({
     input: userInput,
@@ -96,6 +118,15 @@ export function Workspace({ mode, onSelectTool }: WorkspaceProps) {
   useEffect(() => {
     restoredRef.current = false;
   }, [mode]);
+
+  // A changed tool (or auto toggle) invalidates a previously-restored output;
+  // only the tool that produced the shared output may keep showing it.
+  useEffect(() => {
+    if (mode !== restoredModeRef.current) {
+      setRestoredOutput(null);
+      restoredModeRef.current = mode;
+    }
+  }, [mode, autoOn]);
 
   const showFeedback = useCallback((text: string) => {
     setFeedback(text);
@@ -140,6 +171,7 @@ export function Workspace({ mode, onSelectTool }: WorkspaceProps) {
 
   const handleUserChange = useCallback((value: string) => {
     restoredRef.current = false;
+    setRestoredOutput(null);
     userInputRef.current = value;
     lastProgrammaticRef.current = null;
     displayedRef.current = value;
@@ -182,6 +214,69 @@ export function Workspace({ mode, onSelectTool }: WorkspaceProps) {
     [result, setView],
   );
 
+  // Apply state restored from a #/share/<...> URL fragment.
+  useEffect(() => {
+    if (!restorePayload) {
+      return;
+    }
+    const payload = restorePayload;
+    setView(payload.mode);
+    setAutoOn(payload.autoDetect);
+    setWordWrap(payload.wordWrap);
+    restoredModeRef.current = payload.tool;
+    // Equivalent of handleUserChange(payload.input), inlined so every state
+    // write is guarded — the editor starts from the raw shared input.
+    restoredRef.current = false;
+    lastProgrammaticRef.current = null;
+    if (userInputRef.current !== payload.input) {
+      userInputRef.current = payload.input;
+      setUserInput(payload.input);
+    }
+    if (displayedRef.current !== payload.input) {
+      displayedRef.current = payload.input;
+      setDisplayed(payload.input);
+    }
+    // Non-deterministic tools (random generators) embed their output verbatim;
+    // deterministic tools recompute it from the input, keeping links small.
+    const storeOutput = isStoredOutputRequired(payload.tool);
+    if (payload.mode === "single") {
+      let target = payload.input;
+      if (payload.display === "output") {
+        if (storeOutput) {
+          target = payload.output ?? payload.input;
+        } else {
+          // Recompute the deterministic output now so the restored view shows
+          // it immediately, without a flash of the raw input.
+          const computed = transform(payload.tool, payload.autoDetect, payload.input);
+          target = computed.success ? computed.output : payload.input;
+        }
+      }
+      // Guarded like applyResultToDisplay: only push state when the content
+      // actually changed, so the transform pipeline never fights the restore.
+      if (displayedRef.current !== target) {
+        lastProgrammaticRef.current = target;
+        displayedRef.current = target;
+        setDisplayed(target);
+      }
+      // Freeze the content until the user types — but only when it will not
+      // already be refreshed by the transform pipeline (raw-input view, or a
+      // verbatim stored random output).
+      restoredRef.current = !(payload.display === "output" && !storeOutput);
+      if (restoredOutputRef.current !== null) {
+        setRestoredOutput(null);
+      }
+    } else {
+      if (storeOutput && restoredOutputRef.current !== payload.output) {
+        setRestoredOutput(payload.output ?? "");
+      } else if (!storeOutput && restoredOutputRef.current !== null) {
+        setRestoredOutput(null);
+      }
+    }
+    // The persisted setters are purposefully excluded: a restore must apply
+    // exactly once per incoming payload, not whenever a stored pref changes.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [restorePayload]);
+
   const onToggleAuto = useCallback(() => {
     setAutoOn((current) => !current);
   }, [setAutoOn]);
@@ -215,30 +310,79 @@ export function Workspace({ mode, onSelectTool }: WorkspaceProps) {
     [showFeedback],
   );
 
-  // Share the output with the Web Share API when the browser supports it; the
-  // copy button is the fallback path on desktop.
-  const shareOutput = useCallback(
-    async (text: string) => {
-      if (typeof navigator.share === "function") {
-        try {
-          await navigator.share({ title: "DataFormatter", text });
-          return;
-        } catch (error) {
-          if ((error as Error)?.name === "AbortError") {
-            return; // the user dismissed the share sheet
-          }
-        }
-      }
-      await copyWithFeedback(text);
-    },
-    [copyWithFeedback],
-  );
+  // Share the current workspace state as a compressed, self-contained URL.
+  // Everything happens locally — the payload lives only in the URL fragment.
+  const handleShare = useCallback(async () => {
+    const input = userInputRef.current;
+    const derived = result && result.originalInput === input ? result.output : "";
+    // Split view shares what's shown in the output pane (which may be a
+    // restored output). Single view always shares the transform result and
+    // records which content was on screen.
+    const output =
+      view === "split" && restoredOutputRef.current !== null
+        ? restoredOutputRef.current
+        : derived;
+    // Deterministic tools regenerate their output from the input on restore,
+    // so the URL only embeds the input — this is the biggest link-size win.
+    const storeOutput = isStoredOutputRequired(mode);
+
+    const payload: SharePayload = {
+      v: SHARE_SCHEMA_VERSION,
+      mode: view,
+      tool: mode,
+      autoDetect: autoOn,
+      wordWrap,
+      input,
+      output: storeOutput ? output : undefined,
+      display: view === "single" ? (displayedRef.current === input ? "input" : "output") : "output",
+    };
+
+    let link;
+    try {
+      link = await createShareLink(payload);
+    } catch {
+      showShareNotice({ tone: "error", message: "Could not build a share link for this data." });
+      return;
+    }
+
+    if (link.tooLarge) {
+      showShareNotice({
+        tone: "error",
+        message: "This data is too large to reliably share as a URL.",
+        detail: "Use the Download button to keep it locally.",
+      });
+      return;
+    }
+
+    // Privacy-first: warn before putting embedded secrets into a URL.
+    const sensitive = looksSensitive(payload.input, payload.output ?? "");
+
+    const ok = await copyToClipboard(link.url);
+    if (ok) {
+      showShareNotice(
+        sensitive
+          ? {
+              tone: "warning",
+              message: "Share link copied",
+              detail: "Warning: this link contains your data. Anyone with the link can view it.",
+            }
+          : { tone: "success", message: "Share link copied" },
+      );
+    } else {
+      showShareNotice({
+        tone: "error",
+        message: "Unable to copy link. Copy it manually.",
+        detail: link.url,
+      });
+    }
+  }, [view, mode, autoOn, wordWrap, result, showShareNotice]);
 
   const clearAll = useCallback(() => {
     restoredRef.current = false;
     userInputRef.current = "";
     displayedRef.current = "";
     lastProgrammaticRef.current = null;
+    setRestoredOutput(null);
     setUserInput("");
     setDisplayed("");
     setFeedback(null);
@@ -249,6 +393,10 @@ export function Workspace({ mode, onSelectTool }: WorkspaceProps) {
   const sameSource = result?.originalInput === userInput;
 
   const outputText = (() => {
+    if (restoredOutput !== null) {
+      // Preserve the exact output captured at share time.
+      return restoredOutput;
+    }
     if (!result || !sameSource) {
       return "";
     }
@@ -354,6 +502,7 @@ export function Workspace({ mode, onSelectTool }: WorkspaceProps) {
             onCopy={() => void copyWithFeedback(displayedRef.current)}
             onRestore={handleRestore}
             onClear={clearAll}
+            onShare={() => void handleShare()}
             onDownload={() => {
               downloadText(
                 outputFilename(result, singleLabel.toLowerCase()),
@@ -393,7 +542,7 @@ export function Workspace({ mode, onSelectTool }: WorkspaceProps) {
                 outputLanguage === "json" ? "application/json" : "text/plain",
               );
             }}
-            onShare={() => void shareOutput(outputText)}
+            onShare={() => void handleShare()}
             feedback={feedback}
             copied={copied}
             isFullscreen={isFullscreen}
@@ -401,6 +550,10 @@ export function Workspace({ mode, onSelectTool }: WorkspaceProps) {
           />
         )}
       </div>
+
+      {shareNotice && (
+        <ShareToast notice={shareNotice} onDismiss={() => setShareNotice(null)} />
+      )}
     </div>
   );
 }

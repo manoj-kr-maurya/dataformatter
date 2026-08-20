@@ -74,6 +74,40 @@ body {
   overflow: hidden;
 }
 
+/* Search panel buttons. Styled here (with the app's .dark class) rather than
+ * in the CodeMirror theme, because &light/&dark scoping only works when the
+ * theme itself is registered as light/dark. */
+.cm-search .cm-button {
+  appearance: none;
+  -webkit-appearance: none;
+  background-image: none;
+  color: #27272a;
+  background-color: #e4e4e7;
+  border: 1px solid #d4d4d8;
+}
+
+.cm-search .cm-button:hover {
+  background-color: #d4d4d8;
+}
+
+.cm-search .cm-button:active {
+  background-color: #c8c8cc;
+}
+
+.dark .cm-search .cm-button {
+  color: #a1a1aa;
+  background-color: #27272a;
+  border-color: #3f3f46;
+}
+
+.dark .cm-search .cm-button:hover {
+  background-color: #32323a;
+}
+
+.dark .cm-search .cm-button:active {
+  background-color: #383842;
+}
+
 ::selection {
   background: var(--editor-selection);
 }
