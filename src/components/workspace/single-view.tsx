@@ -9,6 +9,7 @@ import {
   DownloadIcon,
   PasteIcon,
   RestoreIcon,
+  ShareIcon,
   TrashIcon,
 } from "@/components/ui/icons";
 import type { Language } from "@/types/tools";
@@ -26,6 +27,7 @@ interface SingleViewProps {
   onCopy: () => void;
   onRestore: () => void;
   onClear: () => void;
+  onShare: () => void;
   onDownload: () => void;
   feedback: string | null;
   copied: boolean;
@@ -52,6 +54,7 @@ export function SingleView({
   onCopy,
   onRestore,
   onClear,
+  onShare,
   onDownload,
   feedback,
   copied,
@@ -155,6 +158,13 @@ export function SingleView({
                   label: "Download",
                   icon: <DownloadIcon className="h-4 w-4" />,
                   onClick: onDownload,
+                  disabled: !value,
+                },
+                {
+                  key: "share",
+                  label: "Share",
+                  icon: <ShareIcon className="h-4 w-4" />,
+                  onClick: onShare,
                   disabled: !value,
                 },
               ]}

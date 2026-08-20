@@ -780,6 +780,22 @@ export const RANDOM_GENERATOR_TOOL_ORDER: ToolType[] = [
   "RANDOM_ALPHANUMERIC",
 ];
 
+/**
+ * Tools whose output cannot be recomputed from the input (their result differs
+ * on every run). Their output must be stored verbatim in share links so the
+ * restored view matches what the sharer saw. Everything else is a pure
+ * function of the input and can be regenerated on restore, which keeps URLs
+ * small — the derived output is the biggest single contributor to link size.
+ */
+export const NON_DETERMINISTIC_TOOLS: ReadonlySet<ToolType> = new Set<ToolType>([
+  ...RANDOM_GENERATOR_TOOL_ORDER,
+  "PASSWORD_GENERATOR",
+]);
+
+export function isNonDeterministicTool(tool: string): boolean {
+  return tool.startsWith("RANDOM_") || NON_DETERMINISTIC_TOOLS.has(tool as ToolType);
+}
+
 /** String utility tools shown on /string-functions. */
 export const STRING_FUNCTION_TOOL_ORDER: ToolType[] = [
   "UPSIDE_DOWN_TEXT",
