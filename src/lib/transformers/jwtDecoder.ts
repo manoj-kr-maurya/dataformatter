@@ -14,7 +14,7 @@ export function jwtDecoder(input: string): TransformationResult {
     formatJwtOutput(parsed.value),
     "JWT_DECODE",
     "JWT",
-    "JWT decoded — header and payload shown",
+    "JWT decoded successfully — signature is NOT verified",
     "JWT",
   );
 }

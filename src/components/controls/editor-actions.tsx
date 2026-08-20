@@ -10,6 +10,7 @@ export interface EditorAction {
   onClick: () => void;
   disabled?: boolean;
   title?: string;
+  variant?: "primary" | "secondary" | "success";
 }
 
 interface EditorActionsProps {
@@ -18,12 +19,12 @@ interface EditorActionsProps {
 
 export function EditorActions({ actions }: EditorActionsProps) {
   return (
-    <div className="flex items-center gap-2">
+    <div className="flex items-center gap-1">
       {actions.map((action) => (
         <Button
           key={action.key}
-          variant="secondary"
-          size="md"
+          variant={action.variant ?? "secondary"}
+          size="sm"
           onClick={action.onClick}
           disabled={action.disabled}
           aria-label={action.label}

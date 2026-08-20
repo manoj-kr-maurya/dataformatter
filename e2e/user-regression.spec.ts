@@ -37,6 +37,12 @@ async function typeIntoEditor(page: Page, text: string) {
   await page.keyboard.insertText(text);
 }
 
+async function selectTool(page: Page, branch: string, label: string) {
+  await page.getByRole("button", { name: "Select tool" }).click();
+  await page.getByRole("menuitem", { name: branch, exact: true }).click();
+  await page.getByRole("menuitem", { name: label, exact: true }).click();
+}
+
 async function editorScrollBox(page: Page, index = 0) {
   const scroller = page.locator(".cm-scroller").nth(index);
   return {
@@ -61,7 +67,7 @@ test.describe("user-regression", () => {
   test("boots with no console errors and no hydration mismatch", async ({ page }) => {
     const errors = await trackErrors(page);
     await page.goto("/");
-    await expect(page.getByText("DevTools", { exact: true })).toBeVisible();
+    await expect(page.getByRole("button", { name: "Select tool" })).toBeVisible();
     await page.waitForTimeout(1500);
     expect(errors.filter((e) => !/React DevTools/i.test(e))).toEqual([]);
   });
@@ -73,7 +79,7 @@ test.describe("user-regression", () => {
     await page.goto("/");
     await typeIntoEditor(page, JSON.stringify(jsonSample));
 
-    await expect(statusOf(page)).toHaveText("JSON detected and pretty-printed");
+    await expect(statusOf(page)).toHaveText("Detected: JSON — pretty-printed");
     const editor = page.locator(".cm-content").first();
     await expect(editor).toContainText('"name": "Ada"');
     const pretty = (await editor.innerText()) ?? "";
@@ -90,15 +96,15 @@ test.describe("user-regression", () => {
     await page.goto("/");
     await typeIntoEditor(page, JSON.stringify(jsonSample));
 
-    await expect(statusOf(page)).toHaveText("JSON detected and pretty-printed");
+    await expect(statusOf(page)).toHaveText("Detected: JSON — pretty-printed");
     await page.getByRole("button", { name: "Restore Original" }).click();
 
-    await page.getByRole("tab", { name: "JSON Minify" }).click();
+    await selectTool(page, "JSON Tools", "JSON Minify");
     await expect(statusOf(page)).toHaveText("JSON minified");
     await expect(page.locator(".cm-content").first()).toHaveText(JSON.stringify(jsonSample));
 
     const raw = JSON.stringify(jsonSample);
-    await page.getByRole("tab", { name: "Base64 Encode" }).click();
+    await selectTool(page, "Conversions", "JSON → Base64");
     await expect(page.locator(".cm-content").first()).toHaveText(
       Buffer.from(raw).toString("base64"),
     );
@@ -107,14 +113,14 @@ test.describe("user-regression", () => {
   test("decodes valid Base64 to plain text in Single view", async ({ page }) => {
     await page.goto("/");
     await typeIntoEditor(page, base64Hello);
-    await expect(statusOf(page)).toHaveText("Base64 decoded to plain text");
+    await expect(statusOf(page)).toHaveText("Detected: Base64 — decoded to plain text");
     await expect(page.locator(".cm-content").first()).toHaveText("hello");
   });
 
   test("detects a JWT pasted with a Bearer label", async ({ page }) => {
     await page.goto("/");
     await typeIntoEditor(page, `Bearer ${jwt}`);
-    await expect(statusOf(page)).toHaveText("JWT decoded — header and payload shown");
+    await expect(statusOf(page)).toHaveText("Detected: JWT — decoded header and payload (signature not verified)");
     const editor = page.locator(".cm-content").first();
     await expect(editor).toContainText("HEADER");
     await expect(editor).toContainText("PAYLOAD");
@@ -122,18 +128,26 @@ test.describe("user-regression", () => {
     await expect(editor).toContainText('"sub": "123"');
   });
 
-  test("Copy button copies the transformed output (not raw input)", async ({ page }) => {
+  test("Copy button copies the transformed output and shows a ✓ Copied confirmation", async ({
+    page,
+  }) => {
     await page.goto("/");
     await typeIntoEditor(page, JSON.stringify(jsonSample));
-    await expect(statusOf(page)).toHaveText("JSON detected and pretty-printed");
+    await expect(statusOf(page)).toHaveText("Detected: JSON — pretty-printed");
     await page.getByRole("button", { name: "Copy" }).click();
     expect(await page.evaluate(() => navigator.clipboard.readText())).toBe(prettyJson);
+
+    // The button itself flips to a success state, then reverts after ~1.6s.
+    const copyButton = page.getByRole("button", { name: "✓ Copied" });
+    await expect(copyButton).toBeVisible();
+    await expect(copyButton).toHaveClass(/text-emerald-700/);
+    await expect(page.getByRole("button", { name: "Copy" })).toBeVisible({ timeout: 4000 });
   });
 
   test("Clear empties the editor and shows the empty-state message", async ({ page }) => {
     await page.goto("/");
     await typeIntoEditor(page, JSON.stringify(jsonSample));
-    await expect(statusOf(page)).toHaveText("JSON detected and pretty-printed");
+    await expect(statusOf(page)).toHaveText("Detected: JSON — pretty-printed");
     await page.getByRole("button", { name: "Clear" }).click();
     await expect(page.getByText("Paste or type JSON, Base64, or plain text…")).toBeVisible();
     await expect(statusOf(page)).toHaveText(
@@ -169,7 +183,7 @@ test.describe("user-regression", () => {
     await page.goto("/");
     const { scroller, box } = await editorScrollBox(page);
     await typeIntoEditor(page, bigJson(600));
-    await expect(statusOf(page)).toHaveText("JSON detected and pretty-printed");
+    await expect(statusOf(page)).toHaveText("Detected: JSON — pretty-printed");
 
     const { sh, ch } = await box();
     expect(sh).toBeGreaterThan(ch); // content is taller than the visible area — scrolling is needed
@@ -190,6 +204,31 @@ test.describe("user-regression", () => {
     expect(topScroll).toBeGreaterThan(0);
   });
 
+  test("pretty-printed JSON exposes collapse arrows that fold nested objects", async ({
+    page,
+  }) => {
+    await page.goto("/");
+    await typeIntoEditor(
+      page,
+      '{"user":{"name":"Ada","addr":{"city":"X"}},"tags":["a","b"]}',
+    );
+    await expect(statusOf(page)).toHaveText("Detected: JSON — pretty-printed");
+
+    // The fold gutter shows structural collapse arrows for nested objects.
+    const gutters = page.locator(".cm-foldGutter .cm-gutterElement");
+    await expect
+      .poll(() => gutters.locator("span").count(), { timeout: 15_000 })
+      .toBeGreaterThanOrEqual(3);
+
+    // Clicking the arrow next to the nested "addr" object (gutter line 3) collapses it.
+    await gutters.nth(3).click();
+    await expect.poll(() => page.locator(".cm-content").first().innerText()).not.toContain(
+      '"city": "X"',
+    );
+    // Sibling content stays intact.
+    await expect(page.locator(".cm-content").first()).toContainText('"name": "Ada"');
+  });
+
   test("theme toggle flips dark class immediately and survives reload", async ({ page }) => {
     await page.goto("/");
     const html = page.locator("html");
@@ -207,30 +246,30 @@ test.describe("user-regression", () => {
   test("single view expands to fullscreen and collapses with Escape", async ({ page }) => {
     await page.goto("/");
     await typeIntoEditor(page, JSON.stringify(jsonSample));
-    const section = page.locator("section").filter({ hasText: "Input / Output" });
+    const section = page.locator("section").filter({ hasText: "Output" }).first();
     const wrapper = section.locator("..");
     await expect(wrapper).toHaveCSS("position", "static");
 
     await page.getByRole("button", { name: "Enter fullscreen" }).click();
     await expect(wrapper).toHaveCSS("position", "fixed");
 
-    // Nothing may show through the fullscreen overlay — every viewport corner
-    // must resolve to the fullscreen panel, never to the app chrome behind it.
+    // The toolbar stays docked at the top of the viewport, and the fullscreen
+    // panel covers everything below it — bottom corners must resolve to the
+    // panel, and the exit control must be visible in the docked toolbar.
     const covering = await page.evaluate(() => {
       const panel = [...document.querySelectorAll("section")].find((s) =>
-        s.textContent?.includes("Input / Output"),
+        s.textContent?.includes("Output") && s.textContent?.includes("chars"),
       );
       if (!panel) return false;
       const inPanel = (x: number, y: number) =>
         document.elementFromPoint(x, y)?.closest("section") === panel;
       return (
-        inPanel(2, 2) &&
-        inPanel(innerWidth - 2, 2) &&
         inPanel(2, innerHeight - 2) &&
         inPanel(innerWidth - 2, innerHeight - 2)
       );
     });
     expect(covering).toBe(true);
+    await expect(page.getByRole("button", { name: "Exit fullscreen" })).toBeVisible();
 
     await page.keyboard.press("Escape");
     await expect(wrapper).toHaveCSS("position", "static");
@@ -239,7 +278,7 @@ test.describe("user-regression", () => {
   test("words count is shown in the Single view header", async ({ page }) => {
     await page.goto("/");
     await typeIntoEditor(page, JSON.stringify(jsonSample));
-    await expect(statusOf(page)).toHaveText("JSON detected and pretty-printed");
+    await expect(statusOf(page)).toHaveText("Detected: JSON — pretty-printed");
     const header = page.locator("header").filter({ hasText: "words" });
     await expect(header).toContainText("5 words");
     await expect(header).toContainText("7 lines");
@@ -255,10 +294,21 @@ test.describe("user-regression", () => {
     await expect(searchPanel).toContainText("match");
   });
 
+  test("Cmd/Ctrl+F opens search in the split output editor", async ({ page }) => {
+    await page.goto("/");
+    await page.getByRole("button", { name: "Split", exact: true }).click();
+    await typeIntoEditor(page, JSON.stringify(jsonSample));
+    await expect(statusOf(page)).toHaveText("Detected: JSON — pretty-printed");
+    await page.getByLabel("Output editor").getByRole("textbox").click();
+    await page.keyboard.press(`${MOD_OR_CTRL}+F`);
+    await expect(page.locator(".cm-search")).toBeVisible();
+    await expect(page.locator(".cm-search").locator("input").first()).toBeFocused();
+  });
+
   test("Cmd/Ctrl+Enter copies the full editor contents", async ({ page }) => {
     await page.goto("/");
     await typeIntoEditor(page, JSON.stringify(jsonSample));
-    await expect(statusOf(page)).toHaveText("JSON detected and pretty-printed");
+    await expect(statusOf(page)).toHaveText("Detected: JSON — pretty-printed");
     await page.keyboard.press(`${MOD_OR_CTRL}+Enter`);
     await expect
       .poll(() => page.evaluate(() => navigator.clipboard.readText()))
@@ -274,7 +324,7 @@ test.describe("user-regression", () => {
     }, JSON.stringify(jsonSample));
     await page.locator(".cm-content").first().dispatchEvent("drop", { dataTransfer });
 
-    await expect(statusOf(page)).toHaveText("JSON detected and pretty-printed");
+    await expect(statusOf(page)).toHaveText("Detected: JSON — pretty-printed");
     await expect(page.locator(".cm-content").first()).toContainText('"name": "Ada"');
   });
 });
