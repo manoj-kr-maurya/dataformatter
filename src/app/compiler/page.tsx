@@ -1,27 +1,14 @@
 import type { Metadata } from "next";
 import { CompilerWorkbench } from "@/components/compiler/compiler-workbench";
+import { buildMetadata } from "@/lib/seo";
 
-export const metadata: Metadata = {
-  title: "Online Dart Compiler — Run Dart in Your Browser",
-  description:
-    "Free online Dart compiler and playground. Write, compile and run Dart code instantly — entirely in your browser via WebAssembly. No server, no sign-up, nothing uploaded. Includes stdin input and shareable links.",
-  keywords: [
-    "online dart compiler",
-    "dart playground",
-    "run dart online",
-    "dart editor",
-    "browser dart",
-    "dart wasm",
-    "dartpad alternative",
-  ],
-  alternates: { canonical: "/compiler" },
-  openGraph: {
-    title: "Online Dart Compiler — Run Dart in Your Browser",
-    description:
-      "Write, compile and run Dart instantly in your browser. Private by design: the Dart toolchain runs locally via WebAssembly.",
-  },
-};
+export const metadata: Metadata = buildMetadata("/compiler");
 
 export default function CompilerPage() {
-  return <CompilerWorkbench />;
+  return (
+    <>
+      <h1 className="sr-only">Online Dart Compiler</h1>
+      <CompilerWorkbench />
+    </>
+  );
 }

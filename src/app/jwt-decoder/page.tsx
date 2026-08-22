@@ -1,13 +1,10 @@
 import type { Metadata } from "next";
-import { ContentPage } from "@/components/seo/content-page";
-import { Section, Bullets, Faq, Cta } from "@/components/seo/content-blocks";
+import { ToolLandingPage } from "@/components/seo/tool-landing";
+import { EmbeddedWorkspace } from "@/components/seo/embedded-workspace";
+import { Section, Bullets, Faq, FaqJsonLd, Example } from "@/components/seo/content-blocks";
+import { buildMetadata } from "@/lib/seo";
 
-export const metadata: Metadata = {
-  title: "JWT Decoder — Decode JWT Header & Payload Online",
-  description:
-    "Free online JWT decoder. Decode the header and payload of any JWT token instantly — with or without a Bearer prefix. No signature verification. 100% private, in your browser.",
-  alternates: { canonical: "/jwt-decoder" },
-};
+export const metadata: Metadata = buildMetadata("/jwt-decoder");
 
 const faqs = [
   {
@@ -16,20 +13,23 @@ const faqs = [
   },
   {
     q: "Does this decoder verify token signatures?",
-    a: "No. Like diagnostic JWT tools, it decodes the header and payload for inspection but does not verify the signature. Never trust the claims of an unverified token.",
+    a: "No. Like diagnostic JWT tools, it decodes the header and payload for inspection but does not verify the signature. Decoding is not verification — never trust the claims of an unverified token.",
   },
   {
     q: "Is it safe to paste a JWT here?",
     a: "Yes from a privacy standpoint — decoding happens locally in your browser and nothing is uploaded. Still avoid pasting live production tokens containing sensitive claims.",
   },
-];
+] as const;
 
 export default function JwtDecoderPage() {
   return (
-    <ContentPage
-      pageTitle="JWT Decoder"
-      summary="Decode a JWT token's header and payload online, free and instantly. Paste a token — with or without a Bearer prefix — and read its claims as formatted JSON. No signature verification. All processing is local."
+    <ToolLandingPage
+      path="/jwt-decoder"
+      summary="Decode a JWT token's header and payload online, free and instantly. Paste a token — with or without a Bearer prefix — into the live tool below and read its claims as formatted JSON. No signature verification."
     >
+      <EmbeddedWorkspace mode="JWT_DECODE" label="JWT decoder editor" />
+      <FaqJsonLd items={faqs} />
+
       <Section title="How JWT decoding works">
         <p>
           A JSON Web Token (JWT) is composed of three base64url parts joined by dots:
@@ -40,18 +40,32 @@ export default function JwtDecoderPage() {
         </p>
         <p>
           This decoder reads those base64url segments, decodes them as UTF-8 JSON, and renders the
-          header and payload as pretty-printed JSON so you can inspect a token quickly. The signature
-          segment is surfaced as-is; it is never decoded to text and no verification is performed.
+          header and payload as pretty-printed JSON so you can inspect a token quickly. The
+          signature segment is surfaced as-is; it is never decoded to text and{" "}
+          <strong>no cryptographic verification is performed</strong>.
         </p>
+        <Example
+          input="eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIxMjM0NSIsIm5hbWUiOiJKb2huIn0.signature"
+          output={`{
+  "alg": "HS256"
+}
+---
+{
+  "sub": "12345",
+  "name": "John"
+}`}
+          inputLabel="Token"
+          outputLabel="Decoded header & payload"
+        />
       </Section>
 
       <Section title="How to decode a JWT online">
         <Bullets
           items={[
-            "Open the free JWT Decoder tool from DataFormatter.",
-            "Paste the token — with or without a 'Bearer ' prefix.",
+            "Paste the token — with or without a 'Bearer ' prefix — into the editor above.",
             "The header and payload appear as formatted JSON sections.",
             "Tokens embedded inside surrounding text are detected automatically.",
+            "Copy or download the decoded claims for your bug report.",
           ]}
         />
       </Section>
@@ -67,9 +81,16 @@ export default function JwtDecoderPage() {
         />
       </Section>
 
-      <Faq items={faqs} />
+      <Section title="Decoding vs verifying">
+        <p>
+          Anyone can decode a JWT — the payload is merely encoded, not encrypted. Verifying a
+          token requires its secret or public key so the signature can be checked server-side.
+          Use this tool to inspect tokens during development; always verify signatures in your
+          application before trusting any claim.
+        </p>
+      </Section>
 
-      <Cta label="Open the free JWT Decoder tool" href="/" />
-    </ContentPage>
+      <Faq items={faqs} />
+    </ToolLandingPage>
   );
 }

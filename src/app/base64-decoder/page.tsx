@@ -1,13 +1,10 @@
 import type { Metadata } from "next";
-import { ContentPage } from "@/components/seo/content-page";
-import { Section, Bullets, Faq, Cta } from "@/components/seo/content-blocks";
+import { ToolLandingPage } from "@/components/seo/tool-landing";
+import { EmbeddedWorkspace } from "@/components/seo/embedded-workspace";
+import { Section, Bullets, Faq, FaqJsonLd, Example } from "@/components/seo/content-blocks";
+import { buildMetadata } from "@/lib/seo";
 
-export const metadata: Metadata = {
-  title: "Base64 Decoder — Decode Base64 to Text & JSON Online",
-  description:
-    "Free online Base64 decoder. Decode Base64 back to text or JSON instantly, with automatic detection of base64-encoded JSON. 100% private and runs entirely in your browser.",
-  alternates: { canonical: "/base64-decoder" },
-};
+export const metadata: Metadata = buildMetadata("/base64-decoder");
 
 const faqs = [
   {
@@ -22,14 +19,17 @@ const faqs = [
     q: "Does Base64 decoding work on private or sensitive data?",
     a: "Yes — everything is decoded locally in your browser. Nothing you paste is uploaded, so it is safe for sensitive payloads.",
   },
-];
+] as const;
 
 export default function Base64DecoderPage() {
   return (
-    <ContentPage
-      pageTitle="Base64 Decoder"
-      summary="Decode Base64 back to plain text or JSON online, free and instantly. Paste a Base64 string and this tool converts it back to readable text in your browser — never uploading your data."
+    <ToolLandingPage
+      path="/base64-decoder"
+      summary="Decode Base64 back to plain text or JSON online, free and instantly. Paste a Base64 string into the live tool below and it converts back to readable text in your browser — never uploading your data."
     >
+      <EmbeddedWorkspace mode="BASE64_DECODE" label="Base64 decoder editor" />
+      <FaqJsonLd items={faqs} />
+
       <Section title="How Base64 decoding works">
         <p>
           Decoding reverses the Base64 process: the tool validates the 64-character alphabet,
@@ -41,15 +41,21 @@ export default function Base64DecoderPage() {
           automatically — handy when you receive Base64-wrapped API payloads or configuration and
           want to read them immediately.
         </p>
+        <Example
+          input="SGVsbG8sIERhdGFGb3JtYXR0ZXIh"
+          output="Hello, DataFormatter!"
+          inputLabel="Base64 input"
+          outputLabel="Decoded text"
+        />
       </Section>
 
       <Section title="How to decode Base64 online">
         <Bullets
           items={[
-            "Open the free Base64 Decoder tool from DataFormatter.",
-            "Paste the Base64 string you received from an API, header, or config.",
+            "Paste the Base64 string you received from an API, header, or config into the editor above.",
             "The decoded text appears instantly, pretty-printed if it is JSON.",
             "Whitespace and line breaks inside the Base64 are handled automatically.",
+            "Copy the result or download it as a file.",
           ]}
         />
       </Section>
@@ -59,15 +65,13 @@ export default function Base64DecoderPage() {
           items={[
             "Reading data URIs and embedded images",
             "Inspecting Base64-encoded JSON from APIs",
-            "Checking values inside JWT fragments and auth headers",
+            "Checking values inside JWT fragments and auth headers (or use the JWT Decoder)",
             "Debugging tokens and encoded configuration values",
           ]}
         />
       </Section>
 
       <Faq items={faqs} />
-
-      <Cta label="Open the free Base64 Decoder tool" href="/encode-decode" />
-    </ContentPage>
+    </ToolLandingPage>
   );
 }

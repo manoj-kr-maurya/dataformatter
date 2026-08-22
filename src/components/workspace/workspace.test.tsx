@@ -33,7 +33,7 @@ async function waitForEditor(container: HTMLElement): Promise<EditorView> {
 }
 
 function renderShell(tools: typeof HOME_TOOL_ORDER | typeof ENCODE_DECODE_TOOL_ORDER = HOME_TOOL_ORDER) {
-  return render(<DevToolsShell tools={tools} activeHref="/" />);
+  return render(<DevToolsShell tools={tools} activeHref="/" heading="DataFormatter" />);
 }
 
 async function selectTool(

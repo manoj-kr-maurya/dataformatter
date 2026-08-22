@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useState } from "react";
 import { Sidebar } from "@/components/app/sidebar";
 import { StarButton } from "@/components/app/star-button";
 import { PrivacyNotice } from "@/components/privacy/privacy-notice";
@@ -10,10 +10,9 @@ import { Workspace } from "@/components/workspace/workspace";
 import { ShareToast } from "@/components/ui/share-toast";
 import type { ShareNotice } from "@/components/ui/share-toast";
 import { MenuIcon } from "@/components/ui/icons";
-import { AUTO_DETECT } from "@/lib/tools";
-import { SHARE_OPEN_FAILURE_MESSAGE, restoreFromShareUrl } from "@/lib/share";
-import type { SharePayload } from "@/lib/share";
-import type { ToolMode, ToolType } from "@/types/tools";
+import { SHARE_OPEN_FAILURE_MESSAGE } from "@/lib/share";
+import { useShareRestore } from "@/hooks/use-share-restore";
+import type { ToolType } from "@/types/tools";
 
 interface DevToolsShellProps {
   tools: ToolType[];
@@ -26,47 +25,24 @@ interface DevToolsShellProps {
     | "/random-generators"
     | "/string-functions"
     | "/cryptography-tools";
+  /** Accessible page heading — the only <h1> on the route. */
+  heading: string;
 }
 
-export function DevToolsShell({ tools, activeHref }: DevToolsShellProps) {
-  const [mode, setMode] = useState<ToolMode>(AUTO_DETECT);
+export function DevToolsShell({ tools, activeHref, heading }: DevToolsShellProps) {
+  const { mode, setMode, restorePayload, restoreFailed } = useShareRestore(tools);
   const [navOpen, setNavOpen] = useState(false);
-  const [restorePayload, setRestorePayload] = useState<SharePayload | null>(null);
-  const [shareNotice, setShareNotice] = useState<ShareNotice | null>(null);
-  const restoreHandledRef = useRef(false);
+  const [noticeDismissed, setNoticeDismissed] = useState(false);
 
-  useEffect(() => {
-    // A share URL restores the workspace entirely client-side — the payload
-    // lives in the fragment and never touches a server.
-    if (restoreHandledRef.current) {
-      return;
-    }
-    restoreHandledRef.current = true;
-    void (async () => {
-      const result = await restoreFromShareUrl(window.location.hash ?? "");
-      if (result.status === "ok") {
-        const tool = result.payload.tool;
-        if (tool === AUTO_DETECT || tools.includes(tool as ToolType)) {
-          setMode(tool);
-        } else {
-          setMode(AUTO_DETECT);
-        }
-        setRestorePayload(result.payload);
-      } else if (result.status === "error") {
-        setShareNotice({
-          tone: "error",
-          message: SHARE_OPEN_FAILURE_MESSAGE,
-        });
-      }
-    })();
-    // `tools` is stable per-route; intentionally run restore exactly once.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  const dismissShareNotice = useCallback(() => setShareNotice(null), []);
+  // The shell's only toast source is a failed share-URL restore.
+  const shareNotice: ShareNotice | null =
+    restoreFailed && !noticeDismissed
+      ? { tone: "error", message: SHARE_OPEN_FAILURE_MESSAGE }
+      : null;
 
   return (
     <div className="flex h-dvh flex-col">
+      <h1 className="sr-only">{heading}</h1>
       <header className="flex h-12 shrink-0 items-center justify-between gap-3 border-b border-zinc-200 bg-zinc-50/80 px-3 dark:border-zinc-800 dark:bg-zinc-900/40">
         <div className="flex min-w-0 items-center gap-2">
           <button
@@ -104,7 +80,9 @@ export function DevToolsShell({ tools, activeHref }: DevToolsShellProps) {
         />
       </div>
 
-      {shareNotice && <ShareToast notice={shareNotice} onDismiss={dismissShareNotice} />}
+      {shareNotice && (
+        <ShareToast notice={shareNotice} onDismiss={() => setNoticeDismissed(true)} />
+      )}
     </div>
   );
 }

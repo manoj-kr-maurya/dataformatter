@@ -1,5 +1,7 @@
 import type { ReactNode } from "react";
 import Link from "next/link";
+import { faqJsonLd, serializeJsonLd } from "@/lib/seo";
+import type { FaqEntry } from "@/lib/seo";
 
 export function Section({ title, children }: { title: string; children: ReactNode }) {
   return (
@@ -24,7 +26,40 @@ export function Bullets({ items }: { items: string[] }) {
   );
 }
 
-export function Faq({ items }: { items: Array<{ q: string; a: string }> }) {
+/** A small before/after example rendered as real, crawlable content. */
+export function Example({
+  inputLabel,
+  input,
+  outputLabel,
+  output,
+}: {
+  inputLabel?: string;
+  input: string;
+  outputLabel?: string;
+  output: string;
+}) {
+  return (
+    <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2">
+      {(
+        [
+          [inputLabel ?? "Input", input] as const,
+          [outputLabel ?? "Output", output] as const,
+        ]
+      ).map(([label, value]) => (
+        <figure key={label} className="min-w-0">
+          <figcaption className="mb-1 text-xs font-medium uppercase tracking-wide text-zinc-400 dark:text-zinc-500">
+            {label}
+          </figcaption>
+          <pre className="overflow-x-auto rounded-lg border border-zinc-200 bg-white p-3 font-mono text-xs leading-relaxed text-zinc-800 dark:border-zinc-800 dark:bg-zinc-950/60 dark:text-zinc-200">
+            <code>{value}</code>
+          </pre>
+        </figure>
+      ))}
+    </div>
+  );
+}
+
+export function Faq({ items }: { items: ReadonlyArray<FaqEntry> }) {
   return (
     <Section title="Frequently asked questions">
       <div className="space-y-2">
@@ -41,6 +76,19 @@ export function Faq({ items }: { items: Array<{ q: string; a: string }> }) {
         ))}
       </div>
     </Section>
+  );
+}
+
+/**
+ * FAQPage structured data for the page's visible FAQ list — generated from
+ * the exact same items so markup always matches on-page content.
+ */
+export function FaqJsonLd({ items }: { items: ReadonlyArray<FaqEntry> }) {
+  return (
+    <script
+      type="application/ld+json"
+      dangerouslySetInnerHTML={{ __html: serializeJsonLd(faqJsonLd(items)) }}
+    />
   );
 }
 

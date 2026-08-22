@@ -1,86 +1,21 @@
 import type { MetadataRoute } from "next";
+import { SEO_PAGE_PATHS, SITE_URL } from "@/lib/seo";
 
-const SITE_URL = "https://www.dataformatter.in";
+/**
+ * Derived from the central SEO registry (src/lib/seo.ts) so the sitemap can
+ * never drift from the pages' canonical metadata. Share URLs (#/share/…
+ * fragments carrying user data) are application state, not SEO pages — they
+ * are deliberately absent and must never be added here.
+ */
+const PRIORITY: Record<string, number> = {
+  "/": 1,
+};
 
 export default function sitemap(): MetadataRoute.Sitemap {
-  return [
-    {
-      url: SITE_URL,
-      lastModified: new Date(),
-      changeFrequency: "weekly",
-      priority: 1,
-    },
-    {
-      url: `${SITE_URL}/encode-decode`,
-      lastModified: new Date(),
-      changeFrequency: "weekly",
-      priority: 0.9,
-    },
-    {
-      url: `${SITE_URL}/base64`,
-      lastModified: new Date(),
-      changeFrequency: "weekly",
-      priority: 0.9,
-    },
-    {
-      url: `${SITE_URL}/json-converter`,
-      lastModified: new Date(),
-      changeFrequency: "weekly",
-      priority: 0.9,
-    },
-    {
-      url: `${SITE_URL}/parsers`,
-      lastModified: new Date(),
-      changeFrequency: "weekly",
-      priority: 0.9,
-    },
-    {
-      url: `${SITE_URL}/random-generators`,
-      lastModified: new Date(),
-      changeFrequency: "weekly",
-      priority: 0.9,
-    },
-    {
-      url: `${SITE_URL}/string-functions`,
-      lastModified: new Date(),
-      changeFrequency: "weekly",
-      priority: 0.9,
-    },
-    {
-      url: `${SITE_URL}/cryptography-tools`,
-      lastModified: new Date(),
-      changeFrequency: "weekly",
-      priority: 0.9,
-    },
-    {
-      url: `${SITE_URL}/json-formatter`,
-      lastModified: new Date(),
-      changeFrequency: "monthly",
-      priority: 0.9,
-    },
-    {
-      url: `${SITE_URL}/base64-encoder`,
-      lastModified: new Date(),
-      changeFrequency: "monthly",
-      priority: 0.9,
-    },
-    {
-      url: `${SITE_URL}/base64-decoder`,
-      lastModified: new Date(),
-      changeFrequency: "monthly",
-      priority: 0.9,
-    },
-    {
-      url: `${SITE_URL}/jwt-decoder`,
-      lastModified: new Date(),
-      changeFrequency: "monthly",
-      priority: 0.9,
-    },
-    {
-      url: `${SITE_URL}/compiler`,
-      lastModified: new Date(),
-      changeFrequency: "weekly",
-      priority: 0.9,
-    },
-  ];
+  return SEO_PAGE_PATHS.map((path) => ({
+    url: `${SITE_URL}${path === "/" ? "/" : path}`,
+    lastModified: new Date(),
+    changeFrequency: "weekly",
+    priority: PRIORITY[path] ?? 0.9,
+  }));
 }

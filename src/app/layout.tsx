@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { ThankYouToast } from "@/components/ui/thank-you-toast";
+import { SITE_NAME, SITE_URL, serializeJsonLd, webSiteJsonLd } from "@/lib/seo";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -13,16 +14,14 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
-const SITE_URL = "https://www.dataformatter.in";
-
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
   title: {
-    default: "JSON Formatter & Base64 Encoder / Decoder – Free Online Dev Tool",
-    template: "%s | DataFormatter",
+    default: "DataFormatter — Online Developer Data Tools",
+    template: `%s | ${SITE_NAME}`,
   },
   description:
-    "Free online JSON formatter, validator, and minifier plus a Base64 encoder/decoder with automatic format detection. Decode JWT tokens too. 100% private — all processing runs locally in your browser.",
+    "Format, validate, decode, convert and inspect developer data directly in your browser. JSON, Base64, JWT, URL, hash tools and more — private by design, nothing is uploaded.",
   keywords: [
     "json formatter",
     "json pretty print",
@@ -31,13 +30,16 @@ export const metadata: Metadata = {
     "base64 encoder",
     "base64 decoder",
     "jwt decoder",
+    "url encoder",
+    "url decoder",
+    "hash generator",
     "base64 to json",
     "json to base64",
     "online developer tools",
-    "free json tools",
+    "dataformatter",
   ],
-  authors: [{ name: "DataFormatter" }],
-  creator: "DataFormatter",
+  authors: [{ name: SITE_NAME }],
+  creator: SITE_NAME,
   robots: {
     index: true,
     follow: true,
@@ -55,30 +57,30 @@ export const metadata: Metadata = {
   openGraph: {
     type: "website",
     url: SITE_URL,
-    siteName: "DataFormatter",
+    siteName: SITE_NAME,
     locale: "en_US",
-    title: "JSON Formatter & Base64 Encoder / Decoder – Free Online Dev Tool",
+    title: "DataFormatter — Online Developer Data Tools",
     description:
-      "Free online JSON formatter, validator, and minifier plus a Base64 encoder/decoder with automatic format detection. 100% private — nothing leaves your browser.",
+      "Format, validate, decode and inspect developer data directly in your browser. JSON, Base64, JWT, URL and hash tools — private by design.",
   },
   twitter: {
-    card: "summary",
-    title: "JSON Formatter & Base64 Encoder / Decoder – Free Online Dev Tool",
+    card: "summary_large_image",
+    title: "DataFormatter — Online Developer Data Tools",
     description:
-      "Free online JSON formatter, validator, and minifier plus a Base64 encoder/decoder with automatic detection. 100% private.",
+      "Format, validate, decode and inspect developer data directly in your browser. Private by design.",
   },
 };
 
-const jsonLd = {
+const applicationJsonLd = {
   "@context": "https://schema.org",
   "@type": "WebApplication",
-  name: "DataFormatter – JSON Formatter, Minifier & Base64 Encoder/Decoder",
+  name: `${SITE_NAME} — JSON Formatter, Minifier & Base64 Encoder/Decoder`,
   url: SITE_URL,
   applicationCategory: "DeveloperApplication",
   operatingSystem: "Any",
   browserRequirements: "Requires JavaScript. All processing happens locally.",
   description:
-    "Free online JSON formatter, validator and minifier, plus Base64 encode/decode and JWT decoding with automatic format detection. Privacy-first: all processing happens in the browser and nothing is uploaded.",
+    "Free online JSON formatter, validator and minifier, plus Base64 encode/decode, URL tools, hash generators and JWT decoding with automatic format detection. Privacy-first: all processing happens in the browser and nothing is uploaded.",
   offers: {
     "@type": "Offer",
     price: "0",
@@ -90,10 +92,21 @@ const jsonLd = {
     "JSON minification",
     "Base64 encode and decode (with embedded JSON detection)",
     "JWT decode of header and payload",
+    "URL encoding/decoding and parsing",
+    "MD5 / SHA-1 / SHA-2 / SHA-3 hash generation",
     "Split view input/output editor",
     "100% client-side processing for privacy",
   ],
 };
+
+function JsonLd({ data }: { data: object }) {
+  return (
+    <script
+      type="application/ld+json"
+      dangerouslySetInnerHTML={{ __html: serializeJsonLd(data) }}
+    />
+  );
+}
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
@@ -105,10 +118,8 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       <body className="flex min-h-full flex-col antialiased">
         {children}
         <ThankYouToast />
-        <script
-          type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd).replace(/</g, "\\u003c") }}
-        />
+        <JsonLd data={applicationJsonLd} />
+        <JsonLd data={webSiteJsonLd()} />
       </body>
     </html>
   );
