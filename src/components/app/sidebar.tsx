@@ -21,6 +21,7 @@ import {
   HomeIcon,
   LinkIcon,
   LockIcon,
+  TerminalIcon,
   TextIcon,
 } from "@/components/ui/icons";
 import {
@@ -45,9 +46,20 @@ type PageHref =
   | "/parsers"
   | "/random-generators"
   | "/string-functions"
-  | "/cryptography-tools";
+  | "/cryptography-tools"
+  | "/compiler";
 
 type IconComponent = ComponentType<SVGProps<SVGSVGElement>>;
+
+/** Page-style entry nested under a rail section (e.g. languages under
+ *  Compiler). Unlike tools these are plain links, not workspace modes. */
+interface RailSubItem {
+  id: string;
+  label: string;
+  /** Defaults to the parent section's page. */
+  href?: PageHref;
+  title?: string;
+}
 
 /** Every tool category lives directly in the sidebar rail as a section with a
  *  hover fly-out of its internal tools. This is the single source of truth for
@@ -65,6 +77,8 @@ interface RailSection {
   mode?: ToolMode;
   /** The section's internal tools, revealed on hover. */
   tools: ToolType[];
+  /** Nested page entries rendered under the section's tools. */
+  subItems?: RailSubItem[];
   title: string;
 }
 
@@ -150,6 +164,18 @@ const RAIL_SECTIONS: RailSection[] = [
     tools: STRING_FUNCTION_TOOL_ORDER,
     title: "String Functions",
   },
+  {
+    id: "compiler",
+    label: "Compiler",
+    fullLabel: "Compiler",
+    icon: TerminalIcon,
+    href: "/compiler",
+    tools: [],
+    subItems: [
+      { id: "dart", label: "Dart", title: "Run Dart in your browser" },
+    ],
+    title: "Compiler — run code in your browser (Dart today, more languages soon)",
+  },
 ];
 
 function sectionActive(section: RailSection, activeHref: PageHref, mode: ToolMode): boolean {
@@ -160,6 +186,17 @@ function sectionActive(section: RailSection, activeHref: PageHref, mode: ToolMod
     return activeHref === "/" && mode === AUTO_DETECT;
   }
   return activeHref === section.href;
+}
+
+/**
+ * Page that hosts a tool. Used by shells without a workspace (e.g. the
+ * compiler playground) so picking a fly-out tool still lands somewhere
+ * useful — the target page opens with auto-detect, which selects it.
+ */
+export function pageHrefForTool(tool: ToolMode): PageHref {
+  const section = RAIL_SECTIONS.find((entry) => entry.tools.includes(tool as ToolType));
+  // Sections without a dedicated page (JWT) are reachable from home.
+  return section?.href ?? "/";
 }
 
 function focusRail(id: string) {
@@ -452,7 +489,7 @@ export function Sidebar({ activeHref, mode, onSelectTool, open = false, onClose 
                         {rowInner}
                       </Link>
                     )}
-                    {section.tools.length > 1 && (
+                    {(section.tools.length > 1 || (section.subItems?.length ?? 0) > 0) && (
                       <button
                         type="button"
                         aria-label={`${expanded ? "Collapse" : "Expand"} ${section.fullLabel}`}
@@ -481,6 +518,21 @@ export function Sidebar({ activeHref, mode, onSelectTool, open = false, onClose 
                           <span className="truncate">{TOOL_META[tool].label}</span>
                         </button>
                       ))}
+                      {(section.subItems ?? []).map((sub) => {
+                        const subHref = (sub.href ?? section.href) as PageHref;
+                        return (
+                          <Link
+                            key={sub.id}
+                            href={subHref}
+                            title={sub.title}
+                            aria-current={activeHref === subHref ? "page" : undefined}
+                            onClick={onClose}
+                            className={drawerItemClass(activeHref === subHref)}
+                          >
+                            <span className="truncate">{sub.label}</span>
+                          </Link>
+                        );
+                      })}
                     </div>
                   )}
                 </div>
@@ -570,6 +622,27 @@ onClick={() => selectTool(section.mode as ToolType)}
                               >
                                 {TOOL_META[tool].label}
                               </button>
+                            </li>
+                          );
+                        })}
+                        {(section.subItems ?? []).map((sub) => {
+                          const subHref = (sub.href ?? section.href) as PageHref;
+                          const subActive = activeHref === subHref;
+                          return (
+                            <li key={sub.id}>
+                              <Link
+                                href={subHref}
+                                title={sub.title}
+                                aria-current={subActive ? "page" : undefined}
+                                onClick={pick}
+                                className={`block w-full rounded-md px-3 py-1.5 text-left text-xs transition-colors focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-violet-500 ${
+                                  subActive
+                                    ? "font-medium text-violet-600 dark:text-violet-300"
+                                    : "text-zinc-500 hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-zinc-100"
+                                }`}
+                              >
+                                {sub.label}
+                              </Link>
                             </li>
                           );
                         })}

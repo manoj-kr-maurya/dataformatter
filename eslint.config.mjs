@@ -12,6 +12,8 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Vendored DartPad engine assets (third-party minified JS):
+    "public/dartpad/**",
   ]),
 ]);
 
