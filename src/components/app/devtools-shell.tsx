@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Sidebar } from "@/components/app/sidebar";
 import { StarButton } from "@/components/app/star-button";
 import { PrivacyNotice } from "@/components/privacy/privacy-notice";
@@ -11,8 +11,13 @@ import { ShareToast } from "@/components/ui/share-toast";
 import type { ShareNotice } from "@/components/ui/share-toast";
 import { MenuIcon } from "@/components/ui/icons";
 import { SHARE_OPEN_FAILURE_MESSAGE } from "@/lib/share";
+import {
+  buildHandoffPayload,
+  consumeEditorHandoff,
+} from "@/lib/editor-handoff";
 import { useShareRestore } from "@/hooks/use-share-restore";
-import type { ToolType } from "@/types/tools";
+import type { SharePayload } from "@/lib/share";
+import type { ToolMode, ToolType } from "@/types/tools";
 
 interface DevToolsShellProps {
   tools: ToolType[];
@@ -30,9 +35,29 @@ interface DevToolsShellProps {
 }
 
 export function DevToolsShell({ tools, activeHref, heading }: DevToolsShellProps) {
-  const { mode, setMode, restorePayload, restoreFailed } = useShareRestore(tools);
+  const { mode: shareMode, setMode, restorePayload: sharePayload, restoreFailed } = useShareRestore(tools);
   const [navOpen, setNavOpen] = useState(false);
   const [noticeDismissed, setNoticeDismissed] = useState(false);
+  // Editor hand-off from an SEO landing page: same tool + text in this shell.
+  const [handoff, setHandoff] = useState<SharePayload | null>(null);
+
+  useEffect(() => {
+    void (async () => {
+      const received = consumeEditorHandoff();
+      if (!received) {
+        return;
+      }
+      const toolValid = received.tool !== null && tools.includes(received.tool as ToolType);
+      const tool = (toolValid ? received.tool : "AUTO_DETECT") as ToolMode;
+      setMode(tool);
+      setHandoff(buildHandoffPayload(tool, received.input));
+    })();
+    // Runs once on mount; `tools` is stable per route.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const mode: ToolMode = handoff ? handoff.tool : shareMode;
+  const restorePayload = sharePayload ?? handoff;
 
   // The shell's only toast source is a failed share-URL restore.
   const shareNotice: ShareNotice | null =
