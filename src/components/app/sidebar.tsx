@@ -17,6 +17,7 @@ import {
   BracketsIcon,
   ChevronIcon,
   DiceIcon,
+  GlobeIcon,
   HashIcon,
   HomeIcon,
   LinkIcon,
@@ -47,7 +48,8 @@ type PageHref =
   | "/random-generators"
   | "/string-functions"
   | "/cryptography-tools"
-  | "/compiler";
+  | "/compiler"
+  | "/api-client";
 
 type IconComponent = ComponentType<SVGProps<SVGSVGElement>>;
 
@@ -175,6 +177,18 @@ const RAIL_SECTIONS: RailSection[] = [
       { id: "dart", label: "Dart", title: "Run Dart in your browser" },
     ],
     title: "Compiler — run code in your browser (Dart today, more languages soon)",
+  },
+  {
+    id: "api",
+    label: "API",
+    fullLabel: "API Client",
+    icon: GlobeIcon,
+    href: "/api-client",
+    tools: [],
+    subItems: [
+      { id: "rest", label: "REST", title: "Build & send HTTP requests in your browser" },
+    ],
+    title: "API Client — build & send HTTP requests entirely in your browser",
   },
 ];
 

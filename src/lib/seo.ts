@@ -151,6 +151,13 @@ const PAGES: PageSeo[] = [
       "Free online Dart compiler and playground. Write, compile and run Dart code instantly — entirely in your browser via WebAssembly. No server, no sign-up, nothing uploaded. Includes stdin input and shareable links.",
     h1: "Online Dart Compiler",
   },
+  {
+    path: "/api-client",
+    title: "API Client — Test HTTP & REST Requests Online",
+    description:
+      "Free online API client for testing REST endpoints. Build GET, POST, PUT and DELETE requests with headers, query params, auth and body — sent directly from your browser. No proxy, no sign-up.",
+    h1: "Online API Client",
+  },
 ];
 
 export const SEO_PAGES: ReadonlyMap<string, PageSeo> = new Map(
@@ -192,6 +199,7 @@ export const FOOTER_LINKS: ReadonlyArray<{ href: string; label: string }> = [
   { href: "/string-functions", label: "String Functions" },
   { href: "/cryptography-tools", label: "Cryptography" },
   { href: "/compiler", label: "Dart Compiler" },
+  { href: "/api-client", label: "API Client" },
 ];
 
 /** Tool-specific internal link graph — descriptive anchors, real routes only. */
