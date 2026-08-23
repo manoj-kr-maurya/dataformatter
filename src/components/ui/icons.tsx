@@ -424,3 +424,13 @@ export function PanelIcon(props: IconProps) {
     </svg>
   );
 }
+
+export function GlobeIcon(props: IconProps) {
+  return (
+    <svg {...base} {...props}>
+      <circle cx="12" cy="12" r="9" />
+      <line x1="3" x2="21" y1="12" y2="12" />
+      <ellipse cx="12" cy="12" rx="4" ry="9" />
+    </svg>
+  );
+}
