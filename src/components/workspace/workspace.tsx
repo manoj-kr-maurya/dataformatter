@@ -528,7 +528,7 @@ const nativeShareAvailable =
         />
       </div>
 
-      <div className="flex min-h-0 flex-1 flex-col px-3 py-2 sm:px-4">
+      <div className="flex min-h-0 flex-1 flex-col pl-1.5 pr-3 py-2 sm:pl-2 sm:pr-4">
         {view === "single" ? (
           <SingleView
             title={singleLabel}
