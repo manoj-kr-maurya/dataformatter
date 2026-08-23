@@ -2,15 +2,18 @@ import { describe, expect, it } from "vitest";
 import sitemap from "@/app/sitemap";
 import robots from "@/app/robots";
 import {
+  BREADCRUMBS,
   FOOTER_LINKS,
   HEADER_LINKS,
   RELATED_LINKS,
   SEO_PAGES,
   SITE_NAME,
   SITE_URL,
+  breadcrumbJsonLd,
   buildMetadata,
   faqJsonLd,
   serializeJsonLd,
+  softwareApplicationJsonLd,
 } from "@/lib/seo";
 
 const pages = Array.from(SEO_PAGES.values());
@@ -134,6 +137,48 @@ describe("internal link graph", () => {
     for (const page of pages) {
       if (page.path === "/") return;
       expect(RELATED_LINKS[page.path]?.length ?? 0, page.path).toBeGreaterThan(0);
+    }
+  });
+});
+
+describe("breadcrumbs", () => {
+  it("covers every registered page with a trail ending at itself", () => {
+    for (const page of pages) {
+      const trail = BREADCRUMBS[page.path];
+      expect(trail, page.path).toBeDefined();
+      expect(trail[0]).toEqual({ name: "Home", href: "/" });
+      const last = trail[trail.length - 1];
+      expect(last.href, page.path).toBe(page.path);
+    }
+  });
+
+  it("only references registered routes in trails", () => {
+    for (const trail of Object.values(BREADCRUMBS)) {
+      for (const item of trail) {
+        expect(SEO_PAGES.has(item.href), item.href).toBe(true);
+      }
+    }
+  });
+
+  it("produces BreadcrumbList markup with absolute URLs and 1-based positions", () => {
+    const json = breadcrumbJsonLd("/url-encoder");
+    expect(json["@type"]).toBe("BreadcrumbList");
+    expect(json.itemListElement[0].item).toBe(`${SITE_URL}/`);
+    json.itemListElement.forEach((entry: { position: number }, i: number) => {
+      expect(entry.position).toBe(i + 1);
+    });
+  });
+});
+
+describe("SoftwareApplication structured data", () => {
+  it("marks each page up as a free developer web application", () => {
+    for (const page of pages) {
+      if (page.path === "/") continue;
+      const json = softwareApplicationJsonLd(page);
+      expect(json["@type"]).toBe("SoftwareApplication");
+      expect(json.applicationCategory).toBe("DeveloperApplication");
+      expect(json.url).toBe(`${SITE_URL}${page.path}`);
+      expect(json.offers.price).toBe("0");
     }
   });
 });

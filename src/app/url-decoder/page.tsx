@@ -1,7 +1,18 @@
 import type { Metadata } from "next";
 import { ToolLandingPage } from "@/components/seo/tool-landing";
 import { EmbeddedWorkspace } from "@/components/seo/embedded-workspace";
-import { Section, Bullets, Faq, FaqJsonLd, Example } from "@/components/seo/content-blocks";
+import {
+  Section,
+  Bullets,
+  Faq,
+  FaqJsonLd,
+  Example,
+  QuickStart,
+  UseCases,
+  Troubleshooting,
+  Glossary,
+  ProTips,
+} from "@/components/seo/content-blocks";
 import { buildMetadata } from "@/lib/seo";
 
 export const metadata: Metadata = buildMetadata("/url-decoder");
@@ -19,6 +30,14 @@ const faqs = [
     q: "Does it turn + into spaces?",
     a: "No — this tool decodes percent-encoding only, matching decodeURIComponent. The '+' convention belongs to form encoding (application/x-www-form-urlencoded).",
   },
+  {
+    q: "Why do I need to decode twice sometimes?",
+    a: "Double encoding happens when software escapes an already-escaped value (%2520 instead of %20). Decode repeatedly until the output stops changing — that's your original text.",
+  },
+  {
+    q: "Can it decode a full URL with many parameters at once?",
+    a: "Yes. Paste the whole query string; every escape is decoded in place so you can read all parameter values exactly as the server would see them.",
+  },
 ] as const;
 
 export default function UrlDecoderPage() {
@@ -28,6 +47,13 @@ export default function UrlDecoderPage() {
       summary="Decode percent-encoded URLs and query strings online. Paste an encoded string into the live tool below and read it as plain text instantly — entirely browser-based, nothing uploaded."
     >
       <EmbeddedWorkspace mode="URL_DECODE" label="URL decoder editor" />
+      <QuickStart
+        steps={[
+          "Paste the encoded URL, query string or parameter above.",
+          "The readable text appears instantly, escapes decoded in place.",
+          "Copy the result — done.",
+        ]}
+      />
       <FaqJsonLd items={faqs} />
 
       <Section title="How URL decoding works">
@@ -56,13 +82,66 @@ export default function UrlDecoderPage() {
         />
       </Section>
 
-      <Section title="When you'll need a URL decoder">
-        <Bullets
+      <Section title="What developers actually decode">
+        <UseCases
+          cases={[
+            {
+              title: "Reading tracking & redirect links",
+              body: "Marketing links bury three layers of parameters inside each other. Decode layer by layer to see the true destination before clicking.",
+            },
+            {
+              title: "Debugging logged requests",
+              body: "Server logs store URLs encoded for safety. Decode them here to reconstruct what users and clients actually sent.",
+            },
+            {
+              title: "Untangling OAuth callbacks",
+              body: "Redirect URIs arrive double-encoded through several hops. Decoding reveals the state, code and error parameters your flow depends on.",
+            },
+          ]}
+        />
+      </Section>
+
+      <Section title="Decoding errors explained">
+        <Troubleshooting
           items={[
-            "Reading tracking links, UTM parameters and redirect targets",
-            "Inspecting values inside logged request URLs",
-            "Understanding double-encoded parameters in APIs (decode twice if needed)",
-            "Debugging callback URLs and OAuth redirect URIs",
+            {
+              error: "URIError: malformed URI sequence",
+              cause: "A stray percent sign followed by non-hex characters (100% done), or an escape cut in half when the string was split.",
+              fix: "Encode bare percent signs as %25 first, or re-copy the complete encoded value including its final characters.",
+            },
+            {
+              error: "Output contains � replacement characters",
+              cause: "The escape sequence was valid but doesn't form complete UTF-8 — usually half of a multi-byte character got lost upstream.",
+              fix: "Recover the original full string if possible; partial multi-byte sequences cannot be reconstructed faithfully.",
+            },
+            {
+              error: "Decoded text still looks encoded",
+              cause: "The value was double-encoded (%2520 decodes to %20 on the first pass).",
+              fix: "Run the output through decoding again — repeat until nothing changes.",
+            },
+          ]}
+        />
+      </Section>
+
+      <Section title="Pro tips">
+        <ProTips
+          tips={[
+            "After decoding, drop the URL into the URL Parser to see scheme, host, path and each query component laid out separately.",
+            "Reading a token from a redirect? The JWT Decoder picks JWTs out of pasted text automatically.",
+            "Keep word wrap on — long encoded links become far easier to review when they wrap instead of scrolling.",
+            "Share a decoded link plus context with teammates via the Share button without leaving the page.",
+          ]}
+        />
+      </Section>
+
+      <Section title="Decoder glossary">
+        <Glossary
+          terms={[
+            {
+              term: "Mojibake",
+              definition:
+                "Garbled text produced when bytes are decoded using the wrong character encoding. This decoder avoids creating mojibake by strictly validating UTF-8 and erroring on sequences that don't fit.",
+            },
           ]}
         />
       </Section>

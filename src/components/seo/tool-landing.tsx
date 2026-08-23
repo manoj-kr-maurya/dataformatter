@@ -1,7 +1,17 @@
 import type { ReactNode } from "react";
 import Link from "next/link";
 import { Logo } from "@/components/brand/logo";
-import { FOOTER_LINKS, HEADER_LINKS, RELATED_LINKS, SEO_PAGES, SITE_NAME } from "@/lib/seo";
+import {
+  FOOTER_LINKS,
+  HEADER_LINKS,
+  RELATED_LINKS,
+  BREADCRUMBS,
+  SEO_PAGES,
+  serializeJsonLd,
+  softwareApplicationJsonLd,
+  SITE_NAME,
+} from "@/lib/seo";
+import { Breadcrumbs, BreadcrumbJsonLd, LastReviewed } from "@/components/seo/content-blocks";
 
 interface ToolLandingPageProps {
   /** Canonical path registered in the SEO registry. */
@@ -27,6 +37,12 @@ export function ToolLandingPage({ path, summary, children }: ToolLandingPageProp
 
   return (
     <div className="flex min-h-full flex-col bg-zinc-50 text-zinc-900 dark:bg-zinc-950 dark:text-zinc-50">
+      {/* Per-tool SoftwareApplication structured data (free developer web app). */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: serializeJsonLd(softwareApplicationJsonLd(page)) }}
+      />
+      <BreadcrumbJsonLd path={path} />
       <header className="sticky top-0 z-10 flex shrink-0 items-center justify-between gap-3 border-b border-zinc-200 bg-zinc-50/90 px-4 py-2.5 backdrop-blur dark:border-zinc-800 dark:bg-zinc-950/90">
         <Link href="/" className="flex items-center gap-2.5" aria-label={`${SITE_NAME} home`}>
           <Logo className="h-8 w-8 rounded-lg" />
@@ -53,6 +69,7 @@ export function ToolLandingPage({ path, summary, children }: ToolLandingPageProp
       </header>
 
       <main className="mx-auto w-full max-w-3xl flex-1 px-4 py-8 sm:px-6">
+        <Breadcrumbs items={BREADCRUMBS[path] ?? [{ name: "Home", href: "/" }]} />
         <h1 className="text-3xl font-bold tracking-tight text-zinc-900 dark:text-zinc-50">
           {page.h1}
         </h1>
@@ -84,7 +101,11 @@ export function ToolLandingPage({ path, summary, children }: ToolLandingPageProp
 
       <footer className="shrink-0 border-t border-zinc-200 bg-white px-4 py-4 dark:border-zinc-800 dark:bg-zinc-950">
         <div className="mx-auto w-full max-w-3xl">
-          <p className="text-xs leading-relaxed text-zinc-500 dark:text-zinc-400">
+          <LastReviewed>
+            Last reviewed August 2026 · {SITE_NAME} team — every tool on this site processes data
+            locally in your browser.
+          </LastReviewed>
+          <p className="mt-3 text-xs leading-relaxed text-zinc-500 dark:text-zinc-400">
             {SITE_NAME} — free online developer data tools that run entirely in your browser. Your
             data stays private: nothing you paste is ever uploaded to a server.
           </p>
