@@ -158,6 +158,20 @@ const PAGES: PageSeo[] = [
       "Build GET, POST, PUT and DELETE requests with headers, auth and JSON bodies, sent straight from your browser. Import cURL commands — no proxy, no signup.",
     h1: "Online API Client",
   },
+  {
+    path: "/about",
+    title: "About DataFormatter – Free, Private, Browser-Based Dev Tools",
+    description:
+      "DataFormatter is a free suite of browser-based developer tools — JSON, Base64, JWT, hashes, compilers and an API client. Everything runs locally in your tab by design: no uploads, no accounts, no data collection.",
+    h1: "About DataFormatter",
+  },
+  {
+    path: "/contact",
+    title: "Contact DataFormatter – Feedback, Bugs & Feature Requests",
+    description:
+      "Found a bug, have a feature idea or just want to say hi? Open an issue on the DataFormatter repository — every report lands in front of the maintainer who builds the tools.",
+    h1: "Contact DataFormatter",
+  },
 ];
 
 export const SEO_PAGES: ReadonlyMap<string, PageSeo> = new Map(
@@ -200,6 +214,8 @@ export const FOOTER_LINKS: ReadonlyArray<{ href: string; label: string }> = [
   { href: "/cryptography-tools", label: "Cryptography" },
   { href: "/compiler", label: "Dart Compiler" },
   { href: "/api-client", label: "API Client" },
+  { href: "/about", label: "About" },
+  { href: "/contact", label: "Contact" },
 ];
 
 /** Tool-specific internal link graph — descriptive anchors, real routes only.
@@ -308,6 +324,18 @@ export const RELATED_LINKS: Readonly<Record<string, ReadonlyArray<{ href: string
     { href: "/json-validator", label: "JSON Validator — check payloads" },
     { href: "/jwt-decoder", label: "JWT Decoder — debug bearer tokens" },
     { href: "/compiler", label: "Dart Compiler — generate request scripts" },
+  ],
+  "/about": [
+    { href: "/api-client", label: "API Client — test REST APIs in-browser" },
+    { href: "/compiler", label: "Online Compiler — run Dart, JS & TypeScript" },
+    { href: "/contact", label: "Contact — feedback & bug reports" },
+    { href: "/json-formatter", label: "JSON Formatter — the flagship tool" },
+  ],
+  "/contact": [
+    { href: "/about", label: "About DataFormatter — how the tools work" },
+    { href: "/json-formatter", label: "JSON Formatter" },
+    { href: "/base64-decoder", label: "Base64 Decoder" },
+    { href: "/jwt-decoder", label: "JWT Decoder" },
   ],
 };
 
@@ -425,6 +453,14 @@ export const BREADCRUMBS: Readonly<Record<string, ReadonlyArray<{ name: string; 
   "/api-client": [
     { name: "Home", href: "/" },
     { name: "API Client", href: "/api-client" },
+  ],
+  "/about": [
+    { name: "Home", href: "/" },
+    { name: "About", href: "/about" },
+  ],
+  "/contact": [
+    { name: "Home", href: "/" },
+    { name: "Contact", href: "/contact" },
   ],
 };
 

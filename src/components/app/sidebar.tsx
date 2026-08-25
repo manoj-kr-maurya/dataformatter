@@ -623,6 +623,25 @@ export function Sidebar({ activeHref, mode, onSelectTool, open = false, onClose 
                 </div>
               );
             })}
+
+            {/* Meta pages — mirrors the desktop rail's About/Contact row. */}
+            <div className="mt-2 flex items-center gap-2 border-t border-zinc-200 px-2 pt-2 dark:border-zinc-800">
+              <Link
+                href="/about"
+                onClick={onClose}
+                className="rounded px-1.5 py-1 text-xs font-medium text-zinc-400 transition-colors hover:text-violet-600 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-violet-500 dark:text-zinc-500 dark:hover:text-violet-300"
+              >
+                About
+              </Link>
+              <span aria-hidden="true" className="text-zinc-300 dark:text-zinc-700">·</span>
+              <Link
+                href="/contact"
+                onClick={onClose}
+                className="rounded px-1.5 py-1 text-xs font-medium text-zinc-400 transition-colors hover:text-violet-600 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-violet-500 dark:text-zinc-500 dark:hover:text-violet-300"
+              >
+                Contact
+              </Link>
+            </div>
           </div>
         </div>
       )}
@@ -658,6 +677,22 @@ export function Sidebar({ activeHref, mode, onSelectTool, open = false, onClose 
 
         <div className="flex min-h-0 flex-1 flex-col gap-0.5 overflow-y-auto overscroll-contain p-1.5">
           {RAIL_SECTIONS.map((section) => renderRailItem(section))}
+        </div>
+
+        {/* Meta pages — the only in-app entry points to /about and /contact. */}
+        <div className="flex shrink-0 flex-col items-center gap-0.5 border-t border-zinc-200 px-1 py-1.5 dark:border-zinc-800">
+          <Link
+            href="/about"
+            className="rounded px-2 py-0.5 text-[10px] font-medium text-zinc-400 transition-colors hover:text-violet-600 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-violet-500 dark:text-zinc-500 dark:hover:text-violet-300"
+          >
+            About
+          </Link>
+          <Link
+            href="/contact"
+            className="rounded px-2 py-0.5 text-[10px] font-medium text-zinc-400 transition-colors hover:text-violet-600 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-violet-500 dark:text-zinc-500 dark:hover:text-violet-300"
+          >
+            Contact
+          </Link>
         </div>
 
         {panelOpen && !picked && activeSection && (
