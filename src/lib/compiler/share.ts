@@ -1,14 +1,17 @@
 import { encodeBase64Url, decodeBase64Url } from "@/lib/share/base64url";
 import { decodeUtf8, encodeUtf8, shareCodecById } from "@/lib/share/codec";
+import type { CompilerLanguage } from "@/lib/compiler/examples";
 
 /**
- * Share links for the Dart compiler playground. Deliberately separate from
+ * Share links for the compiler playground. Deliberately separate from
  * the workspace `#/share/` payload (whose compact tool-code table is
  * append-only and tool-specific) — compiler links use their own hash prefix:
  *
  *   #/dart/<codecId>/<base64url(JSON)>
  *
- * where JSON is `{ c: string, s?: string }` (code, optional stdin).
+ * where JSON is `{ c: string, s?: string, l?: "js" | "ts" }` (code, optional
+ * stdin, optional language). The legacy `#/dart/` prefix stays so existing
+ * Dart links keep working; Dart shares omit `l`, JS/TS ones set it.
  */
 
 export const COMPILER_HASH_PREFIX = "#/dart/";
@@ -18,6 +21,8 @@ export const COMPILER_SHARE_LIMIT_CHARS = 32_000;
 export interface CompilerSharePayload {
   code: string;
   stdin: string;
+  /** Defaults to `"dart"`; only JS/TS links carry the field on the wire. */
+  language?: CompilerLanguage;
 }
 
 export interface CompilerShareLinkResult {
@@ -69,7 +74,11 @@ export function extractCompilerShare(url: string): ExtractedCompilerHash {
 export async function createCompilerShareLink(
   payload: CompilerSharePayload,
 ): Promise<CompilerShareLinkResult> {
-  const json = JSON.stringify({ c: payload.code, s: payload.stdin });
+  const json = JSON.stringify(
+    payload.language && payload.language !== "dart"
+      ? { c: payload.code, s: payload.stdin, l: payload.language }
+      : { c: payload.code, s: payload.stdin },
+  );
   const source = encodeUtf8(json);
 
   let codecId = "r";
@@ -133,7 +142,12 @@ export async function restoreCompilerShare(url: string): Promise<CompilerRestore
     }
     return {
       status: "ok",
-      payload: { code: record.c, stdin: typeof record.s === "string" ? record.s : "" },
+      payload: {
+        code: record.c,
+        stdin: typeof record.s === "string" ? record.s : "",
+        language:
+          record.l === "js" ? ("js" as const) : record.l === "ts" ? ("ts" as const) : ("dart" as const),
+      },
     };
   } catch {
     return failure;

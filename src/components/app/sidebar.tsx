@@ -61,8 +61,8 @@ type IconComponent = ComponentType<SVGProps<SVGSVGElement>>;
 interface RailSubItem {
   id: string;
   label: string;
-  /** Defaults to the parent section's page. */
-  href?: PageHref;
+  /** Defaults to the parent section's page. May carry a query (e.g. ?lang=). */
+  href?: string;
   title?: string;
 }
 
@@ -177,9 +177,21 @@ const RAIL_SECTIONS: RailSection[] = [
     href: "/compiler",
     tools: [],
     subItems: [
-      { id: "dart", label: "Dart", title: "Run Dart in your browser" },
+      { id: "dart", href: "/compiler?lang=dart", label: "Dart", title: "Run Dart in your browser" },
+      {
+        id: "js",
+        href: "/compiler?lang=js",
+        label: "JavaScript",
+        title: "Run JavaScript in a sandboxed worker",
+      },
+      {
+        id: "ts",
+        href: "/compiler?lang=ts",
+        label: "TypeScript",
+        title: "Transpile & run TypeScript in your browser",
+      },
     ],
-    title: "Compiler — run code in your browser (Dart today, more languages soon)",
+    title: "Compiler — run Dart, JavaScript and TypeScript in your browser",
   },
   {
     id: "api",

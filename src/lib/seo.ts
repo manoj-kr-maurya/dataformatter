@@ -146,10 +146,10 @@ const PAGES: PageSeo[] = [
   },
   {
     path: "/compiler",
-    title: "Online Dart Compiler – Run Dart in Browser",
+    title: "Online Dart, JS & TypeScript Compiler – Run in Browser",
     description:
-      "Write, compile and execute Dart instantly via WebAssembly — with stdin support and shareable links. No server round-trips, no signup; code is never uploaded.",
-    h1: "Online Dart Compiler",
+      "Write, compile and run Dart, JavaScript or TypeScript instantly in your browser — Dart via WebAssembly, JS/TS in a sandboxed worker. No signup; code never leaves your machine.",
+    h1: "Online Dart, JavaScript & TypeScript Compiler",
   },
   {
     path: "/api-client",
@@ -420,7 +420,7 @@ export const BREADCRUMBS: Readonly<Record<string, ReadonlyArray<{ name: string; 
   ],
   "/compiler": [
     { name: "Home", href: "/" },
-    { name: "Online Dart Compiler", href: "/compiler" },
+    { name: "Online Dart, JavaScript & TypeScript Compiler", href: "/compiler" },
   ],
   "/api-client": [
     { name: "Home", href: "/" },

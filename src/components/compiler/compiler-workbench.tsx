@@ -2,11 +2,12 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { EditorView, keymap } from "@codemirror/view";
 import { Prec } from "@codemirror/state";
 import { StreamLanguage } from "@codemirror/language";
 import { dart } from "@codemirror/legacy-modes/mode/clike";
+import { javascript } from "@codemirror/legacy-modes/mode/javascript";
 import CodeMirror from "@uiw/react-codemirror";
 import {
   AlertIcon,
@@ -33,13 +34,36 @@ import {
   type RunState,
   type WorkbenchEvent,
 } from "@/lib/compiler/run-controller";
-import { COMPILER_EXAMPLES, DEFAULT_EXAMPLE } from "@/lib/compiler/examples";
+import {
+  COMPILER_EXAMPLES_BY_LANGUAGE,
+  DEFAULT_EXAMPLE,
+  DEFAULT_EXAMPLE_BY_LANGUAGE,
+  type CompilerExample,
+  type CompilerLanguage,
+} from "@/lib/compiler/examples";
 import { createCompilerShareLink, restoreCompilerShare } from "@/lib/compiler/share";
+import { JsRunner } from "@/lib/compiler/js-runner";
+import { transpileTypeScript } from "@/lib/compiler/ts-transpile";
 
 /**
- * The Dart compiler playground. One engine instance per page; all browser
- * APIs are touched from effects only so the prerender pass stays clean.
+ * The compiler playground — Dart, JavaScript and TypeScript.
+ *
+ * Dart runs on the self-hosted WebAssembly engine (one instance per page).
+ * JavaScript runs directly in a sandboxed Web Worker; TypeScript is
+ * transpiled in-browser (type-check-free) first, then executed the same way.
+ * All browser APIs are touched from effects or event handlers only so the
+ * prerender pass stays clean.
  */
+
+const LANGUAGES: { id: CompilerLanguage; label: string; file: string; tab: string }[] = [
+  { id: "dart", label: "Dart", file: "main.dart", tab: "Dart" },
+  { id: "js", label: "JavaScript", file: "index.js", tab: "JS" },
+  { id: "ts", label: "TypeScript", file: "index.ts", tab: "TS" },
+];
+
+function languageById(id: CompilerLanguage) {
+  return LANGUAGES.find((entry) => entry.id === id) ?? LANGUAGES[0];
+}
 
 const RUN_LABELS: Record<RunState, string> = {
   idle: "",
@@ -62,7 +86,22 @@ const RUN_TONES: Record<RunState, string> = {
 
 export function CompilerWorkbench() {
   const router = useRouter();
-  const [code, setCode] = useState(DEFAULT_EXAMPLE.code);
+  const searchParams = useSearchParams();
+  const [language, setLanguage] = useState<CompilerLanguage>(
+    searchParams.get("lang") === "js"
+      ? "js"
+      : searchParams.get("lang") === "ts"
+        ? "ts"
+        : searchParams.get("lang") === "dart"
+          ? "dart"
+          : "dart",
+  );
+  // Separate drafts per language so switching tabs never loses code.
+  const [codeByLanguage, setCodeByLanguage] = useState<Record<CompilerLanguage, string>>({
+    dart: DEFAULT_EXAMPLE.code,
+    js: DEFAULT_EXAMPLE_BY_LANGUAGE.js.code,
+    ts: DEFAULT_EXAMPLE_BY_LANGUAGE.ts.code,
+  });
   const [stdinText, setStdinText] = useState(DEFAULT_EXAMPLE.stdin);
   const [stdinOpen, setStdinOpen] = useState(DEFAULT_EXAMPLE.stdin.length > 0);
   const [output, setOutput] = useState<{ level: string; message: string; id: number }[]>([]);
@@ -74,6 +113,8 @@ export function CompilerWorkbench() {
   const [elapsedMs, setElapsedMs] = useState<number | null>(null);
   const [engineError, setEngineError] = useState<string | null>(null);
 
+  const code = codeByLanguage[language];
+
   // Collapsible sidebar: visible by default so users can hop back to the
   // other tools; collapsed state persists across visits. On mobile (< sm)
   // the rail is hidden and the header button opens the drawer instead.
@@ -81,6 +122,7 @@ export function CompilerWorkbench() {
   const [navDrawerOpen, setNavDrawerOpen] = useState(false);
 
   const engineRef = useRef<CompilerEngine | null>(null);
+  const jsRunnerRef = useRef<JsRunner | null>(null);
   const outputRef = useRef<HTMLDivElement>(null);
   const runStartRef = useRef(0);
 
@@ -91,7 +133,7 @@ export function CompilerWorkbench() {
     engineRef.current = new CompilerEngine();
   }
 
-  // Wire the engine's event stream into component state.
+  // Wire the engine's event stream into component state (Dart only).
   useEffect(() => {
     const engine = engineRef.current;
     if (!engine) {
@@ -128,17 +170,26 @@ export function CompilerWorkbench() {
     return engine.subscribe(apply);
   }, []);
 
-  // Warm the engine up on mount (downloads ~8MB wasm in the background).
+  // Warm the Dart engine up (~8MB wasm in the background) — but only while
+  // Dart is the active language, so JS/TS-first visitors don't pay for a
+  // download they never use.
   useEffect(() => {
     const engine = engineRef.current;
-    if (!engine) {
+    if (!engine || language !== "dart") {
       return;
     }
     void engine.preload().catch((error: unknown) => {
       setEngineError(error instanceof Error ? error.message : String(error));
     });
+  }, [language]);
+
+  // Dispose exactly once on unmount — not on language switches, which must
+  // leave a warmed-up Dart session intact for when the user returns.
+  useEffect(() => {
+    const engine = engineRef.current;
     return () => {
-      void engine.dispose();
+      void engine?.dispose();
+      jsRunnerRef.current?.dispose();
     };
   }, []);
 
@@ -155,32 +206,116 @@ export function CompilerWorkbench() {
       if (cancelled || result.status !== "ok") {
         return;
       }
-      setCode(result.payload.code);
-      setStdinText(result.payload.stdin);
-      setStdinOpen(result.payload.stdin.length > 0);
+      const shared = result.payload;
+      const lang = shared.language ?? "dart";
+      setLanguage(lang);
+      setCodeByLanguage((prev) => ({ ...prev, [lang]: shared.code }));
+      setStdinText(shared.stdin);
+      setStdinOpen(shared.stdin.length > 0);
     })();
     return () => {
       cancelled = true;
     };
   }, []);
 
+  /** Ensure the lazy JS runner exists and streams console lines. */
+  const ensureJsRunner = useCallback((): JsRunner => {
+    if (jsRunnerRef.current == null) {
+      const runner = new JsRunner();
+      runner.onConsole((level, message) => {
+        setOutput((prev) => appendLine(prev, level, message));
+      });
+      jsRunnerRef.current = runner;
+    }
+    return jsRunnerRef.current;
+  }, []);
+
   const handleRun = useCallback(async () => {
-    const engine = engineRef.current;
-    if (!engine || runState === "compiling" || runState === "running") {
+    if (runState === "compiling" || runState === "running") {
       return;
     }
     runStartRef.current = performance.now();
-    try {
-      await engine.run(code, stdinText);
-    } catch {
-      // State + notice already emitted by the engine.
+
+    if (language === "dart") {
+      const engine = engineRef.current;
+      if (!engine || phase === "booting") {
+        return;
+      }
+      try {
+        await engine.run(codeByLanguage.dart, stdinText);
+      } catch {
+        // State + notice already emitted by the engine.
+      }
+      return;
     }
-  }, [code, stdinText, runState]);
+
+    // JS / TS: transpile (TS only), then execute inside the worker.
+    setNotice(null);
+    setElapsedMs(null);
+    setOutput([]);
+    let source = code;
+    if (language === "ts") {
+      setRunState("compiling");
+      try {
+        source = await transpileTypeScript(code);
+      } catch (error) {
+        setRunState("compile-error");
+        setElapsedMs(Math.round(performance.now() - runStartRef.current));
+        setNotice(error instanceof Error ? error.message : String(error));
+        return;
+      }
+    }
+    setRunState("running");
+    const runner = ensureJsRunner();
+    const result = await runner.run(source, stdinText);
+    setElapsedMs(Math.round(performance.now() - runStartRef.current));
+    if (result.status === "done") {
+      setRunState("done");
+    } else if (result.status === "timeout") {
+      setRunState("runtime-error");
+      setNotice("The program ran longer than 10 seconds and was stopped.");
+    } else {
+      setRunState("runtime-error");
+      setNotice(result.message ?? "The program crashed.");
+    }
+  }, [language, runState, phase, code, codeByLanguage.dart, stdinText, ensureJsRunner]);
 
   const handleReset = useCallback(async () => {
     setOutput([]);
-    await engineRef.current?.reset();
+    setNotice(null);
+    setElapsedMs(null);
+    if (language === "dart") {
+      await engineRef.current?.reset();
+    } else {
+      jsRunnerRef.current?.dispose();
+      jsRunnerRef.current = null;
+      setRunState("idle");
+    }
+  }, [language]);
+
+  /** Swap languages: keep each draft, clear the shared output pane. */
+  const switchLanguage = useCallback((next: CompilerLanguage) => {
+    setLanguage(next);
+    setOutput([]);
+    setNotice(null);
+    setElapsedMs(null);
+    setRunState("idle");
+    setExamplesOpen(false);
   }, []);
+
+  // Deep links: sidebar fly-out and URLs like /compiler?lang=ts select the
+  // language tab directly. Adjusting during render (not in an effect), per
+  // the React docs' derived-state pattern, keeps this cascade-free.
+  const langParam = searchParams.get("lang");
+  const [appliedLangParam, setAppliedLangParam] = useState(langParam);
+  if (
+    (langParam === "dart" || langParam === "js" || langParam === "ts") &&
+    langParam !== appliedLangParam &&
+    langParam !== language
+  ) {
+    setAppliedLangParam(langParam);
+    switchLanguage(langParam);
+  }
 
   /** Fly-out tool picks navigate to the page hosting that tool. */
   const handleToolSelect = useCallback(
@@ -212,7 +347,7 @@ export function CompilerWorkbench() {
   }, [handleRun]);
 
   const handleShare = useCallback(async () => {
-    const link = await createCompilerShareLink({ code, stdin: stdinText });
+    const link = await createCompilerShareLink({ code, stdin: stdinText, language });
     if (link.tooLarge) {
       setNotice("This program is too large for a share link.");
       return;
@@ -225,9 +360,11 @@ export function CompilerWorkbench() {
     await copyToClipboard(link.url);
     setCopied(true);
     window.setTimeout(() => setCopied(false), 1600);
-  }, [code, stdinText]);
+  }, [code, stdinText, language]);
 
   const busy = runState === "compiling" || runState === "running";
+  const activeLang = languageById(language);
+  const usingEngine = language === "dart";
 
   return (
     <div className="flex h-dvh flex-col">
@@ -261,25 +398,51 @@ export function CompilerWorkbench() {
           </Link>
           <div className="min-w-0 leading-tight">
             <p className="truncate text-sm font-semibold text-zinc-900 dark:text-zinc-100">
-              Dart Playground{" "}
+              {activeLang.label} Playground{" "}
               <span className="ml-1 align-middle text-[10px] font-medium uppercase tracking-wide text-violet-600 dark:text-violet-300">
                 beta
               </span>
             </p>
             <p className="truncate text-[11px] text-zinc-500 dark:text-zinc-400">
-              Compile &amp; run Dart entirely in your browser
+              Compile &amp; run entirely in your browser — nothing leaves your machine
             </p>
+          </div>
+          {/* Language switcher */}
+          <div
+            role="tablist"
+            aria-label="Playground language"
+            className="ml-1 flex shrink-0 items-center rounded-md border border-zinc-200 p-0.5 dark:border-zinc-700"
+          >
+            {LANGUAGES.map((entry) => (
+              <button
+                key={entry.id}
+                type="button"
+                role="tab"
+                aria-selected={language === entry.id}
+                onClick={() => switchLanguage(entry.id)}
+                title={entry.label}
+                className={`rounded px-2 py-1 text-xs font-medium transition-colors focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-violet-500 ${
+                  language === entry.id
+                    ? "bg-violet-600 text-white"
+                    : "text-zinc-500 hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-zinc-100"
+                }`}
+              >
+                {entry.tab}
+              </button>
+            ))}
           </div>
         </div>
         <div className="flex items-center gap-2">
           <ExamplesMenu
             open={examplesOpen}
             onOpenChange={setExamplesOpen}
+            examples={COMPILER_EXAMPLES_BY_LANGUAGE[language]}
             onPick={(example) => {
-              setCode(example.code);
+              setCodeByLanguage((prev) => ({ ...prev, [language]: example.code }));
               setStdinText(example.stdin);
               setStdinOpen(example.stdin.length > 0);
               setOutput([]);
+              setNotice(null);
               setElapsedMs(null);
             }}
           />
@@ -301,16 +464,20 @@ export function CompilerWorkbench() {
         {/* Editor column */}
         <section className="flex min-h-0 flex-1 flex-col border-b border-zinc-200 dark:border-zinc-800 lg:border-b-0 lg:border-r">
           <div className="flex h-9 shrink-0 items-center gap-2 border-b border-zinc-200 px-3 dark:border-zinc-800">
-            <span className="text-xs font-medium text-zinc-600 dark:text-zinc-300">main.dart</span>
+            <span className="text-xs font-medium text-zinc-600 dark:text-zinc-300">{activeLang.file}</span>
             <span className="ml-auto text-[11px] text-zinc-400 dark:text-zinc-500">
               ⌘/Ctrl + ↵ to run
             </span>
           </div>
           <div className="min-h-0 flex-1 overflow-hidden">
             <CodeMirror
+              /* Remount per language: swapping both value and extensions on
+                 one live view makes @uiw/react-codemirror drop the new value.
+                 Drafts live in React state, so nothing is lost. */
+              key={language}
               value={code}
-              onChange={setCode}
-              extensions={dartExtensions}
+              onChange={(value) => setCodeByLanguage((prev) => ({ ...prev, [language]: value }))}
+              extensions={language === "dart" ? dartExtensions : javascriptExtensions}
               theme={editorTheme}
               /* Stretch to the pane so the editor — not its clipped wrapper —
                  owns scrolling, and clicks on blank space land inside CM. */
@@ -325,7 +492,7 @@ export function CompilerWorkbench() {
                 autocompletion: false,
                 highlightSelectionMatches: true,
               }}
-              aria-label="Dart source code"
+              aria-label={`${activeLang.label} source code`}
             />
           </div>
         </section>
@@ -335,7 +502,7 @@ export function CompilerWorkbench() {
           <div className="flex min-h-0 flex-1 flex-col">
             <div className="flex h-9 shrink-0 items-center gap-2 border-y border-zinc-200 px-3 dark:border-zinc-800 lg:border-t-0">
               <span className="text-xs font-medium text-zinc-600 dark:text-zinc-300">Output</span>
-              {phase === "booting" && (
+              {usingEngine && phase === "booting" && (
                 <span className="inline-flex items-center gap-1 text-[11px] text-violet-600 dark:text-violet-300">
                   <LoaderIcon className="h-3 w-3 animate-spin" /> Loading Dart engine…
                 </span>
@@ -382,7 +549,7 @@ export function CompilerWorkbench() {
             </div>
           </div>
 
-          {/* stdin */}
+          {/* stdin — same layout for every language, per-language hint */}
           <div className="shrink-0 border-t border-zinc-200 dark:border-zinc-800">
             <button
               type="button"
@@ -418,11 +585,20 @@ export function CompilerWorkbench() {
                   className="h-auto max-h-40 w-full resize-y rounded-md border border-zinc-300 bg-white p-2 font-mono text-[13px] text-zinc-800 placeholder:text-zinc-400 focus-visible:outline-2 focus-visible:outline-violet-500 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-200 dark:placeholder:text-zinc-500"
                 />
                 <p className="mt-1 text-[11px] leading-snug text-zinc-400 dark:text-zinc-500">
-                  Browsers have no real stdin. Read these lines in Dart with:
-                  <code className="ml-1 rounded bg-zinc-100 px-1 py-0.5 font-mono text-[10px] dark:bg-zinc-800">
-                    @JS(&apos;dartpadReadLine&apos;) external String? dartpadReadLine();
-                  </code>{" "}
-                  via <code className="font-mono text-[10px]">dart:js_interop</code>.
+                  {usingEngine ? (
+                    <>
+                      Browsers have no real stdin. Read these lines in Dart with:
+                      <code className="ml-1 rounded bg-zinc-100 px-1 py-0.5 font-mono text-[10px] dark:bg-zinc-800">
+                        @JS(&apos;dartpadReadLine&apos;) external String? dartpadReadLine();
+                      </code>{" "}
+                      via <code className="font-mono text-[10px]">dart:js_interop</code>.
+                    </>
+                  ) : (
+                    <>
+                      Call <code className="rounded bg-zinc-100 px-1 py-0.5 font-mono text-[10px] dark:bg-zinc-800">readLine()</code> to get
+                      the next line (<code className="font-mono text-[10px]">null</code> when exhausted).
+                    </>
+                  )}
                 </p>
               </div>
             )}
@@ -434,13 +610,19 @@ export function CompilerWorkbench() {
               variant="primary"
               size="md"
               onClick={() => void handleRun()}
-              disabled={busy || phase === "booting"}
-              title="Compile and run (⌘/Ctrl + Enter)"
+              disabled={(usingEngine && busy) || (usingEngine && phase === "booting")}
+              title={
+                usingEngine
+                  ? "Compile and run in your browser (⌘/Ctrl + Enter)"
+                  : language === "ts"
+                    ? "Transpile TypeScript and run it in a sandboxed worker (⌘/Ctrl + Enter)"
+                    : "Run in a sandboxed worker (⌘/Ctrl + Enter)"
+              }
             >
               {busy ? <LoaderIcon className="h-4 w-4 animate-spin" /> : <PlayIcon className="h-4 w-4" />}
               Run
             </Button>
-            <Button size="md" onClick={() => void handleReset()} disabled={phase !== "ready"} title="Kill the running program and reset state">
+            <Button size="md" onClick={() => void handleReset()} disabled={usingEngine && phase !== "ready"} title="Kill the running program and reset state">
               <RotateIcon className="h-4 w-4" />
               Reset
             </Button>
@@ -491,11 +673,13 @@ function appendLine(
 function ExamplesMenu({
   open,
   onOpenChange,
+  examples,
   onPick,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onPick: (example: (typeof COMPILER_EXAMPLES)[number]) => void;
+  examples: CompilerExample[];
+  onPick: (example: CompilerExample) => void;
 }) {
   return (
     <div className="relative">
@@ -509,7 +693,7 @@ function ExamplesMenu({
             role="menu"
             className="absolute right-0 top-full z-50 mt-1 w-64 rounded-lg border border-zinc-200 bg-white p-1 shadow-xl dark:border-zinc-800 dark:bg-zinc-900"
           >
-            {COMPILER_EXAMPLES.map((example) => (
+            {examples.map((example) => (
               <li key={example.name} role="none">
                 <button
                   type="button"
@@ -533,12 +717,14 @@ function ExamplesMenu({
 }
 
 const dartLanguage = StreamLanguage.define(dart);
+const jsLanguage = StreamLanguage.define(javascript);
 
 /**
- * Static extensions for the Dart editor. The ⌘/Ctrl+Enter binding routes to
+ * Static extensions for the editors. The ⌘/Ctrl+Enter binding routes to
  * the latest run handler via a ref so the extension list stays referentially
  * stable (CodeMirror reconfigures on identity change).
  */
+
 /**
  * Clicking the blank space below the code should drop the caret at the end
  * of the last line that actually has content (not on a phantom trailing
@@ -565,22 +751,30 @@ const blankClickToLastCodeLine = EditorView.domEventHandlers({
   },
 });
 
+const modEnterKeymap = Prec.highest(
+  keymap.of([
+    {
+      key: "Mod-Enter",
+      run: () => {
+        globalRunHandler?.();
+        return true;
+      },
+    },
+  ]),
+);
+
 const dartExtensions = [
   dartLanguage,
   blankClickToLastCodeLine,
-  Prec.highest(
-    keymap.of([
-      {
-        key: "Mod-Enter",
-        run: () => {
-          globalRunHandler?.();
-          return true;
-        },
-      },
-    ]),
-  ),
+  modEnterKeymap,
+  EditorView.lineWrapping,
+];
+
+const javascriptExtensions = [
+  jsLanguage,
+  blankClickToLastCodeLine,
+  modEnterKeymap,
   EditorView.lineWrapping,
 ];
 
 let globalRunHandler: (() => void) | null = null;
-

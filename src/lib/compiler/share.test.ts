@@ -31,6 +31,20 @@ describe("compiler share links", () => {
     expect(restored.status).toBe("ok");
     if (restored.status === "ok") {
       expect(restored.payload.stdin).toBe("");
+      expect(restored.payload.language).toBe("dart");
+    }
+  });
+
+  it("round-trips JS/TS links with the language marker", async () => {
+    for (const language of ["js", "ts"] as const) {
+      const program = `console.log("hi from ${language}");`;
+      const link = await createCompilerShareLink({ code: program, stdin: "", language });
+      const restored = await restoreCompilerShare(link.url);
+      expect(restored.status).toBe("ok");
+      if (restored.status === "ok") {
+        expect(restored.payload.language).toBe(language);
+        expect(restored.payload.code).toBe(program);
+      }
     }
   });
 
