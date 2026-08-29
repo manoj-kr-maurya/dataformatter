@@ -18,7 +18,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Logo } from "@/components/brand/logo";
 import { ThemeToggle } from "@/components/theme/theme-toggle";
-import { Sidebar, pageHrefForTool } from "@/components/app/sidebar";
+import { Sidebar, pageHrefForTool, type PageHref } from "@/components/app/sidebar";
 import { usePersistedState } from "@/hooks/usePersistedState";
 import { AUTO_DETECT } from "@/lib/tools";
 import type { ToolMode } from "@/types/tools";
@@ -115,7 +115,7 @@ function describeDraft(draft: RequestDraft): string {
   return label.length > 64 ? `${label.slice(0, 61)}…` : label;
 }
 
-export function ApiClientWorkbench() {
+export function ApiClientWorkbench({ activeHref = "/api-client" }: { activeHref?: PageHref }) {
   const router = useRouter();
   const [draft, setDraft] = useState<RequestDraft>(exampleDraft());
   const [requestTab, setRequestTab] = useState<RequestTab>("params");
@@ -386,7 +386,7 @@ export function ApiClientWorkbench() {
       <div className="flex min-h-0 min-w-0 flex-1">
         {navExpanded && (
           <Sidebar
-            activeHref="/api-client"
+            activeHref={activeHref}
             mode={AUTO_DETECT}
             onSelectTool={handleToolSelect}
             open={navDrawerOpen}

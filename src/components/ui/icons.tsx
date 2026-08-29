@@ -434,3 +434,40 @@ export function GlobeIcon(props: IconProps) {
     </svg>
   );
 }
+
+export function ClockIcon(props: IconProps) {
+  return (
+    <svg {...base} {...props}>
+      <circle cx="12" cy="12" r="9" />
+      <path d="M12 7v5l3 2" />
+    </svg>
+  );
+}
+
+export function CalculatorIcon(props: IconProps) {
+  return (
+    <svg {...base} {...props}>
+      <rect x="4" y="2" width="16" height="20" rx="2" />
+      <line x1="8" x2="16" y1="6" y2="6" />
+      <line x1="8" x2="8" y1="10" y2="10" />
+      <line x1="8" x2="16" y1="14" y2="14" />
+      <line x1="8" x2="8" y1="17" y2="17" />
+      <line x1="8" x2="16" y1="20" y2="20" />
+      <line x1="16" x2="16" y1="10" y2="10" />
+      <line x1="16" x2="16" y1="17" y2="17" />
+    </svg>
+  );
+}
+
+export function BugIcon(props: IconProps) {
+  return (
+    <svg {...base} {...props}>
+      <rect x="7" y="8" width="10" height="12" rx="3" />
+      <path d="M12 8V4" />
+      <path d="M8 2.5 12 5l4-2.5" />
+      <path d="M4 12h3M17 12h3M5 7l3 3M19 7l-3 3M7 15H4M20 15h-3M5 20l3-3M19 20l-3-3" />
+      <circle cx="9" cy="13" r="0.5" fill="currentColor" stroke="none" />
+      <circle cx="15" cy="13" r="0.5" fill="currentColor" stroke="none" />
+    </svg>
+  );
+}

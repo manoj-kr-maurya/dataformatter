@@ -15,7 +15,10 @@ import {
   BinaryIcon,
   BracesIcon,
   BracketsIcon,
+  BugIcon,
+  CalculatorIcon,
   ChevronIcon,
+  ClockIcon,
   DiceIcon,
   GlobeIcon,
   HashIcon,
@@ -42,7 +45,7 @@ import {
 } from "@/lib/tools";
 import type { ToolMode, ToolType } from "@/types/tools";
 
-type PageHref =
+export type PageHref =
   | "/"
   | "/encode-decode"
   | "/base64"
@@ -52,7 +55,21 @@ type PageHref =
   | "/string-functions"
   | "/cryptography-tools"
   | "/compiler"
-  | "/api-client";
+  | "/api-client"
+  | "/api-tester"
+  | "/json-diff"
+  | "/json-to-code"
+  | "/json-to-schema"
+  | "/curl-to-code"
+  | "/http-header-inspector"
+  | "/log-analyzer"
+  | "/stack-trace"
+  | "/env-validator"
+  | "/cron"
+  | "/timestamp"
+  | "/regex"
+  | "/fake-data"
+  | "/developer-calculator";
 
 type IconComponent = ComponentType<SVGProps<SVGSVGElement>>;
 
@@ -158,6 +175,9 @@ const RAIL_SECTIONS: RailSection[] = [
     icon: DiceIcon,
     href: "/random-generators",
     tools: RANDOM_GENERATOR_TOOL_ORDER,
+    subItems: [
+      { id: "fake-data", href: "/fake-data", label: "Fake Data", title: "Generate realistic fake data in your browser" },
+    ],
     title: "Random Tools",
   },
   {
@@ -202,8 +222,79 @@ const RAIL_SECTIONS: RailSection[] = [
     tools: [],
     subItems: [
       { id: "rest", label: "REST", title: "Build & send HTTP requests in your browser" },
+      { id: "api-tester", href: "/api-tester", label: "API Tester", title: "Send & debug HTTP requests in your browser" },
+      {
+        id: "http-headers",
+        href: "/http-header-inspector",
+        label: "HTTP Headers",
+        title: "Analyze cached or captured HTTP headers",
+      },
     ],
     title: "API Client — build & send HTTP requests entirely in your browser",
+  },
+  {
+    id: "converters",
+    label: "Converters",
+    fullLabel: "Converters",
+    icon: CalculatorIcon,
+    href: "/json-to-code",
+    tools: [],
+    subItems: [
+      {
+        id: "json-to-code",
+        href: "/json-to-code",
+        label: "JSON to Code",
+        title: "Generate type declarations from JSON samples",
+      },
+      {
+        id: "json-to-schema",
+        href: "/json-to-schema",
+        label: "JSON to Schema",
+        title: "Derive validation schemas (JSON Schema, Zod, Pydantic)",
+      },
+      {
+        id: "curl-to-code",
+        href: "/curl-to-code",
+        label: "cURL to Code",
+        title: "Convert cURL commands to JavaScript, Python & more",
+      },
+      {
+        id: "developer-calculator",
+        href: "/developer-calculator",
+        label: "Developer Calculator",
+        title: "Hex, bytes, percent & CRC-32 — built for developers",
+      },
+    ],
+    title: "Converters — JSON to code, schemas, cURL and the developer calculator",
+  },
+  {
+    id: "debug",
+    label: "Debug",
+    fullLabel: "Debug Tools",
+    icon: BugIcon,
+    href: "/json-diff",
+    tools: [],
+    subItems: [
+      { id: "json-diff", href: "/json-diff", label: "JSON Diff", title: "Compare two JSON documents" },
+      { id: "log-analyzer", href: "/log-analyzer", label: "Log Analyzer", title: "Count errors & spot spikes in logs" },
+      { id: "stack-trace", href: "/stack-trace", label: "Stack Trace", title: "Read Java, JS, Python & Go stack traces" },
+      { id: "env-validator", href: "/env-validator", label: "ENV Validator", title: "Validate & diff .env files locally" },
+      { id: "regex", href: "/regex", label: "Regex Tester", title: "Test regular expressions locally" },
+    ],
+    title: "Debug — diff JSON, analyze logs and traces, validate env & regex",
+  },
+  {
+    id: "time",
+    label: "Time",
+    fullLabel: "Time Tools",
+    icon: ClockIcon,
+    href: "/timestamp",
+    tools: [],
+    subItems: [
+      { id: "timestamp", href: "/timestamp", label: "Timestamp", title: "Convert Unix time, ISO and HTTP dates" },
+      { id: "cron", href: "/cron", label: "Cron", title: "Validate, describe & schedule cron expressions" },
+    ],
+    title: "Time — timestamp conversion and cron expression scheduling",
   },
 ];
 
@@ -214,7 +305,10 @@ function sectionActive(section: RailSection, activeHref: PageHref, mode: ToolMod
   if (section.id === "home") {
     return activeHref === "/" && mode === AUTO_DETECT;
   }
-  return activeHref === section.href;
+  return (
+    activeHref === section.href ||
+    (section.subItems ?? []).some((sub) => sub.href === activeHref)
+  );
 }
 
 /** Sections whose contents are worth a fly-out hint on the rail itself. */

@@ -172,6 +172,104 @@ const PAGES: PageSeo[] = [
       "Found a bug, have a feature idea or just want to say hi? Open an issue on the DataFormatter repository — every report lands in front of the maintainer who builds the tools.",
     h1: "Contact DataFormatter",
   },
+  {
+    path: "/json-diff",
+    title: "JSON Diff – Compare Two JSON Files Online",
+    description:
+      "Compare two JSON documents side by side and get a precise list of added, removed and changed values as dot paths. Runs entirely in your browser — nothing you paste is uploaded.",
+    h1: "JSON Diff",
+  },
+  {
+    path: "/json-to-code",
+    title: "JSON to Code – Generate Types for TS, Java, Go & More",
+    description:
+      "Turn any JSON sample into TypeScript interfaces, Java classes, C#, Go structs, Python dataclasses, Kotlin or Swift. Free, no signup, and fully local so payloads stay private.",
+    h1: "JSON to Code",
+  },
+  {
+    path: "/json-to-schema",
+    title: "JSON to Schema – JSON Schema, Zod, Pydantic & OpenAPI",
+    description:
+      "Derive validation schemas from JSON samples: JSON Schema, Zod, Pydantic, OpenAPI or a NestJS DTO. Multiple samples teach it which fields are optional — all local, no uploads.",
+    h1: "JSON to Schema",
+  },
+  {
+    path: "/curl-to-code",
+    title: "cURL to Code – Convert Commands to JS, Python & Java",
+    description:
+      "Paste any cURL command and get JavaScript fetch, Axios, Python requests, Java, Go, C# or PHP in one click. Faithful parsing of headers, auth, query and body — done locally.",
+    h1: "cURL to Code",
+  },
+  {
+    path: "/api-tester",
+    title: "API Tester – Send & Debug HTTP Requests in Your Browser",
+    description:
+      "Build and send GET, POST, PUT and DELETE requests with headers, auth and JSON bodies straight from your browser. No proxy, no signup — requests go directly to the endpoint.",
+    h1: "Online API Tester",
+  },
+  {
+    path: "/http-header-inspector",
+    title: "HTTP Header Inspector – Analyze Security & Caching Headers",
+    description:
+      "Paste a raw header block and get categorized findings: cache control, cookies, CORS, HSTS and security headers with honest ok/warn/error notes. Runs locally — nothing is uploaded.",
+    h1: "HTTP Header Inspector",
+  },
+  {
+    path: "/log-analyzer",
+    title: "Log Analyzer – Count Errors & Spot Spikes in Logs",
+    description:
+      "Paste up to 50,000 log lines and get level counts, deduplicated error groups and an hourly timeline. Entirely browser-based, so server logs with real data never leave your machine.",
+    h1: "Log Analyzer",
+  },
+  {
+    path: "/stack-trace",
+    title: "Stack Trace Reader – Parse Java, JS, Python & Go Traces",
+    description:
+      "Paste a Java, JavaScript/Node, Python or Go stack trace to get the exception, the first project frame and a clean call chain. Detection is automatic and parsing happens locally.",
+    h1: "Stack Trace Reader",
+  },
+  {
+    path: "/env-validator",
+    title: "ENV Validator – Check & Compare .env Files Online",
+    description:
+      "Validate .env syntax, duplicates and formatting, then diff your local file against your .env.example. All analysis happens in your browser — secret values are never uploaded.",
+    h1: "ENV Validator",
+  },
+  {
+    path: "/cron",
+    title: "Cron Expression Helper – Validate, Describe & Schedule",
+    description:
+      "Validate 5- and 6-field cron expressions, read them in plain English, and list the next or previous runs in any time zone. DST-aware and fully client-side — nothing is uploaded.",
+    h1: "Cron Expression Helper",
+  },
+  {
+    path: "/timestamp",
+    title: "Unix Timestamp Converter – Epoch & ISO Online",
+    description:
+      "Convert Unix seconds or milliseconds, ISO-8601 and HTTP dates into every epoch unit plus readable local and UTC forms. Auto-detection, live relative age — all computed in your browser.",
+    h1: "Timestamp Converter",
+  },
+  {
+    path: "/regex",
+    title: "Regex Tester – Build & Test Regular Expressions Online",
+    description:
+      "Test regular expressions with the browser's own engine: instant validity, every match with position and capture groups, and a per-line mode for log auditing. 100% client-side.",
+    h1: "Regular Expression Tester",
+  },
+  {
+    path: "/fake-data",
+    title: "Fake Data Generator – Realistic Rows for Tests & Demos",
+    description:
+      "Generate realistic fake data — names, emails, UUIDs, IPs, dates and more — as tables, JSON or CSV. Seeded output is reproducible, and generation runs entirely in your browser.",
+    h1: "Fake Data Generator",
+  },
+  {
+    path: "/developer-calculator",
+    title: "Developer Calculator – Hex, Bytes, Percent & CRC-32 Online",
+    description:
+      "A calculator built for developers: evaluate expressions with hex/binary literals, convert between radices with bit masking, measure byte size, do percent math and compute CRC-32. Local only.",
+    h1: "Developer Calculator",
+  },
 ];
 
 export const SEO_PAGES: ReadonlyMap<string, PageSeo> = new Map(
@@ -216,6 +314,20 @@ export const FOOTER_LINKS: ReadonlyArray<{ href: string; label: string }> = [
   { href: "/api-client", label: "API Client" },
   { href: "/about", label: "About" },
   { href: "/contact", label: "Contact" },
+  { href: "/json-diff", label: "JSON Diff" },
+  { href: "/json-to-code", label: "JSON to Code" },
+  { href: "/json-to-schema", label: "JSON to Schema" },
+  { href: "/curl-to-code", label: "cURL to Code" },
+  { href: "/api-tester", label: "API Tester" },
+  { href: "/http-header-inspector", label: "Header Inspector" },
+  { href: "/log-analyzer", label: "Log Analyzer" },
+  { href: "/stack-trace", label: "Stack Trace" },
+  { href: "/env-validator", label: "ENV Validator" },
+  { href: "/cron", label: "Cron Helper" },
+  { href: "/timestamp", label: "Timestamp" },
+  { href: "/regex", label: "Regex Tester" },
+  { href: "/fake-data", label: "Fake Data" },
+  { href: "/developer-calculator", label: "Dev Calculator" },
 ];
 
 /** Tool-specific internal link graph — descriptive anchors, real routes only.
@@ -336,6 +448,89 @@ export const RELATED_LINKS: Readonly<Record<string, ReadonlyArray<{ href: string
     { href: "/json-formatter", label: "JSON Formatter" },
     { href: "/base64-decoder", label: "Base64 Decoder" },
     { href: "/jwt-decoder", label: "JWT Decoder" },
+  ],
+  "/json-diff": [
+    { href: "/json-formatter", label: "JSON Formatter — pretty-print before diffing" },
+    { href: "/json-validator", label: "JSON Validator — confirm both sides parse" },
+    { href: "/json-to-schema", label: "JSON to Schema — re-derive from changed API" },
+    { href: "/json-to-code", label: "JSON to Code — regenerate types after changes" },
+  ],
+  "/json-to-code": [
+    { href: "/json-to-schema", label: "JSON to Schema — validation instead of types" },
+    { href: "/json-formatter", label: "JSON Formatter — tidy the input sample" },
+    { href: "/json-diff", label: "JSON Diff — see how the contract changed" },
+    { href: "/compiler", label: "Compiler — run generated scripts" },
+  ],
+  "/json-to-schema": [
+    { href: "/json-to-code", label: "JSON to Code — type declarations instead" },
+    { href: "/json-validator", label: "JSON Validator — check the samples first" },
+    { href: "/json-diff", label: "JSON Diff — track what changed" },
+    { href: "/parsers", label: "Parsers — inspect the JSON as a tree" },
+  ],
+  "/curl-to-code": [
+    { href: "/api-tester", label: "API Tester — send the request live" },
+    { href: "/api-client", label: "API Client — build requests by hand" },
+    { href: "/http-header-inspector", label: "Header Inspector — analyze the headers" },
+    { href: "/json-validator", label: "JSON Validator — check the body you generated" },
+  ],
+  "/api-tester": [
+    { href: "/curl-to-code", label: "cURL to Code — import a command" },
+    { href: "/json-formatter", label: "JSON Formatter — prettify the response" },
+    { href: "/json-validator", label: "JSON Validator — verify the payload" },
+    { href: "/http-header-inspector", label: "Header Inspector — inspect response headers" },
+  ],
+  "/http-header-inspector": [
+    { href: "/curl-to-code", label: "cURL to Code — reproduce the exact request" },
+    { href: "/api-tester", label: "API Tester — hit the endpoint yourself" },
+    { href: "/log-analyzer", label: "Log Analyzer — correlate with server logs" },
+    { href: "/env-validator", label: "ENV Validator — keep secrets out of headers" },
+  ],
+  "/log-analyzer": [
+    { href: "/stack-trace", label: "Stack Trace Reader — clean up error stacks" },
+    { href: "/regex", label: "Regex Tester — build log line patterns" },
+    { href: "/timestamp", label: "Timestamp Converter — read log timestamps" },
+    { href: "/http-header-inspector", label: "Header Inspector — debug request quirks" },
+  ],
+  "/stack-trace": [
+    { href: "/log-analyzer", label: "Log Analyzer — find which errors repeat" },
+    { href: "/regex", label: "Regex Tester — match trace frames" },
+    { href: "/json-validator", label: "JSON Validator — validate the payload that failed" },
+    { href: "/compiler", label: "Compiler — reproduce the failure in code" },
+  ],
+  "/env-validator": [
+    { href: "/fake-data", label: "Fake Data — placeholder values for config" },
+    { href: "/http-header-inspector", label: "Header Inspector — keep secrets out of headers" },
+    { href: "/json-to-code", label: "JSON to Code — types for config payloads" },
+    { href: "/api-tester", label: "API Tester — test with the configured env" },
+  ],
+  "/cron": [
+    { href: "/timestamp", label: "Timestamp Converter — verify run instants" },
+    { href: "/log-analyzer", label: "Log Analyzer — see what a job actually did" },
+    { href: "/fake-data", label: "Fake Data — sample data for job testing" },
+  ],
+  "/timestamp": [
+    { href: "/cron", label: "Cron Helper — schedule against these instants" },
+    { href: "/log-analyzer", label: "Log Analyzer — read message timestamps" },
+    { href: "/regex", label: "Regex Tester — pull timestamps out of logs" },
+    { href: "/json-formatter", label: "JSON Formatter — pretty-print dated payloads" },
+  ],
+  "/regex": [
+    { href: "/log-analyzer", label: "Log Analyzer — apply patterns to real logs" },
+    { href: "/timestamp", label: "Timestamp Converter — parse extracted values" },
+    { href: "/stack-trace", label: "Stack Trace Reader — match frame formats" },
+    { href: "/parsers", label: "Parsers — structured alternatives to regex" },
+  ],
+  "/fake-data": [
+    { href: "/json-converter", label: "JSON Converters — shape generated rows" },
+    { href: "/env-validator", label: "ENV Validator — fill config with placeholders" },
+    { href: "/random-generators", label: "Random Generators — UUIDs, IPs & numbers" },
+    { href: "/json-to-code", label: "JSON to Code — type the generated fixtures" },
+  ],
+  "/developer-calculator": [
+    { href: "/regex", label: "Regex Tester — parse the values you compute" },
+    { href: "/json-converter", label: "JSON Converters — size payloads you generate" },
+    { href: "/json-formatter", label: "JSON Formatter — measure output sizes" },
+    { href: "/fake-data", label: "Fake Data — estimate fixture sizes" },
   ],
 };
 
@@ -461,6 +656,62 @@ export const BREADCRUMBS: Readonly<Record<string, ReadonlyArray<{ name: string; 
   "/contact": [
     { name: "Home", href: "/" },
     { name: "Contact", href: "/contact" },
+  ],
+  "/json-diff": [
+    { name: "Home", href: "/" },
+    { name: "JSON Diff", href: "/json-diff" },
+  ],
+  "/json-to-code": [
+    { name: "Home", href: "/" },
+    { name: "JSON to Code", href: "/json-to-code" },
+  ],
+  "/json-to-schema": [
+    { name: "Home", href: "/" },
+    { name: "JSON to Schema", href: "/json-to-schema" },
+  ],
+  "/curl-to-code": [
+    { name: "Home", href: "/" },
+    { name: "cURL to Code", href: "/curl-to-code" },
+  ],
+  "/api-tester": [
+    { name: "Home", href: "/" },
+    { name: "API Tester", href: "/api-tester" },
+  ],
+  "/http-header-inspector": [
+    { name: "Home", href: "/" },
+    { name: "HTTP Header Inspector", href: "/http-header-inspector" },
+  ],
+  "/log-analyzer": [
+    { name: "Home", href: "/" },
+    { name: "Log Analyzer", href: "/log-analyzer" },
+  ],
+  "/stack-trace": [
+    { name: "Home", href: "/" },
+    { name: "Stack Trace Reader", href: "/stack-trace" },
+  ],
+  "/env-validator": [
+    { name: "Home", href: "/" },
+    { name: "ENV Validator", href: "/env-validator" },
+  ],
+  "/cron": [
+    { name: "Home", href: "/" },
+    { name: "Cron Expression Helper", href: "/cron" },
+  ],
+  "/timestamp": [
+    { name: "Home", href: "/" },
+    { name: "Timestamp Converter", href: "/timestamp" },
+  ],
+  "/regex": [
+    { name: "Home", href: "/" },
+    { name: "Regular Expression Tester", href: "/regex" },
+  ],
+  "/fake-data": [
+    { name: "Home", href: "/" },
+    { name: "Fake Data Generator", href: "/fake-data" },
+  ],
+  "/developer-calculator": [
+    { name: "Home", href: "/" },
+    { name: "Developer Calculator", href: "/developer-calculator" },
   ],
 };
 
