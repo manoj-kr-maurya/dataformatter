@@ -50,7 +50,15 @@ export default function RandomGeneratorsPage() {
         tableHeaders={["Need", "Generator"]}
         tableCaption="Random generators and what to use them for"
         tableRows={[
-          ["Unique identifiers", "UUID generator (version 4)"],
+          [
+            "Unique identifiers",
+            <>
+              <Link key="uuid" href="/uuid-generator" className="text-violet-600 underline-offset-2 hover:underline dark:text-violet-400">
+                UUID generator (version 4)
+              </Link>
+              {" "}— dedicated page
+            </>,
+          ],
           ["Network fixtures & log samples", "IPv4 / IPv6 address generators"],
           ["Bulk structured fixtures", <>
             JSON / CSV / TSV generators — format output with the{" "}

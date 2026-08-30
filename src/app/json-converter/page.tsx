@@ -18,7 +18,7 @@ const faqs = [
   },
   {
     q: "Can I convert nested JSON to CSV?",
-    a: "Flattening rules apply: objects may be flattened with dot-notation keys, but arrays of varying shape don't fit tabular rows cleanly. Normalize the structure first for best results.",
+    a: "Objects at the top level become table rows; nested objects and arrays inside a row are kept as JSON text in the cell so nothing is lost. If you need every nested field on its own column, flatten the keys first so the document is a flat array of objects.",
   },
   {
     q: "My conversion failed — is my JSON invalid?",
@@ -56,10 +56,17 @@ export default function JsonConverterPage() {
         tableRows={[
           ["Java", "POJO-style classes mirroring your JSON structure"],
           ["XML", "Elements with attributes/children mapped from keys and arrays"],
-          ["YAML", "Indentation-based config, ideal for Kubernetes & CI files"],
           [
             <>
-              <Link key="csv" href="/parsers" className="text-violet-600 underline-offset-2 hover:underline dark:text-violet-400">
+              <Link key="yaml" href="/json-to-yaml" className="text-violet-600 underline-offset-2 hover:underline dark:text-violet-400">
+                YAML
+              </Link>
+            </>,
+            "Indentation-based config, ideal for Kubernetes & CI files",
+          ],
+          [
+            <>
+              <Link key="csv" href="/json-to-csv" className="text-violet-600 underline-offset-2 hover:underline dark:text-violet-400">
                 CSV / TSV / Excel
               </Link>
             </>,

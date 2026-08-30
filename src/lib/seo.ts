@@ -27,10 +27,10 @@ export interface PageSeo {
 const PAGES: PageSeo[] = [
   {
     path: "/",
-    title: "DataFormatter – Free Online Developer Tools",
+    title: "Privacy-First Developer Tools – Free & No Signup",
     description:
-      "Format JSON, decode JWTs, convert Base64 and more in one auto-detect workspace. 100% private by design — nothing you paste is ever uploaded.",
-    h1: "DataFormatter",
+      "Format JSON, decode JWTs, convert Base64, generate UUIDs and debug HTTP in one fast workspace. Runs 100% in your browser — nothing you paste is ever uploaded.",
+    h1: "Privacy-First Developer Tools",
   },
   {
     path: "/json-formatter",
@@ -270,6 +270,27 @@ const PAGES: PageSeo[] = [
       "A calculator built for developers: evaluate expressions with hex/binary literals, convert between radices with bit masking, measure byte size, do percent math and compute CRC-32. Local only.",
     h1: "Developer Calculator",
   },
+  {
+    path: "/json-to-csv",
+    title: "JSON to CSV Converter – Flatten JSON to CSV Rows",
+    description:
+      "Convert an array of JSON objects into clean CSV: one header column per key, quoted and escaped cells, empty cells for missing fields. Ready for Excel or BigQuery — conversion runs entirely in your browser.",
+    h1: "JSON to CSV Converter",
+  },
+  {
+    path: "/json-to-yaml",
+    title: "JSON to YAML Converter – Generate YAML from JSON",
+    description:
+      "Turn JSON into indentation-based YAML for Docker Compose, Kubernetes manifests, CI configs and Ansible. Handles nested objects, arrays and quoting — free, private and computed locally in your tab.",
+    h1: "JSON to YAML Converter",
+  },
+  {
+    path: "/uuid-generator",
+    title: "UUID Generator – Create Random UUID v4 Online",
+    description:
+      "Generate one or more random UUID v4 identifiers straight from your browser — RFC 4122 format, lowercase hex, ready for database keys, API mocks and test fixtures. Fully client-side: nothing you generate is uploaded.",
+    h1: "UUID Generator",
+  },
 ];
 
 export const SEO_PAGES: ReadonlyMap<string, PageSeo> = new Map(
@@ -328,6 +349,9 @@ export const FOOTER_LINKS: ReadonlyArray<{ href: string; label: string }> = [
   { href: "/regex", label: "Regex Tester" },
   { href: "/fake-data", label: "Fake Data" },
   { href: "/developer-calculator", label: "Dev Calculator" },
+  { href: "/json-to-csv", label: "JSON to CSV" },
+  { href: "/json-to-yaml", label: "JSON to YAML" },
+  { href: "/uuid-generator", label: "UUID Generator" },
 ];
 
 /** Tool-specific internal link graph — descriptive anchors, real routes only.
@@ -404,6 +428,8 @@ export const RELATED_LINKS: Readonly<Record<string, ReadonlyArray<{ href: string
     { href: "/json-formatter", label: "JSON Formatter — tidy input first" },
     { href: "/json-validator", label: "JSON Validator — check syntax" },
     { href: "/parsers", label: "Parsers — JSON tree view" },
+    { href: "/json-to-csv", label: "JSON to CSV — dedicated converter page" },
+    { href: "/json-to-yaml", label: "JSON to YAML — dedicated converter page" },
   ],
   "/parsers": [
     { href: "/json-formatter", label: "JSON Formatter" },
@@ -415,6 +441,7 @@ export const RELATED_LINKS: Readonly<Record<string, ReadonlyArray<{ href: string
     { href: "/hash-generator", label: "Hash Generator — digest random data" },
     { href: "/string-functions", label: "String Functions — transform output" },
     { href: "/compiler", label: "Dart Compiler — script your fixtures" },
+    { href: "/uuid-generator", label: "UUID Generator — dedicated page" },
   ],
   "/string-functions": [
     { href: "/hash-generator", label: "Hash Generator" },
@@ -531,6 +558,24 @@ export const RELATED_LINKS: Readonly<Record<string, ReadonlyArray<{ href: string
     { href: "/json-converter", label: "JSON Converters — size payloads you generate" },
     { href: "/json-formatter", label: "JSON Formatter — measure output sizes" },
     { href: "/fake-data", label: "Fake Data — estimate fixture sizes" },
+  ],
+  "/json-to-csv": [
+    { href: "/json-to-yaml", label: "JSON to YAML — keep the structure" },
+    { href: "/json-converter", label: "JSON Converters — TSV, YAML, XML & Excel" },
+    { href: "/json-formatter", label: "JSON Formatter — tidy the source first" },
+    { href: "/fake-data", label: "Fake Data — generate CSV rows" },
+  ],
+  "/json-to-yaml": [
+    { href: "/json-to-csv", label: "JSON to CSV — tabular output instead" },
+    { href: "/json-converter", label: "JSON Converters — every output target" },
+    { href: "/env-validator", label: "ENV Validator — shop config-style files" },
+    { href: "/json-formatter", label: "JSON Formatter — clean input first" },
+  ],
+  "/uuid-generator": [
+    { href: "/fake-data", label: "Fake Data — realistic rows with UUIDs" },
+    { href: "/random-generators", label: "Random Generators — IPs, numbers & dates" },
+    { href: "/hash-generator", label: "Hash Generator — checksums for IDs" },
+    { href: "/json-converter", label: "JSON Converters — fixtures with UUID keys" },
   ],
 };
 
@@ -712,6 +757,21 @@ export const BREADCRUMBS: Readonly<Record<string, ReadonlyArray<{ name: string; 
   "/developer-calculator": [
     { name: "Home", href: "/" },
     { name: "Developer Calculator", href: "/developer-calculator" },
+  ],
+  "/json-to-csv": [
+    { name: "Home", href: "/" },
+    { name: "JSON Converters", href: "/json-converter" },
+    { name: "JSON to CSV", href: "/json-to-csv" },
+  ],
+  "/json-to-yaml": [
+    { name: "Home", href: "/" },
+    { name: "JSON Converters", href: "/json-converter" },
+    { name: "JSON to YAML", href: "/json-to-yaml" },
+  ],
+  "/uuid-generator": [
+    { name: "Home", href: "/" },
+    { name: "Random Generators", href: "/random-generators" },
+    { name: "UUID Generator", href: "/uuid-generator" },
   ],
 };
 
