@@ -32,9 +32,18 @@ export const FIELD_TYPES = [
 
 export type FieldType = (typeof FIELD_TYPES)[number];
 
+/** One step in a nested path. `array: true` marks a named array whose
+ *  element objects carry the following child segments. */
+export interface PathSegment {
+  key: string;
+  array?: boolean;
+}
+
 export interface FieldSpec {
   name: string;
   type: FieldType;
+  /** Structured path for rebuilding nested JSON output; absent = flat top-level field. */
+  path?: PathSegment[];
 }
 
 function mulberry32(seed: number): () => number {
@@ -220,6 +229,56 @@ export function generateRows(fields: FieldSpec[], count: number, seed: string): 
     rows.push(row);
   }
   return rows;
+}
+
+/** Rebuild nested objects / arrays of objects from flat rows using each
+ *  field's structured `path`. Values whose path carries no segments stay flat. */
+export function nestRows(
+  fields: FieldSpec[],
+  flatRows: Record<string, string | number | boolean>[],
+): Record<string, unknown>[] {
+  return flatRows.map((row) => {
+    const root: Record<string, unknown> = {};
+    for (const field of fields) {
+      if (!field.path || field.path.length === 0) {
+        root[field.name] = row[field.name];
+        continue;
+      }
+      setPath(root, field.path, row[field.name]);
+    }
+    return root;
+  });
+}
+
+/** Walk the structured path, creating nested objects and array-of-object
+ *  containers on demand, and store the leaf value at the final key. */
+function setPath(root: Record<string, unknown>, segments: PathSegment[], value: unknown): void {
+  let obj: Record<string, unknown> = root;
+  for (let i = 0; i < segments.length; i++) {
+    const seg = segments[i];
+    if (seg.array) {
+      const current = obj[seg.key];
+      let arr: Record<string, unknown>[];
+      if (Array.isArray(current) && current.length > 0 && typeof current[0] === "object") {
+        arr = current as Record<string, unknown>[];
+      } else {
+        arr = [{}];
+      }
+      obj[seg.key] = arr;
+      obj = arr[0];
+      continue;
+    }
+    if (i === segments.length - 1) {
+      obj[seg.key] = value;
+      return;
+    }
+    let child = obj[seg.key];
+    if (typeof child !== "object" || child === null || Array.isArray(child)) {
+      child = {};
+    }
+    obj[seg.key] = child;
+    obj = child as Record<string, unknown>;
+  }
 }
 
 export function defaultFields(): FieldSpec[] {

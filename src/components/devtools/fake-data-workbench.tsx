@@ -12,7 +12,7 @@ import {
   Hint,
 } from "@/components/devtools/shared";
 import { Button } from "@/components/ui/button";
-import { generateRows, defaultFields, FIELD_TYPES, type FieldSpec, type FieldType } from "@/lib/fake-data/generate";
+import { generateRows, nestRows, defaultFields, FIELD_TYPES, type FieldSpec, type FieldType, type PathSegment } from "@/lib/fake-data/generate";
 
 type Format = "table" | "json" | "csv";
 
@@ -88,7 +88,7 @@ export function FakeDataWorkbench() {
   }, [fields, count, seed]);
 
   const report = useMemo(() => {
-    if (format === "json") return JSON.stringify(rows, null, 2);
+    if (format === "json") return JSON.stringify(nestRows(fields, rows), null, 2);
     if (format === "csv") {
       const header = fields.map((field) => csvCell(field.name)).join(",");
       const body = rows.map((row) => fields.map((field) => csvCell(String(row[field.name] ?? ""))).join(","));
@@ -105,42 +105,51 @@ export function FakeDataWorkbench() {
 
   /** Flatten a JSON value into dot-path columns, recursing into nested objects
    *  and arrays of objects so samples like {profile:{firstName}} or
-   *  {orders:[{orderId}]} become real columns instead of opaque values. */
-  function addLeaf(seen: Map<string, unknown[]>, path: string, value: unknown): void {
-    const key = path.trim() || "value";
-    const list = seen.get(key);
-    if (list) list.push(value);
-    else seen.set(key, [value]);
+   *  {orders:[{orderId}]} become real columns instead of opaque values.
+   *  Each column records its structured `path` so the generated output can be
+   *  rebuilt back into nested objects / arrays of objects. */
+  interface DetectedColumn {
+    values: unknown[];
+    path?: PathSegment[];
   }
 
-  function flattenColumns(value: unknown, prefix: string, seen: Map<string, unknown[]>): void {
+  function addLeaf(seen: Map<string, DetectedColumn>, path: PathSegment[], value: unknown): void {
+    const key = path.map((s) => s.key).join(".") || "value";
+    const col = seen.get(key);
+    if (col) col.values.push(value);
+    else seen.set(key, { values: [value], path });
+  }
+
+  function flattenColumns(prefixPath: PathSegment[], value: unknown, seen: Map<string, DetectedColumn>): void {
     if (Array.isArray(value)) {
       const objects = value.filter((v) => typeof v === "object" && v !== null && !Array.isArray(v));
       if (objects.length > 0 && objects.length === value.length) {
+        // The current key (last segment) names an array of objects. Mark it as
+        // an array so output rebuilds `key: [{...}, ...]` instead of `key: {...}`.
+        const parentKeySeg: PathSegment = {
+          key: prefixPath.length ? prefixPath[prefixPath.length - 1].key : "value",
+          array: true,
+        };
+        const basePath = prefixPath.slice(0, -1);
         for (const item of objects) {
           for (const key of Object.keys(item as Record<string, unknown>)) {
             const child = (item as Record<string, unknown>)[key];
-            if (typeof child === "object" && child !== null) {
-              flattenColumns(child, prefix ? `${prefix}.${key}` : key, seen);
-            } else {
-              addLeaf(seen, prefix ? `${prefix}.${key}` : key, child);
-            }
+            flattenColumns([...basePath, parentKeySeg, { key }], child, seen);
           }
         }
         return;
       }
-      const leaf = prefix || "value";
-      addLeaf(seen, leaf, value);
+      addLeaf(seen, prefixPath.length ? prefixPath : [{ key: "value" }], value);
       return;
     }
     if (typeof value === "object" && value !== null) {
       for (const key of Object.keys(value as Record<string, unknown>)) {
         const child = (value as Record<string, unknown>)[key];
-        flattenColumns(child, prefix ? `${prefix}.${key}` : key, seen);
+        flattenColumns([...prefixPath, { key }], child, seen);
       }
       return;
     }
-    addLeaf(seen, prefix || "value", value);
+    addLeaf(seen, prefixPath.length ? prefixPath : [{ key: "value" }], value);
   }
 
   /** Turn pasted JSON or CSV into a field list, guessing each column's type. */
@@ -168,13 +177,17 @@ export function FakeDataWorkbench() {
         setSampleError("JSON sample must be an array of objects (or a single object).");
         return;
       }
-      const columns = new Map<string, unknown[]>();
+      const columns = new Map<string, DetectedColumn>();
       for (const row of rows) {
-        flattenColumns(row, "", columns);
+        flattenColumns([], row, columns);
       }
       const specs: FieldSpec[] = Array.from(columns.entries())
-        .filter(([name]) => name.trim() !== "")
-        .map(([name, values]) => ({ name, type: inferType(values) }));
+        .filter(([name]) => name.trim() !== "" && name !== "value")
+        .map(([, col]) => ({
+          name: col.path ? col.path.map((s) => s.key).join(".") : "",
+          type: inferType(col.values),
+          path: col.path,
+        }));
       setFields(specs);
       setSampleError("");
       setShowSample(false);

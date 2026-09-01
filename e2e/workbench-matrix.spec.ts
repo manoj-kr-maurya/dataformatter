@@ -239,6 +239,10 @@ test.describe("workbench input→output matrix", () => {
     await page.getByLabel("Row count").fill("2");
     await page.getByLabel("Seed").fill("demo");
     await expect(page.getByText("2rows", { exact: true })).toBeVisible();
+    await expect(preview).toContainText('"profile"');
+    await expect(preview).toContainText('"firstName"');
+    await expect(preview).toContainText('"orders"');
+    await expect(preview).toContainText('"orderId"');
     const first = await preview.textContent();
     await page.getByLabel("Seed").fill("other");
     const second = await preview.textContent();

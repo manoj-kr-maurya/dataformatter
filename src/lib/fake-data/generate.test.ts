@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { generateRows, defaultFields, FIELD_TYPES } from "@/lib/fake-data/generate";
+import { generateRows, nestRows, defaultFields, FIELD_TYPES } from "@/lib/fake-data/generate";
 
 describe("generateRows", () => {
   it("is seeded and deterministic", () => {
@@ -32,5 +32,32 @@ describe("generateRows", () => {
     for (const type of FIELD_TYPES) {
       expect(rows[0][type]).toBeDefined();
     }
+  });
+});
+
+describe("nestRows", () => {
+  it("rebuilds nested objects and arrays of objects into the input shape", () => {
+    const fields = [
+      { name: "id", type: "number" as const },
+      { name: "profile.firstName", type: "firstName" as const, path: [{ key: "profile" }, { key: "firstName" }] },
+      { name: "orders.orderId", type: "words" as const, path: [{ key: "orders", array: true }, { key: "orderId" }] },
+      { name: "orders.amount", type: "number" as const, path: [{ key: "orders", array: true }, { key: "amount" }] },
+    ];
+    const flat: Record<string, string | number | boolean>[] = [
+      { id: 1, "profile.firstName": "John", "orders.orderId": "A948", "orders.amount": 45.99 },
+    ];
+    const nested = nestRows(fields, flat);
+    expect(nested).toHaveLength(1);
+    expect(nested[0]).toEqual({
+      id: 1,
+      profile: { firstName: "John" },
+      orders: [{ orderId: "A948", amount: 45.99 }],
+    });
+  });
+
+  it("keeps flat fields flat and preserves top-level leaf columns", () => {
+    const fields = [{ name: "name", type: "fullName" as const }];
+    const nested = nestRows(fields, [{ name: "Ada Lovelace" }]);
+    expect(nested[0]).toEqual({ name: "Ada Lovelace" });
   });
 });
