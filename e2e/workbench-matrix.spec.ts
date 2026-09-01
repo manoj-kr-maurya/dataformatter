@@ -251,6 +251,29 @@ test.describe("workbench input→output matrix", () => {
     await expect.poll(() => preview.textContent()).toBe(first);
   });
 
+  test("Fake data supports Exclude and Keep-sample toggles per field", async ({ page }) => {
+    await page.goto("/fake-data");
+    const preview = page.locator("pre").first();
+
+    await page.getByRole("button", { name: "Paste sample…", exact: true }).click();
+    await page
+      .getByLabel("Sample data")
+      .fill(
+        `{"id":101,"name":"Alice","role":"admin","email":"alice@example.com","isActive":true,"profile":{"firstName":"John"},"orders":[{"orderId":"A948","amount":45.99}]}`,
+      );
+    await page.getByRole("button", { name: "Detect fields", exact: true }).click();
+
+    await page.getByLabel("Row count").fill("1");
+    await page.getByLabel("Seed").fill("demo");
+
+    await expect(preview).toContainText('"orderId"');
+    await page.getByRole("button", { name: "Exclude field orders.orderId" }).click();
+    await expect(preview).not.toContainText('"orderId"');
+
+    await page.getByRole("button", { name: "Keep sample value for field id" }).click();
+    await expect(preview).toContainText('"id": 101');
+  });
+
   test("Compiler runs JavaScript and prints stdout", async ({ page }) => {
     await page.goto("/compiler");
     await page.getByRole("tab", { name: "JS", exact: true }).click();

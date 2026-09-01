@@ -90,14 +90,15 @@ export function FakeDataWorkbench() {
   }, [fields, count, seed]);
 
   const report = useMemo(() => {
+    const activeFields = fields.filter((field) => !field.exclude);
     if (format === "json") return JSON.stringify(nestRows(fields, rows), null, 2);
     if (format === "csv") {
-      const header = fields.map((field) => csvCell(field.name)).join(",");
-      const body = rows.map((row) => fields.map((field) => csvCell(String(row[field.name] ?? ""))).join(","));
+      const header = activeFields.map((field) => csvCell(field.name)).join(",");
+      const body = rows.map((row) => activeFields.map((field) => csvCell(String(row[field.name] ?? ""))).join(","));
       return [header, ...body].join("\n");
     }
-    const header = fields.map((field) => field.name).join("\t");
-    const body = rows.map((row) => fields.map((field) => String(row[field.name] ?? "")).join("\t"));
+    const header = activeFields.map((field) => field.name).join("\t");
+    const body = rows.map((row) => activeFields.map((field) => String(row[field.name] ?? "")).join("\t"));
     return [header, ...body].join("\n");
   }, [rows, fields, format]);
 
@@ -113,13 +114,22 @@ export function FakeDataWorkbench() {
   interface DetectedColumn {
     values: unknown[];
     path?: PathSegment[];
+    sampleValue?: string | number | boolean;
   }
 
   function addLeaf(seen: Map<string, DetectedColumn>, path: PathSegment[], value: unknown): void {
     const key = path.map((s) => s.key).join(".") || "value";
     const col = seen.get(key);
     if (col) col.values.push(value);
-    else seen.set(key, { values: [value], path });
+    else seen.set(key, { values: [value], path, sampleValue: normalizeScalar(value) });
+  }
+
+  function normalizeScalar(value: unknown): string | number | boolean {
+    if (value === null || value === undefined) return "";
+    if (typeof value === "string" || typeof value === "number" || typeof value === "boolean") {
+      return value;
+    }
+    return String(value);
   }
 
   function flattenColumns(prefixPath: PathSegment[], value: unknown, seen: Map<string, DetectedColumn>): void {
@@ -189,6 +199,7 @@ export function FakeDataWorkbench() {
           name: col.path ? col.path.map((s) => s.key).join(".") : "",
           type: inferType(col.values),
           path: col.path,
+          sampleValue: col.sampleValue,
         }));
       setFields(specs);
       setSampleError("");
@@ -265,7 +276,10 @@ export function FakeDataWorkbench() {
             </p>
           )}
           {fields.map((field, index) => (
-            <div key={index} className="flex items-center gap-2">
+            <div
+              key={index}
+              className={`flex items-center gap-2 ${field.exclude ? "opacity-50" : ""}`}
+            >
               <input
                 className={`${inputClass} w-40`}
                 value={field.name}
@@ -283,6 +297,36 @@ export function FakeDataWorkbench() {
                   <option key={type} value={type}>{type}</option>
                 ))}
               </select>
+              {field.sampleValue !== undefined && (
+                <button
+                  type="button"
+                  title="Reuse the sample value for every row"
+                  className={`rounded-md px-2 py-1.5 text-xs font-medium transition-colors ${
+                    field.keepSample
+                      ? "bg-violet-100 text-violet-700 dark:bg-violet-500/20 dark:text-violet-300"
+                      : "text-zinc-500 hover:bg-zinc-100 hover:text-zinc-700 dark:text-zinc-400 dark:hover:bg-zinc-800"
+                  }`}
+                  aria-label={`Keep sample value for field ${field.name}`}
+                  aria-pressed={field.keepSample ?? false}
+                  onClick={() => updateField(index, { keepSample: !field.keepSample })}
+                >
+                  Keep
+                </button>
+              )}
+              <button
+                type="button"
+                title="Exclude this field from the generated output"
+                className={`rounded-md px-2 py-1.5 text-xs font-medium transition-colors ${
+                  field.exclude
+                    ? "bg-red-100 text-red-700 dark:bg-red-500/20 dark:text-red-300"
+                    : "text-zinc-500 hover:bg-zinc-100 hover:text-zinc-700 dark:text-zinc-400 dark:hover:bg-zinc-800"
+                }`}
+                aria-label={`Exclude field ${field.name}`}
+                aria-pressed={field.exclude ?? false}
+                onClick={() => updateField(index, { exclude: !field.exclude })}
+              >
+                Exclude
+              </button>
               <button
                 type="button"
                 className="rounded-md px-2 py-1.5 text-xs font-medium text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-500/10"
