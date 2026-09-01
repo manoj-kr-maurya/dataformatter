@@ -215,13 +215,26 @@ test.describe("workbench input→output matrix", () => {
     await page.getByRole("button", { name: "Paste sample…", exact: true }).click();
     await page
       .getByLabel("Sample data")
-      .fill('[{"name":"Ada","email":"ada@example.com","paid":true}]');
+      .fill(
+        `{"id":101,"username":"johndoe","isActive":true,"profile":{"firstName":"John","lastName":"Doe","age":30},"contact":{"email":"johndoe@example.com","address":{"street":"123 Main St","city":"Anytown","zipcode":"12345"}},"skills":["JavaScript","Python","SQL"],"orders":[{"orderId":"A948","amount":45.99,"items":["Book","Pen"]},{"orderId":"B201","amount":12.5,"items":["Notebook"]}]}`,
+      );
     await page.getByRole("button", { name: "Detect fields", exact: true }).click();
 
-    await expect(page.getByText("3 columns", { exact: true })).toBeVisible();
-    await expect(page.getByLabel("Field 1 name")).toHaveValue("name");
-    await expect(page.getByLabel("Field 2 type")).toHaveValue("email");
+    await expect(page.getByText("14 columns", { exact: true })).toBeVisible();
+    await expect(page.getByLabel("Field 1 name")).toHaveValue("id");
+    await expect(page.getByLabel("Field 1 type")).toHaveValue("number");
+    await expect(page.getByLabel("Field 2 name")).toHaveValue("username");
+    await expect(page.getByLabel("Field 2 type")).toHaveValue("words");
+    await expect(page.getByLabel("Field 3 name")).toHaveValue("isActive");
     await expect(page.getByLabel("Field 3 type")).toHaveValue("boolean");
+    await expect(page.getByLabel("Field 4 name")).toHaveValue("profile.firstName");
+    await expect(page.getByLabel("Field 7 name")).toHaveValue("contact.email");
+    await expect(page.getByLabel("Field 7 type")).toHaveValue("email");
+    await expect(page.getByLabel("Field 10 name")).toHaveValue("contact.address.zipcode");
+    await expect(page.getByLabel("Field 12 name")).toHaveValue("orders.orderId");
+    await expect(page.getByLabel("Field 13 name")).toHaveValue("orders.amount");
+    await expect(page.getByLabel("Field 13 type")).toHaveValue("number");
+    await expect(page.getByLabel("Field 14 name")).toHaveValue("orders.items");
 
     await page.getByLabel("Row count").fill("2");
     await page.getByLabel("Seed").fill("demo");

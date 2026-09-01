@@ -103,6 +103,46 @@ export function FakeDataWorkbench() {
     setFields((current) => current.map((field, i) => (i === index ? { ...field, ...patch } : field)));
   }
 
+  /** Flatten a JSON value into dot-path columns, recursing into nested objects
+   *  and arrays of objects so samples like {profile:{firstName}} or
+   *  {orders:[{orderId}]} become real columns instead of opaque values. */
+  function addLeaf(seen: Map<string, unknown[]>, path: string, value: unknown): void {
+    const key = path.trim() || "value";
+    const list = seen.get(key);
+    if (list) list.push(value);
+    else seen.set(key, [value]);
+  }
+
+  function flattenColumns(value: unknown, prefix: string, seen: Map<string, unknown[]>): void {
+    if (Array.isArray(value)) {
+      const objects = value.filter((v) => typeof v === "object" && v !== null && !Array.isArray(v));
+      if (objects.length > 0 && objects.length === value.length) {
+        for (const item of objects) {
+          for (const key of Object.keys(item as Record<string, unknown>)) {
+            const child = (item as Record<string, unknown>)[key];
+            if (typeof child === "object" && child !== null) {
+              flattenColumns(child, prefix ? `${prefix}.${key}` : key, seen);
+            } else {
+              addLeaf(seen, prefix ? `${prefix}.${key}` : key, child);
+            }
+          }
+        }
+        return;
+      }
+      const leaf = prefix || "value";
+      addLeaf(seen, leaf, value);
+      return;
+    }
+    if (typeof value === "object" && value !== null) {
+      for (const key of Object.keys(value as Record<string, unknown>)) {
+        const child = (value as Record<string, unknown>)[key];
+        flattenColumns(child, prefix ? `${prefix}.${key}` : key, seen);
+      }
+      return;
+    }
+    addLeaf(seen, prefix || "value", value);
+  }
+
   /** Turn pasted JSON or CSV into a field list, guessing each column's type. */
   function detectFields(raw: string): void {
     const trimmed = raw.trim();
@@ -128,11 +168,13 @@ export function FakeDataWorkbench() {
         setSampleError("JSON sample must be an array of objects (or a single object).");
         return;
       }
-      const keys = Array.from(new Set(rows.flatMap((item) => Object.keys(item as Record<string, unknown>))));
-      const specs: FieldSpec[] = keys.map((key) => ({
-        name: key,
-        type: inferType(rows.map((item) => (item as Record<string, unknown>)[key])),
-      }));
+      const columns = new Map<string, unknown[]>();
+      for (const row of rows) {
+        flattenColumns(row, "", columns);
+      }
+      const specs: FieldSpec[] = Array.from(columns.entries())
+        .filter(([name]) => name.trim() !== "")
+        .map(([name, values]) => ({ name, type: inferType(values) }));
       setFields(specs);
       setSampleError("");
       setShowSample(false);
