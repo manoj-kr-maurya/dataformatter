@@ -17,6 +17,23 @@ describe("parseStackTrace", () => {
     expect(result.chain[0]).toBe("run");
   });
 
+  it("parses canonical tab-indented Java frames", () => {
+    const text = [
+      "java.lang.NullPointerException: Cannot invoke \"String.length()\" because \"name\" is null",
+      "\tat com.example.OrderService.charge(OrderService.java:42)",
+      "\tat com.example.OrdersController.create(OrdersController.java:18)",
+      "\tat java.base/jdk.internal.reflect.DirectMethodHandleAccessor.invoke(...)",
+    ].join("\n");
+    const result = parseStackTrace(text);
+    expect(result.language).toBe("java");
+    expect(result.exceptionType).toContain("NullPointerException");
+    expect(result.frames).toHaveLength(3);
+    expect(result.frames[0].function).toBe("com.example.OrderService.charge");
+    expect(result.frames[0].file).toBe("OrderService.java");
+    expect(result.frames[0].line).toBe(42);
+    expect(result.chain[0]).toBe("charge");
+  });
+
   it("detects Node.js traces", () => {
     const text = [
       "  at fn (/app/fetcher.js:18:5)",
@@ -27,6 +44,21 @@ describe("parseStackTrace", () => {
     expect(result.language).toBe("javascript");
     expect(result.message).toContain("ENOTFOUND");
     expect(result.frames[0].file).toContain("fetcher.js");
+  });
+
+  it("detects JS traces whose TypeError banner precedes the frames", () => {
+    const text = [
+      "TypeError: Cannot read properties of undefined (reading 'length')",
+      "    at formatUser (webpack:///src/utils.ts:12:9)",
+      "    at renderProfile (webpack:///src/Profile.tsx:33:15)",
+    ].join("\n");
+    const result = parseStackTrace(text);
+    expect(result.language).toBe("javascript");
+    expect(result.exceptionType).toBe("TypeError");
+    expect(result.frames).toHaveLength(2);
+    expect(result.frames[0].function).toBe("formatUser");
+    expect(result.frames[0].file).toContain("utils.ts");
+    expect(result.chain[0]).toBe("formatUser");
   });
 
   it("detects Python tracebacks", () => {

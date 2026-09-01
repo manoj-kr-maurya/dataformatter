@@ -37,8 +37,14 @@ const engines: Engine[] = [
   {
     // Node.js / V8: the first line is `at ...`, not an exception banner.
     detect: (text) => {
-      const first = text.trim().split(/\r?\n/)[0].trim();
-      return /^at\s+/.test(first) && /\(.*:\d+:\d+\)\s*$/.test(first);
+      const lines = text.trim().split(/\r?\n/);
+      const frameLike = (l: string) => /^\s*at\s+.+\(.+\)\s*$/.test(l.trim());
+      const hasFrame = lines.some(frameLike);
+      if (!hasFrame) return false;
+      const first = lines[0].trim();
+      const bannerFirst = /^[A-Za-z_]\w*(Error|TypeError|RangeError|ReferenceError|SyntaxError)/.test(first) && !frameLike(first);
+      const frameFirst = frameLike(first);
+      return frameFirst || bannerFirst;
     },
     parse: (text) => {
       const frames: StackFrame[] = [];
@@ -88,9 +94,9 @@ const engines: Engine[] = [
       const message = exceptionLine?.replace(/^\s*[\w.$]+(?:Exception|Error|Throwable)[^:]*:\s*/, "").trim() || null;
       const frames: StackFrame[] = [];
       for (const line of lines) {
-        const open = line.lastIndexOf(" at ");
-        if (open === -1) continue;
-        const right = line.slice(open + 4);
+        const stripped = line.trimStart();
+        if (!/^at\s+/.test(stripped)) continue;
+        const right = stripped.slice(3);
         const paren = right.lastIndexOf("(");
         if (paren === -1) continue;
         const fn = right.slice(0, paren).trim();
