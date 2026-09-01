@@ -28,6 +28,8 @@ export const FIELD_TYPES = [
   "boolean",
   "hexColor",
   "url",
+  "alphanumUpper",
+  "alphanumLower",
 ] as const;
 
 export type FieldType = (typeof FIELD_TYPES)[number];
@@ -214,7 +216,21 @@ export function generateValue(type: FieldType, rng: () => number): string | numb
       const tld = pick(rng, ["com", "org", "net", "io", "dev"]);
       return `https://${pick(rng, IDENTIFIERS)}.${tld}/${pick(rng, IDENTIFIERS)}`;
     }
+    case "alphanumUpper": {
+      return alphanumeric(rng, intBetween(rng, 8, 12), "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789");
+    }
+    case "alphanumLower": {
+      return alphanumeric(rng, intBetween(rng, 8, 12), "abcdefghijklmnopqrstuvwxyz0123456789");
+    }
   }
+}
+
+/** Random alphanumeric string of the given length drawn from `alphabet`. */
+function alphanumeric(rng: () => number, length: number, alphabet: string): string {
+  const chars = alphabet.split("");
+  let out = "";
+  for (let i = 0; i < length; i++) out += pick(rng, chars);
+  return out;
 }
 
 export function generateRows(fields: FieldSpec[], count: number, seed: string): Record<string, string | number | boolean>[] {

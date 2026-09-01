@@ -67,6 +67,8 @@ function inferType(values: unknown[]): FieldType {
   if (every(/^\d{2}:\d{2}:\d{2}$/)) return "timeIso";
   if (every(/^\+?[\d ()\-.]{7,}$/) && !every(/^-?\d+(\.\d+)?$/)) return "phone";
   if (every(/^-?\d+(\.\d+)?$/)) return "number";
+  if (every(/^[A-Z0-9]+$/) && every(/[A-Z]/) && strings.some((s) => /\d/.test(s))) return "alphanumUpper";
+  if (every(/^[a-z0-9]+$/) && every(/[a-z]/) && strings.some((s) => /\d/.test(s))) return "alphanumLower";
   return "words";
 }
 

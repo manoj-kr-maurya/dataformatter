@@ -33,6 +33,22 @@ describe("generateRows", () => {
       expect(rows[0][type]).toBeDefined();
     }
   });
+
+  it("alphanumUpper emits only uppercase letters and digits", () => {
+    const rows = generateRows([{ name: "code", type: "alphanumUpper" }], 3, "s");
+    for (const row of rows) {
+      expect(String(row.code)).toMatch(/^[A-Z0-9]+$/);
+      expect(String(row.code)).toMatch(/[A-Z]/);
+    }
+  });
+
+  it("alphanumLower emits only lowercase letters and digits", () => {
+    const rows = generateRows([{ name: "code", type: "alphanumLower" }], 3, "s");
+    for (const row of rows) {
+      expect(String(row.code)).toMatch(/^[a-z0-9]+$/);
+      expect(String(row.code)).toMatch(/[a-z]/);
+    }
+  });
 });
 
 describe("nestRows", () => {
