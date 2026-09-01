@@ -90,15 +90,14 @@ export function FakeDataWorkbench() {
   }, [fields, count, seed]);
 
   const report = useMemo(() => {
-    const activeFields = fields.filter((field) => !field.exclude);
     if (format === "json") return JSON.stringify(nestRows(fields, rows), null, 2);
     if (format === "csv") {
-      const header = activeFields.map((field) => csvCell(field.name)).join(",");
-      const body = rows.map((row) => activeFields.map((field) => csvCell(String(row[field.name] ?? ""))).join(","));
+      const header = fields.map((field) => csvCell(field.name)).join(",");
+      const body = rows.map((row) => fields.map((field) => csvCell(String(row[field.name] ?? ""))).join(","));
       return [header, ...body].join("\n");
     }
-    const header = activeFields.map((field) => field.name).join("\t");
-    const body = rows.map((row) => activeFields.map((field) => String(row[field.name] ?? "")).join("\t"));
+    const header = fields.map((field) => field.name).join("\t");
+    const body = rows.map((row) => fields.map((field) => String(row[field.name] ?? "")).join("\t"));
     return [header, ...body].join("\n");
   }, [rows, fields, format]);
 
@@ -276,10 +275,7 @@ export function FakeDataWorkbench() {
             </p>
           )}
           {fields.map((field, index) => (
-            <div
-              key={index}
-              className={`flex items-center gap-2 ${field.exclude ? "opacity-50" : ""}`}
-            >
+            <div key={index} className="flex items-center gap-2">
               <input
                 className={`${inputClass} w-40`}
                 value={field.name}
@@ -313,20 +309,6 @@ export function FakeDataWorkbench() {
                   Keep
                 </button>
               )}
-              <button
-                type="button"
-                title="Exclude this field from the generated output"
-                className={`rounded-md px-2 py-1.5 text-xs font-medium transition-colors ${
-                  field.exclude
-                    ? "bg-red-100 text-red-700 dark:bg-red-500/20 dark:text-red-300"
-                    : "text-zinc-500 hover:bg-zinc-100 hover:text-zinc-700 dark:text-zinc-400 dark:hover:bg-zinc-800"
-                }`}
-                aria-label={`Exclude field ${field.name}`}
-                aria-pressed={field.exclude ?? false}
-                onClick={() => updateField(index, { exclude: !field.exclude })}
-              >
-                Exclude
-              </button>
               <button
                 type="button"
                 className="rounded-md px-2 py-1.5 text-xs font-medium text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-500/10"

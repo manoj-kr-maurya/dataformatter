@@ -50,18 +50,6 @@ describe("generateRows", () => {
     }
   });
 
-  it("skips excluded fields", () => {
-    const rows = generateRows(
-      [
-        { name: "id", type: "uuid", exclude: true },
-        { name: "name", type: "fullName" },
-      ],
-      2,
-      "x",
-    );
-    expect(Object.keys(rows[0])).toEqual(["name"]);
-  });
-
   it("reuses the sample value for keepSample fields", () => {
     const rows = generateRows(
       [
@@ -74,17 +62,6 @@ describe("generateRows", () => {
     for (const row of rows) {
       expect(row.price).toBe(45.99);
     }
-  });
-
-  it("nestRows omits excluded fields", () => {
-    const nested = nestRows(
-      [
-        { name: "id", type: "uuid", exclude: true },
-        { name: "profile.firstName", type: "firstName", path: [{ key: "profile" }, { key: "firstName" }] },
-      ],
-      [{ "profile.firstName": "Ada" }],
-    );
-    expect(nested[0]).toEqual({ profile: { firstName: "Ada" } });
   });
 });
 

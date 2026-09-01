@@ -251,7 +251,7 @@ test.describe("workbench input→output matrix", () => {
     await expect.poll(() => preview.textContent()).toBe(first);
   });
 
-  test("Fake data supports Exclude and Keep-sample toggles per field", async ({ page }) => {
+  test("Fake data supports the Keep-sample value toggle per field", async ({ page }) => {
     await page.goto("/fake-data");
     const preview = page.locator("pre").first();
 
@@ -265,10 +265,6 @@ test.describe("workbench input→output matrix", () => {
 
     await page.getByLabel("Row count").fill("1");
     await page.getByLabel("Seed").fill("demo");
-
-    await expect(preview).toContainText('"orderId"');
-    await page.getByRole("button", { name: "Exclude field orders.orderId" }).click();
-    await expect(preview).not.toContainText('"orderId"');
 
     await page.getByRole("button", { name: "Keep sample value for field id" }).click();
     await expect(preview).toContainText('"id": 101');

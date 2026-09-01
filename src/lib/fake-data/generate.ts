@@ -46,8 +46,6 @@ export interface FieldSpec {
   type: FieldType;
   /** Structured path for rebuilding nested JSON output; absent = flat top-level field. */
   path?: PathSegment[];
-  /** Omit this field from the generated output entirely. */
-  exclude?: boolean;
   /** Reuse `sampleValue` verbatim for every row instead of generating a new one. */
   keepSample?: boolean;
   /** The original value seen in the pasted sample (used when `keepSample` is set). */
@@ -245,7 +243,7 @@ export function generateRows(fields: FieldSpec[], count: number, seed: string): 
   for (let i = 0; i < count; i++) {
     const row: Record<string, string | number | boolean> = {};
     for (const field of fields) {
-      if (!field.name.trim() || field.exclude) continue;
+      if (!field.name.trim()) continue;
       row[field.name] = field.keepSample && field.sampleValue !== undefined
         ? field.sampleValue
         : generateValue(field.type, rng);
@@ -264,7 +262,6 @@ export function nestRows(
   return flatRows.map((row) => {
     const root: Record<string, unknown> = {};
     for (const field of fields) {
-      if (field.exclude) continue;
       if (!field.path || field.path.length === 0) {
         root[field.name] = row[field.name];
         continue;
