@@ -24,6 +24,22 @@ export interface PageSeo {
   h1: string;
 }
 
+/**
+ * GEO (Generative Engine Optimization) answers for a tool page — concise,
+ * answer-first copy that makes it trivially easy for AI systems (and
+ * featured-snippet engines) to state what a tool is, who it is for and what
+ * makes DataFormatter's version different. Each statement is technically
+ * accurate to the implementation; no unsupported claims.
+ */
+export interface GeoDatum {
+  /** Definitional first sentence: "X is a free online … that …" */
+  what: string;
+  /** Who is this tool for. */
+  who: string;
+  /** What makes DataFormatter's tool different (privacy/local processing etc.). */
+  different: string;
+}
+
 const PAGES: PageSeo[] = [
   {
     path: "/",
@@ -578,6 +594,193 @@ export const RELATED_LINKS: Readonly<Record<string, ReadonlyArray<{ href: string
     { href: "/json-converter", label: "JSON Converters — fixtures with UUID keys" },
   ],
 };
+
+/**
+ * Per-tool GEO answers rendered as an answer-first "About this tool" block on
+ * every tool page. Exactly one entry per canonical tool page. All claims are
+ * true of the implementation — local/client-side processing, no upload, free,
+ * no signup — and each page's copy is written individually, never templated.
+ */
+export const GEO_ANSWERS: Readonly<Record<string, GeoDatum>> = {
+  "/json-formatter": {
+    what: "DataFormatter JSON Formatter is a free online JSON formatter, beautifier and pretty printer. It reformats minified JSON with clean 2-space indentation directly in the browser and lets you validate or minify it in the same workspace.",
+    who: "Developers and testers who need to make compact or minified API responses, configs and fixtures readable before they edit, debug or review them.",
+    different: "Unlike hosted formatters, it runs 100% in your browser — the JSON you paste is never uploaded — and it also validates and minifies in one place, with no signup.",
+  },
+  "/json-minifier": {
+    what: "DataFormatter JSON Minifier is a free online tool that compresses JSON to a single line by removing whitespace, so payloads take up less space in storage, logs and network requests.",
+    who: "Backend and frontend developers shrinking API responses or configuration that must fit small payload limits or reduce bandwidth.",
+    different: "It minifies entirely in the browser (nothing is uploaded) and, because it is lossless, output parses back to exactly the same values as the input.",
+  },
+  "/json-validator": {
+    what: "DataFormatter JSON Validator is a free online validator that checks JSON against RFC 8259 and points to the exact line and column of any syntax error.",
+    who: "Developers debugging malformed API responses, config files or webhook payloads that fail to parse.",
+    different: "It reports precise line and column positions and runs fully client-side, so sensitive JSON never leaves your browser.",
+  },
+  "/base64-encoder": {
+    what: "DataFormatter Base64 Encoder is a free online tool that encodes text, JSON or tokens to Base64 with correct UTF-8 handling for emoji and non-Latin scripts.",
+    who: "Developers and system administrators who need a Base64 form of a string for data URIs, headers or quick transfers.",
+    different: "It handles multi-byte UTF-8 correctly and runs locally in the browser — your input is never uploaded and no signup is required.",
+  },
+  "/base64-decoder": {
+    what: "DataFormatter Base64 Decoder is a free online tool that turns a Base64 string back into readable text, automatically pretty-printing any embedded JSON it finds.",
+    who: "Developers debugging encoded payloads, auth strings or base64-wrapped data who want the decoded result instantly and safely.",
+    different: "It auto-detects embedded JSON and pretty-prints it, and decoding happens entirely in your browser with nothing sent to a server.",
+  },
+  "/jwt-decoder": {
+    what: "DataFormatter JWT Decoder is a free online tool that decodes a JWT's header and payload into readable JSON, handling Bearer prefixes automatically.",
+    who: "Developers and testers inspecting access tokens, verifying claims or debugging auth flows without exposing token contents to a third-party service.",
+    different: "Decoding is 100% local — tokens are never sent to a server — and it auto-strips Bearer prefixes so you can paste a token as-is.",
+  },
+  "/url-encoder": {
+    what: "DataFormatter URL Encoder is a free online tool that percent-encodes spaces, symbols and Unicode exactly like encodeURIComponent before you put values into links or APIs.",
+    who: "Frontend developers and QA engineers building query strings, form values or hrefs that must be safely URL-encoded.",
+    different: "It mirrors the browser's encodeURIComponent behavior and runs entirely locally, so nothing you encode is uploaded.",
+  },
+  "/url-decoder": {
+    what: "DataFormatter URL Decoder is a free online tool that turns %20-style percent escapes back into readable text, including multi-byte emoji and accented characters.",
+    who: "Developers auditing tracked links, debugging redirects or reading query strings that arrive percent-encoded in logs.",
+    different: "It correctly decodes multi-byte sequences and runs fully in the browser — no upload, free and no signup.",
+  },
+  "/hash-generator": {
+    what: "DataFormatter Hash Generator is a free online tool that computes MD5, SHA-1, SHA-2 and SHA-3 checksum digests of any text.",
+    who: "Developers verifying file integrity, generating digests for webhooks or comparing checksums without reaching for a command line.",
+    different: "Every digest is calculated locally in your browser, so sensitive input is never uploaded — and the full SHA-3 family is supported.",
+  },
+  "/encode-decode": {
+    what: "DataFormatter Encoding & Decoding Workspace is a free collection of encoders and decoders covering Base32, Base58, Base64, URL, HTML, UTF-8 and JSON in one tab.",
+    who: "Anyone who switches between encoding schemes regularly and wants a single privacy-safe workspace instead of many bookmarklets.",
+    different: "It consolidates many formats in one client-side tab where every operation runs locally — no uploads, no accounts.",
+  },
+  "/base64": {
+    what: "DataFormatter Base64 Tools is a free suite that converts images, JSON, XML, CSV, hex, binary and octal to Base64 — and back.",
+    who: "Developers generating data URIs, encoding file content for APIs or decoding embedded assets without uploading files.",
+    different: "File conversion runs entirely client-side, so images and payloads are never uploaded to a server.",
+  },
+  "/json-converter": {
+    what: "DataFormatter JSON Converters is a free collection that turns JSON into Java classes, XML, YAML, CSV, TSV, Excel-ready tables, HTML and plain text.",
+    who: "Developers who need JSON transformed into another format for another tool, language or report.",
+    different: "Conversion happens in the browser with no upload, and dedicated pages cover JSON to CSV and JSON to YAML.",
+  },
+  "/json-diff": {
+    what: "DataFormatter JSON Diff is a free online tool that compares two JSON documents side by side and reports added, removed and changed values as precise dot paths.",
+    who: "Developers reviewing changes to an API response, config file or data contract between two versions.",
+    different: "Comparison runs entirely in your browser, so the JSON you paste is never uploaded, and results are listed as exact dot paths rather than a vague visual diff.",
+  },
+  "/json-to-code": {
+    what: "DataFormatter JSON to Code is a free online tool that turns a JSON sample into typed declarations for TypeScript, Java, C#, Go, Python, Kotlin or Swift.",
+    who: "Developers who need type-safe models or interfaces for an API payload and want to derive them instantly from a sample.",
+    different: "Generation is fully local with no upload and no signup, and it supports a wide range of popular languages from one sample.",
+  },
+  "/json-to-schema": {
+    what: "DataFormatter JSON to Schema is a free online tool that derives validation schemas from JSON samples — JSON Schema, Zod, Pydantic, OpenAPI or a NestJS DTO.",
+    who: "Developers adding validation to a codebase who want an accurate schema derived directly from example payloads.",
+    different: "It lets you supply multiple samples so it can learn which fields are optional, and everything runs locally with no upload.",
+  },
+  "/curl-to-code": {
+    what: "DataFormatter cURL to Code is a free online tool that converts a cURL command into JavaScript fetch, Axios, Python requests, Java, Go, C# or PHP.",
+    who: "Developers who have a working curl command and want the equivalent code in their language of choice.",
+    different: "It parses headers, auth, query and body faithfully and runs locally in the browser, so the request you paste is never uploaded.",
+  },
+  "/parsers": {
+    what: "DataFormatter Parsers is a free suite that breaks URLs into components, parses JSON into a typed tree, inspects XML element trees and converts YAML to JSON.",
+    who: "Developers inspecting structured data or URLs to understand their internals before coding against them.",
+    different: "All parsing runs locally in the browser, so the data you inspect is never uploaded.",
+  },
+  "/random-generators": {
+    what: "DataFormatter Random Generators is a free suite that produces UUIDs, IP addresses, primes, dates, names, MAC addresses and realistic test data as JSON or CSV.",
+    who: "Developers and testers who need realistic, seeded test fixtures quickly and reproducibly.",
+    different: "Generation runs on-device with seeded, reproducible output — nothing is uploaded and there is no signup.",
+  },
+  "/string-functions": {
+    what: "DataFormatter String Functions is a free collection of more than 20 utility transforms: change case, reverse, repeat, sort, count words and more.",
+    who: "Anyone cleaning or reshaping short text values without juggling multiple one-off sites.",
+    different: "It bundles the transforms into one private client-side tab where text never leaves the browser.",
+  },
+  "/cryptography-tools": {
+    what: "DataFormatter Cryptography Tools is a free suite for computing common digests from MD5 through SHA-512 and the SHA-3 family.",
+    who: "Developers and security-conscious users generating checksums or verifying integrity locally.",
+    different: "All digests compute in the browser — nothing is uploaded, and the SHA-3 family is included for free.",
+  },
+  "/compiler": {
+    what: "DataFormatter Online Compiler is a free tool that compiles and runs Dart, JavaScript and TypeScript directly in your browser (Dart via WebAssembly, JS/TS in a sandboxed worker).",
+    who: "Developers who want to prototype or test small code snippets in Dart, JavaScript or TypeScript without installing a toolchain.",
+    different: "There is no signup and code never leaves your machine — execution happens in the browser via WebAssembly and a sandboxed worker.",
+  },
+  "/api-client": {
+    what: "DataFormatter API Client is a free online tool that builds GET, POST, PUT and DELETE requests with headers, auth and JSON bodies and sends them straight from your browser.",
+    who: "Developers and testers who want to exercise a REST API quickly with full control over headers and auth.",
+    different: "Requests go directly to the endpoint with no server-side proxy, so nothing is forwarded, logged or uploaded.",
+  },
+  "/api-tester": {
+    what: "DataFormatter API Tester is a free online tool to build and send GET, POST, PUT and DELETE requests with headers, auth and JSON bodies directly from your browser.",
+    who: "Developers debugging endpoints and inspecting responses without leaving the tab or using a separate desktop app.",
+    different: "It sends requests straight to the endpoint with no proxy and no signup — cross-origin responses depend only on the endpoint's CORS policy, and nothing is logged.",
+  },
+  "/http-header-inspector": {
+    what: "DataFormatter HTTP Header Inspector is a free online tool that analyzes a pasted raw header block and reports cache control, cookies, CORS, HSTS and security headers with honest ok/warn/error notes.",
+    who: "Developers and security reviewers checking response headers for caching behavior and missing security protections.",
+    different: "Analysis runs locally — header blocks are never uploaded — so it is safe to inspect real production responses.",
+  },
+  "/log-analyzer": {
+    what: "DataFormatter Log Analyzer is a free online tool that counts log levels, deduplicates error groups and builds an hourly timeline from up to 50,000 pasted log lines.",
+    who: "Developers triaging server logs to find which errors repeat and when spikes happened without shipping logs anywhere.",
+    different: "It is entirely browser-based, so server logs with real data never leave your machine, and it handles large inputs locally.",
+  },
+  "/stack-trace": {
+    what: "DataFormatter Stack Trace Reader is a free online tool that parses Java, JavaScript/Node, Python and Go stack traces and surfaces the exception, the first project frame and a clean call chain.",
+    who: "Developers debugging panics and exceptions who want the failure's root cause and origin frame quickly.",
+    different: "Language detection is automatic, parsing is local, and it normalizes noisy async/framework frames into a readable chain.",
+  },
+  "/env-validator": {
+    what: "DataFormatter ENV Validator is a free online tool that checks .env syntax, duplicates and formatting, then diffs a local file against its .env.example.",
+    who: "Developers and DevOps engineers who want to confirm configuration files are well-formed and complete before deploying.",
+    different: "Analysis happens entirely in the browser, so secret values never leave your machine.",
+  },
+  "/cron": {
+    what: "DataFormatter Cron Expression Helper is a free online tool that validates 5- and 6-field cron expressions, describes them in plain English and lists next or previous runs in any time zone.",
+    who: "Developers and system administrators who need to verify a cron schedule or translate it into plain language.",
+    different: "It is DST-aware and fully client-side — nothing is uploaded, and you can read schedules in plain English.",
+  },
+  "/timestamp": {
+    what: "DataFormatter Timestamp Converter is a free online tool that converts Unix seconds or milliseconds, ISO-8601 and HTTP dates into every epoch unit plus readable local and UTC forms.",
+    who: "Developers debugging logs, databases and APIs who need to translate epoch values or dates quickly.",
+    different: "It auto-detects the input format, shows live relative age and computes everything in your browser.",
+  },
+  "/regex": {
+    what: "DataFormatter Regex Tester is a free online tool that tests regular expressions with the browser's own engine, showing instant validity, every match with positions and capture groups, plus a per-line mode.",
+    who: "Developers writing or debugging regex for validation, parsing and log auditing without running a script.",
+    different: "It runs 100% client-side against your browser's native engine, so behavior matches real JavaScript exactly.",
+  },
+  "/fake-data": {
+    what: "DataFormatter Fake Data Generator is a free online tool that generates realistic fake data — names, emails, UUIDs, IPs, dates and more — as tables, JSON or CSV.",
+    who: "Developers and testers seeding databases, mocks and demos with safe, non-personal placeholder data.",
+    different: "Generation is seeded and reproducible and runs entirely in your browser — no data is generated server-side or uploaded.",
+  },
+  "/developer-calculator": {
+    what: "DataFormatter Developer Calculator is a free online calculator built for developers: hex/binary literals, radix conversion with bit masking, byte-size measurement, percent math and CRC-32.",
+    who: "Developers who work in hex, bytes and bitwise math and want a calculator that matches their mental model.",
+    different: "It is designed around developer expressions and bit operations, and everything runs locally in your browser.",
+  },
+  "/json-to-csv": {
+    what: "DataFormatter JSON to CSV Converter is a free online tool that flattens an array of JSON objects into clean CSV with one header column per key, quoted cells and empty cells for missing fields.",
+    who: "Developers and analysts exporting JSON API data for Excel, BigQuery or spreadsheet workflows.",
+    different: "Conversion runs entirely in the browser — nothing is uploaded — and output is ready to paste into a spreadsheet.",
+  },
+  "/json-to-yaml": {
+    what: "DataFormatter JSON to YAML Converter is a free online tool that turns JSON into indentation-based YAML for Docker Compose, Kubernetes manifests, CI configs and Ansible.",
+    who: "Developers and platform engineers converting JSON config into YAML for tools that expect YAML or prefer it by convention.",
+    different: "It handles nested objects, arrays and quoting correctly, and runs free and locally in your tab with no upload.",
+  },
+  "/uuid-generator": {
+    what: "DataFormatter UUID Generator is a free online tool that creates one or more random RFC 4122 UUID v4 identifiers directly in your browser.",
+    who: "Developers and testers who need unique ID values for database keys, API mocks and test fixtures.",
+    different: "It generates standard lowercase v4 UUIDs fully client-side — nothing you generate is uploaded and there is no signup.",
+  },
+};
+
+/** Every canonical tool page carries a GEO answer block (mirrors the registry). */
+export const GEO_KEYS: readonly string[] = Object.keys(GEO_ANSWERS);
 
 /**
  * Build complete static page metadata from the registry: unique title,

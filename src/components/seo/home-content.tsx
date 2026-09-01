@@ -42,10 +42,11 @@ export function HomeContent() {
         Privacy-First Developer Tools
       </h1>
       <p className="mt-3 text-base leading-relaxed text-zinc-600 dark:text-zinc-400">
-        Format JSON, decode JWTs, convert Base64 and URL, hash text, compile code and test APIs —
-        all in one fast workspace that runs entirely in your browser. DataFormatter keeps your
-        data private by design: nothing you paste is ever uploaded to a server. No accounts, no
-        signup, no usage limits.
+        DataFormatter is a collection of free, privacy-first online developer tools for
+        formatting, validating, converting, encoding and debugging data. Format JSON, decode JWTs,
+        convert Base64 and URL, hash text, compile code and test APIs — all in one fast workspace
+        that runs entirely in your browser. Nothing you paste is ever uploaded to a server, and
+        there are no accounts, no signup and no usage limits.
       </p>
 
       <Section title="Popular developer tools">

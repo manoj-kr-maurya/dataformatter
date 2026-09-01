@@ -4,6 +4,7 @@ import robots from "@/app/robots";
 import {
   BREADCRUMBS,
   FOOTER_LINKS,
+  GEO_ANSWERS,
   HEADER_LINKS,
   RELATED_LINKS,
   SEO_PAGES,
@@ -179,6 +180,37 @@ describe("SoftwareApplication structured data", () => {
       expect(json.applicationCategory).toBe("DeveloperApplication");
       expect(json.url).toBe(`${SITE_URL}${page.path}`);
       expect(json.offers.price).toBe("0");
+    }
+  });
+});
+
+describe("GEO answers", () => {
+  // Every tool page (all registered pages except home/about/contact) must carry
+  // a concise, complete GEO answer block so AI systems and featured snippets
+  // can answer what / who-for / differentiator directly from the page.
+  const NON_TOOL = new Set(["/", "/about", "/contact"]);
+
+  it("covers every tool page with a complete GEO answer", () => {
+    for (const page of pages) {
+      if (NON_TOOL.has(page.path)) continue;
+      const geo = GEO_ANSWERS[page.path];
+      expect(geo, `${page.path} missing GEO answers`).toBeDefined();
+      expect(geo.what.length, page.path).toBeGreaterThan(40);
+      expect(geo.who.length, page.path).toBeGreaterThan(20);
+      expect(geo.different.length, page.path).toBeGreaterThan(20);
+    }
+  });
+
+  it("does not invent GEO answers for non-tool pages", () => {
+    for (const path of NON_TOOL) {
+      expect(GEO_ANSWERS[path]).toBeUndefined();
+    }
+  });
+
+  it("only references registered routes", () => {
+    const valid = new Set(SEO_PAGES.keys());
+    for (const path of Object.keys(GEO_ANSWERS)) {
+      expect(valid.has(path), path).toBe(true);
     }
   });
 });

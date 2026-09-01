@@ -7,11 +7,12 @@ import {
   RELATED_LINKS,
   BREADCRUMBS,
   SEO_PAGES,
+  GEO_ANSWERS,
   serializeJsonLd,
   softwareApplicationJsonLd,
   SITE_NAME,
 } from "@/lib/seo";
-import { Breadcrumbs, BreadcrumbJsonLd, LastReviewed } from "@/components/seo/content-blocks";
+import { Breadcrumbs, BreadcrumbJsonLd, LastReviewed, GeoBlock } from "@/components/seo/content-blocks";
 
 interface ToolLandingPageProps {
   /** Canonical path registered in the SEO registry. */
@@ -76,6 +77,7 @@ export function ToolLandingPage({ path, summary, children }: ToolLandingPageProp
         <p className="mt-2 text-base leading-relaxed text-zinc-600 dark:text-zinc-400">
           {summary}
         </p>
+        {GEO_ANSWERS[path] && <GeoBlock answers={GEO_ANSWERS[path]} />}
         {children}
 
         {related.length > 0 && (

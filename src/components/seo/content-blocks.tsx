@@ -5,7 +5,7 @@ import {
   faqJsonLd,
   serializeJsonLd,
 } from "@/lib/seo";
-import type { FaqEntry } from "@/lib/seo";
+import type { FaqEntry, GeoDatum } from "@/lib/seo";
 
 export function Section({ title, children }: { title: string; children: ReactNode }) {
   return (
@@ -75,6 +75,38 @@ export function LastReviewed({ children }: { children: ReactNode }) {
     <p className="mt-8 border-t border-zinc-200 pt-3 text-xs text-zinc-400 dark:border-zinc-800 dark:text-zinc-500">
       {children}
     </p>
+  );
+}
+
+/**
+ * GEO (Generative Engine Optimization) answer block: a concise, answer-first
+ * "About this tool" section that lets AI systems and featured-snippet engines
+ * state what a tool is, who it is for and how DataFormatter's version differs.
+ * Copy comes from the central {@link GEO_ANSWERS} registry — never templated.
+ */
+export function GeoBlock({ answers }: { answers: GeoDatum }) {
+  return (
+    <section className="mt-4 rounded-xl border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-950/40">
+      <h2 className="text-sm font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
+        About this tool
+      </h2>
+      <dl className="mt-2 space-y-3 text-sm leading-relaxed text-zinc-600 dark:text-zinc-400">
+        <div>
+          <dt className="font-semibold text-zinc-800 dark:text-zinc-200">What is it?</dt>
+          <dd>{answers.what}</dd>
+        </div>
+        <div>
+          <dt className="font-semibold text-zinc-800 dark:text-zinc-200">Who is it for?</dt>
+          <dd>{answers.who}</dd>
+        </div>
+        <div>
+          <dt className="font-semibold text-zinc-800 dark:text-zinc-200">
+            What makes DataFormatter&apos;s tool different?
+          </dt>
+          <dd>{answers.different}</dd>
+        </div>
+      </dl>
+    </section>
   );
 }
 
