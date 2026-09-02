@@ -224,6 +224,13 @@ const PAGES: PageSeo[] = [
     h1: "Online API Tester",
   },
   {
+    path: "/openapi",
+    title: "OpenAPI Viewer & Workbench – Explore, Validate & Generate Code",
+    description:
+      "Paste or upload an OpenAPI 3.0/3.1 JSON or YAML document and explore every endpoint and schema, validate structure, and generate cURL, fetch, Axios and TypeScript code. Runs entirely in your browser — nothing is uploaded.",
+    h1: "OpenAPI Viewer & Workbench",
+  },
+  {
     path: "/http-header-inspector",
     title: "HTTP Header Inspector – Analyze Security & Caching Headers",
     description:
@@ -307,6 +314,27 @@ const PAGES: PageSeo[] = [
       "Generate one or more random UUID v4 identifiers straight from your browser — RFC 4122 format, lowercase hex, ready for database keys, API mocks and test fixtures. Fully client-side: nothing you generate is uploaded.",
     h1: "UUID Generator",
   },
+  {
+    path: "/har",
+    title: "HAR Debugger – Analyze & Visualize Network Logs",
+    description:
+      "Open a HAR file and get failed and slow requests, timings, status groups, auth and security observations instantly — virtualized list, waterfall bars and privacy-safe sanitize & export. Runs entirely in your browser.",
+    h1: "HAR Debugger",
+  },
+  {
+    path: "/api-diff",
+    title: "API Breaking Change Detector – Diff JSON APIs",
+    description:
+      "Compare two JSON APIs or schemas and get every difference classified as breaking, potentially-breaking, non-breaking or informational — new required fields, enum removals and shape flips flagged first. Local and free.",
+    h1: "API Breaking Change Detector",
+  },
+  {
+    path: "/error-workspace",
+    title: "Error Workspace – Correlate Stack Traces & Logs",
+    description:
+      "Paste a stack trace, service logs and the failing request and response to get one correlated, prioritized debugging session — with runnable reproduction code, trace-ID linking and Markdown/JSON export. Everything stays in your browser.",
+    h1: "Production Error Workspace",
+  },
 ];
 
 export const SEO_PAGES: ReadonlyMap<string, PageSeo> = new Map(
@@ -356,6 +384,7 @@ export const FOOTER_LINKS: ReadonlyArray<{ href: string; label: string }> = [
   { href: "/json-to-schema", label: "JSON to Schema" },
   { href: "/curl-to-code", label: "cURL to Code" },
   { href: "/api-tester", label: "API Tester" },
+  { href: "/openapi", label: "OpenAPI Workbench" },
   { href: "/http-header-inspector", label: "Header Inspector" },
   { href: "/log-analyzer", label: "Log Analyzer" },
   { href: "/stack-trace", label: "Stack Trace" },
@@ -368,6 +397,9 @@ export const FOOTER_LINKS: ReadonlyArray<{ href: string; label: string }> = [
   { href: "/json-to-csv", label: "JSON to CSV" },
   { href: "/json-to-yaml", label: "JSON to YAML" },
   { href: "/uuid-generator", label: "UUID Generator" },
+  { href: "/har", label: "HAR Debugger" },
+  { href: "/api-diff", label: "API Breaking Change Detector" },
+  { href: "/error-workspace", label: "Error Workspace" },
 ];
 
 /** Tool-specific internal link graph — descriptive anchors, real routes only.
@@ -479,6 +511,7 @@ export const RELATED_LINKS: Readonly<Record<string, ReadonlyArray<{ href: string
     { href: "/json-validator", label: "JSON Validator — check payloads" },
     { href: "/jwt-decoder", label: "JWT Decoder — debug bearer tokens" },
     { href: "/compiler", label: "Dart Compiler — generate request scripts" },
+    { href: "/openapi", label: "OpenAPI Workbench — explore a documented API" },
   ],
   "/about": [
     { href: "/api-client", label: "API Client — test REST APIs in-browser" },
@@ -509,18 +542,28 @@ export const RELATED_LINKS: Readonly<Record<string, ReadonlyArray<{ href: string
     { href: "/json-validator", label: "JSON Validator — check the samples first" },
     { href: "/json-diff", label: "JSON Diff — track what changed" },
     { href: "/parsers", label: "Parsers — inspect the JSON as a tree" },
+    { href: "/openapi", label: "OpenAPI Workbench — use the schema in a document" },
   ],
   "/curl-to-code": [
     { href: "/api-tester", label: "API Tester — send the request live" },
     { href: "/api-client", label: "API Client — build requests by hand" },
     { href: "/http-header-inspector", label: "Header Inspector — analyze the headers" },
     { href: "/json-validator", label: "JSON Validator — check the body you generated" },
+    { href: "/openapi", label: "OpenAPI Workbench — generate code from a document" },
   ],
   "/api-tester": [
     { href: "/curl-to-code", label: "cURL to Code — import a command" },
     { href: "/json-formatter", label: "JSON Formatter — prettify the response" },
     { href: "/json-validator", label: "JSON Validator — verify the payload" },
     { href: "/http-header-inspector", label: "Header Inspector — inspect response headers" },
+    { href: "/openapi", label: "OpenAPI Workbench — explore the API definition" },
+  ],
+  "/openapi": [
+    { href: "/api-tester", label: "API Tester — send a request live" },
+    { href: "/api-client", label: "API Client — build requests by hand" },
+    { href: "/curl-to-code", label: "cURL to Code — port a command to code" },
+    { href: "/json-to-schema", label: "JSON to Schema — derive schemas from samples" },
+    { href: "/json-to-code", label: "JSON to Code — generate types from payloads" },
   ],
   "/http-header-inspector": [
     { href: "/curl-to-code", label: "cURL to Code — reproduce the exact request" },
@@ -539,6 +582,24 @@ export const RELATED_LINKS: Readonly<Record<string, ReadonlyArray<{ href: string
     { href: "/regex", label: "Regex Tester — match trace frames" },
     { href: "/json-validator", label: "JSON Validator — validate the payload that failed" },
     { href: "/compiler", label: "Compiler — reproduce the failure in code" },
+  ],
+  "/har": [
+    { href: "/http-header-inspector", label: "Header Inspector — inspect specific header blocks" },
+    { href: "/log-analyzer", label: "Log Analyzer — correlate request failures with server logs" },
+    { href: "/api-client", label: "API Client — replay a captured request" },
+    { href: "/error-workspace", label: "Error Workspace — dig into one failed exchange" },
+  ],
+  "/api-diff": [
+    { href: "/json-diff", label: "JSON Diff — precise field-level before/after" },
+    { href: "/openapi", label: "OpenAPI Workbench — explore a documented API" },
+    { href: "/json-to-schema", label: "JSON to Schema — derive the contract to compare" },
+    { href: "/api-client", label: "API Client — verify the changed endpoint" },
+  ],
+  "/error-workspace": [
+    { href: "/stack-trace", label: "Stack Trace Reader — parse the exception cleanly" },
+    { href: "/log-analyzer", label: "Log Analyzer — level counts and error groups" },
+    { href: "/http-header-inspector", label: "Header Inspector — debug the request/response headers" },
+    { href: "/curl-to-code", label: "cURL to Code — port the reproduction to code" },
   ],
   "/env-validator": [
     { href: "/fake-data", label: "Fake Data — placeholder values for config" },
@@ -717,6 +778,11 @@ export const GEO_ANSWERS: Readonly<Record<string, GeoDatum>> = {
     who: "Developers debugging endpoints and inspecting responses without leaving the tab or using a separate desktop app.",
     different: "It sends requests straight to the endpoint with no proxy and no signup — cross-origin responses depend only on the endpoint's CORS policy, and nothing is logged.",
   },
+  "/openapi": {
+    what: "DataFormatter OpenAPI Viewer & Workbench is a free online tool that parses an OpenAPI 3.0/3.1 JSON or YAML document in your browser, lets you explore every endpoint and schema, validates the structure and generates cURL, fetch, Axios and TypeScript code.",
+    who: "Developers and API designers who need to understand a documented API quickly, spot structural problems in a spec or get runnable request code without installing a client.",
+    different: "It accepts real-world YAML (block scalars, anchors), resolves $ref safely against circular schemas, and processes everything locally with no upload — including generated code that never carries authorization secrets.",
+  },
   "/http-header-inspector": {
     what: "DataFormatter HTTP Header Inspector is a free online tool that analyzes a pasted raw header block and reports cache control, cookies, CORS, HSTS and security headers with honest ok/warn/error notes.",
     who: "Developers and security reviewers checking response headers for caching behavior and missing security protections.",
@@ -776,6 +842,21 @@ export const GEO_ANSWERS: Readonly<Record<string, GeoDatum>> = {
     what: "DataFormatter UUID Generator is a free online tool that creates one or more random RFC 4122 UUID v4 identifiers directly in your browser.",
     who: "Developers and testers who need unique ID values for database keys, API mocks and test fixtures.",
     different: "It generates standard lowercase v4 UUIDs fully client-side — nothing you generate is uploaded and there is no signup.",
+  },
+  "/har": {
+    what: "DataFormatter HAR Debugger is a free online HAR file viewer and analyzer that opens browser HAR exports and surfaces failed requests, slow timings, duplicates, auth and security observations.",
+    who: "Frontend and QA engineers tracing page load performance, failed API calls or network behavior captured in a HAR recording.",
+    different: "It analyzes entirely in the browser with a privacy-safe sanitize-and-download flow, so real request data never leaves your machine.",
+  },
+  "/api-diff": {
+    what: "DataFormatter API Breaking Change Detector is a free online tool that compares two JSON APIs or JSON Schemas and classifies every difference as breaking, potentially-breaking, non-breaking or informational.",
+    who: "Backend and integration developers reviewing release branches, third-party API upgrades or contract changes before shipping.",
+    different: "It is schema-aware — new required fields, enum removals and type tightenings count as breaking — and runs fully locally with no upload.",
+  },
+  "/error-workspace": {
+    what: "DataFormatter Production Error Workspace is a free online incident debugging tool that correlates a pasted stack trace, service logs, failing request and response into one prioritized session with a runnable reproduction.",
+    who: "Backend and platform engineers triaging production failures who want stack trace, logs and request evidence unified in one place.",
+    different: "It correlates trace IDs across log lines and request headers, generates cURL and code reproduction commands, and runs entirely in the browser.",
   },
 };
 
@@ -925,6 +1006,10 @@ export const BREADCRUMBS: Readonly<Record<string, ReadonlyArray<{ name: string; 
     { name: "Home", href: "/" },
     { name: "API Tester", href: "/api-tester" },
   ],
+  "/openapi": [
+    { name: "Home", href: "/" },
+    { name: "OpenAPI Viewer & Workbench", href: "/openapi" },
+  ],
   "/http-header-inspector": [
     { name: "Home", href: "/" },
     { name: "HTTP Header Inspector", href: "/http-header-inspector" },
@@ -975,6 +1060,18 @@ export const BREADCRUMBS: Readonly<Record<string, ReadonlyArray<{ name: string; 
     { name: "Home", href: "/" },
     { name: "Random Generators", href: "/random-generators" },
     { name: "UUID Generator", href: "/uuid-generator" },
+  ],
+  "/har": [
+    { name: "Home", href: "/" },
+    { name: "HAR Debugger", href: "/har" },
+  ],
+  "/api-diff": [
+    { name: "Home", href: "/" },
+    { name: "API Breaking Change Detector", href: "/api-diff" },
+  ],
+  "/error-workspace": [
+    { name: "Home", href: "/" },
+    { name: "Production Error Workspace", href: "/error-workspace" },
   ],
 };
 

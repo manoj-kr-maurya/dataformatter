@@ -57,7 +57,11 @@ export type PageHref =
   | "/compiler"
   | "/api-client"
   | "/api-tester"
+  | "/openapi"
   | "/json-diff"
+  | "/har"
+  | "/api-diff"
+  | "/error-workspace"
   | "/json-to-code"
   | "/json-to-schema"
   | "/curl-to-code"
@@ -224,6 +228,12 @@ const RAIL_SECTIONS: RailSection[] = [
       { id: "rest", label: "REST", title: "Build & send HTTP requests in your browser" },
       { id: "api-tester", href: "/api-tester", label: "API Tester", title: "Send & debug HTTP requests in your browser" },
       {
+        id: "openapi",
+        href: "/openapi",
+        label: "OpenAPI",
+        title: "View, validate & generate code from OpenAPI documents",
+      },
+      {
         id: "http-headers",
         href: "/http-header-inspector",
         label: "HTTP Headers",
@@ -276,12 +286,15 @@ const RAIL_SECTIONS: RailSection[] = [
     tools: [],
     subItems: [
       { id: "json-diff", href: "/json-diff", label: "JSON Diff", title: "Compare two JSON documents" },
+      { id: "har", href: "/har", label: "HAR Debugger", title: "Analyze network captures & HAR files" },
+      { id: "api-diff", href: "/api-diff", label: "API Diff", title: "Detect breaking changes between JSON APIs" },
+      { id: "error-workspace", href: "/error-workspace", label: "Error Workspace", title: "Debug production errors, logs & stack traces" },
       { id: "log-analyzer", href: "/log-analyzer", label: "Log Analyzer", title: "Count errors & spot spikes in logs" },
       { id: "stack-trace", href: "/stack-trace", label: "Stack Trace", title: "Read Java, JS, Python & Go stack traces" },
       { id: "env-validator", href: "/env-validator", label: "ENV Validator", title: "Validate & diff .env files locally" },
       { id: "regex", href: "/regex", label: "Regex Tester", title: "Test regular expressions locally" },
     ],
-    title: "Debug — diff JSON, analyze logs and traces, validate env & regex",
+    title: "Debug — inspect HAR captures, detect API breaking changes, debug errors, diff JSON, analyze logs and traces, validate env & regex",
   },
   {
     id: "time",
@@ -338,9 +351,11 @@ interface SidebarProps {
   /** Mobile drawer visibility; the drawer is only rendered below `sm`. */
   open?: boolean;
   onClose?: () => void;
+  /** When true, tool clicks navigate to the section's page instead of calling onSelectTool. Use on standalone workbench pages (HAR, API-Diff, Error-Workspace) where there is no tool-switching workspace. */
+  standalone?: boolean;
 }
 
-export function Sidebar({ activeHref, mode, onSelectTool, open = false, onClose }: SidebarProps) {
+export function Sidebar({ activeHref, mode, onSelectTool, open = false, onClose, standalone }: SidebarProps) {
   const [activeId, setActiveId] = useState<string | null>(null);
   const [panelOpen, setPanelOpen] = useState(false);
   const [picked, setPicked] = useState(false);
@@ -558,6 +573,24 @@ export function Sidebar({ activeHref, mode, onSelectTool, open = false, onClose 
       </>
     );
     if (section.mode) {
+      if (standalone) {
+        return (
+          <Link
+            key={section.id}
+            href={(section.href ?? "/") as PageHref}
+            data-rail={section.id}
+            aria-label={section.label}
+            aria-current={highlighted ? "page" : undefined}
+            title={section.title}
+            onClick={pick}
+            onMouseEnter={(event) => reveal(section.id, event.currentTarget)}
+            onKeyDown={(event) => handleRailKeyDown(event, section)}
+            className={railItemClass(highlighted)}
+          >
+            {inner}
+          </Link>
+        );
+      }
       return (
         <button
           key={section.id}
@@ -647,17 +680,28 @@ export function Sidebar({ activeHref, mode, onSelectTool, open = false, onClose 
                 <div key={section.id}>
                   <div className="flex items-center gap-1">
                     {section.mode ? (
-                      <button
-                        type="button"
-                        aria-current={active ? "true" : undefined}
-                        onClick={() => {
-                          onSelectTool(section.mode as ToolMode);
-                          onClose?.();
-                        }}
-                        className={drawerItemClass(active)}
-                      >
-                        {rowInner}
-                      </button>
+                      standalone ? (
+                        <Link
+                          href={(section.href ?? "/") as PageHref}
+                          aria-current={active ? "page" : undefined}
+                          onClick={onClose}
+                          className={drawerItemClass(active)}
+                        >
+                          {rowInner}
+                        </Link>
+                      ) : (
+                        <button
+                          type="button"
+                          aria-current={active ? "true" : undefined}
+                          onClick={() => {
+                            onSelectTool(section.mode as ToolMode);
+                            onClose?.();
+                          }}
+                          className={drawerItemClass(active)}
+                        >
+                          {rowInner}
+                        </button>
+                      )
                     ) : (
                       <Link
                         href={section.href as PageHref}
@@ -684,19 +728,33 @@ export function Sidebar({ activeHref, mode, onSelectTool, open = false, onClose 
                   </div>
                   {expanded && (
                     <div className="ml-3 mt-0.5 space-y-0.5 border-l border-zinc-200 pl-3 dark:border-zinc-800">
-                      {section.tools.map((tool) => (
-                        <button
-                          key={tool}
-                          type="button"
-                          onClick={() => {
-                            onSelectTool(tool);
-                            onClose?.();
-                          }}
-                          className={drawerItemClass(mode === tool)}
-                        >
-                          <span className="truncate">{TOOL_META[tool].label}</span>
-                        </button>
-                      ))}
+                      {section.tools.map((tool) => {
+                        if (standalone) {
+                          return (
+                            <Link
+                              key={tool}
+                              href={pageHrefForTool(tool)}
+                              onClick={onClose}
+                              className={drawerItemClass(mode === tool)}
+                            >
+                              <span className="truncate">{TOOL_META[tool].label}</span>
+                            </Link>
+                          );
+                        }
+                        return (
+                          <button
+                            key={tool}
+                            type="button"
+                            onClick={() => {
+                              onSelectTool(tool);
+                              onClose?.();
+                            }}
+                            className={drawerItemClass(mode === tool)}
+                          >
+                            <span className="truncate">{TOOL_META[tool].label}</span>
+                          </button>
+                        );
+                      })}
                       {(section.subItems ?? []).map((sub) => {
                         const subHref = (sub.href ?? section.href) as PageHref;
                         return (
@@ -807,17 +865,31 @@ export function Sidebar({ activeHref, mode, onSelectTool, open = false, onClose 
             <div className="max-h-[70vh] overflow-y-auto p-1">
               {activeSection.tools.map((tool) => {
                 const toolActive = mode === tool;
+                const toolClass = `block w-full rounded-md px-3 py-1.5 text-left text-xs transition-colors focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-violet-500 ${
+                  toolActive
+                    ? "font-medium text-violet-600 dark:text-violet-300"
+                    : "text-zinc-500 hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-zinc-100"
+                }`;
+                if (standalone) {
+                  return (
+                    <Link
+                      key={tool}
+                      href={pageHrefForTool(tool)}
+                      data-tool={tool}
+                      onClick={pick}
+                      className={toolClass}
+                    >
+                      {TOOL_META[tool].label}
+                    </Link>
+                  );
+                }
                 return (
                   <button
                     key={tool}
                     type="button"
                     data-tool={tool}
                     onClick={() => selectTool(tool)}
-                    className={`w-full rounded-md px-3 py-1.5 text-left text-xs transition-colors focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-violet-500 ${
-                      toolActive
-                        ? "font-medium text-violet-600 dark:text-violet-300"
-                        : "text-zinc-500 hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-zinc-100"
-                    }`}
+                    className={toolClass}
                   >
                     {TOOL_META[tool].label}
                   </button>

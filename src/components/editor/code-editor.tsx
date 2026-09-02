@@ -167,7 +167,7 @@ export function CodeEditor({
 
   return (
     <div
-      className={`h-full overflow-hidden ${
+      className={`code-editor h-full overflow-hidden ${
         dragging ? "ring-2 ring-violet-500 ring-inset" : ""
       }`}
       onDragOver={handleDragOver}
