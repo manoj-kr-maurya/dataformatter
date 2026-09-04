@@ -858,9 +858,20 @@ export function Sidebar({ activeHref, mode, onSelectTool, open = false, onClose,
           >
             <div className="flex items-center gap-2 border-b border-zinc-200 px-3 py-2 dark:border-zinc-800">
               <activeSection.icon className="h-4 w-4 shrink-0 text-violet-500 dark:text-violet-300" />
-              <span className="truncate text-sm font-semibold text-zinc-900 dark:text-zinc-100">
-                {activeSection.fullLabel}
-              </span>
+              {activeSection.href ? (
+                <Link
+                  href={activeSection.href}
+                  title={activeSection.title}
+                  onClick={pick}
+                  className="truncate text-sm font-semibold text-zinc-900 dark:text-zinc-100"
+                >
+                  {activeSection.fullLabel}
+                </Link>
+              ) : (
+                <span className="truncate text-sm font-semibold text-zinc-900 dark:text-zinc-100">
+                  {activeSection.fullLabel}
+                </span>
+              )}
             </div>
             <div className="max-h-[70vh] overflow-y-auto p-1">
               {activeSection.tools.map((tool) => {

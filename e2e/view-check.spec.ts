@@ -36,18 +36,20 @@ test("menu lists encoding tools in a sideways branch and reflects the active one
 
   // The rail is a slim, permanent icon+label column listing every tool
   // category — none tucked away in an overflow popup — with the current page
-  // highlighted on the matching item.
-  await expect(page.getByRole("link", { name: "Home", exact: true })).toBeVisible();
-  await expect(page.getByRole("link", { name: "Base64", exact: true })).toBeVisible();
-  await expect(page.getByRole("button", { name: "JWT", exact: true })).toBeVisible();
-  await expect(page.getByRole("link", { name: "URL", exact: true })).toHaveAttribute(
+  // highlighted on the matching item. Scoped to the primary nav so the header
+  // breadcrumb's "Home" link doesn't create a strict-mode ambiguity.
+  const nav = page.getByRole("navigation", { name: "Primary" });
+  await expect(nav.getByRole("link", { name: "Home", exact: true })).toBeVisible();
+  await expect(nav.getByRole("link", { name: "Base64", exact: true })).toBeVisible();
+  await expect(nav.getByRole("button", { name: "JWT", exact: true })).toBeVisible();
+  await expect(nav.getByRole("link", { name: "URL", exact: true })).toHaveAttribute(
     "aria-current",
     "page",
   );
-  await expect(page.getByRole("link", { name: "Hash", exact: true })).toBeVisible();
-  await expect(page.getByRole("link", { name: "Parsers", exact: true })).toBeVisible();
-  await expect(page.getByRole("link", { name: "Random", exact: true })).toBeVisible();
-  await expect(page.getByRole("link", { name: "String", exact: true })).toBeVisible();
+  await expect(nav.getByRole("link", { name: "Hash", exact: true })).toBeVisible();
+  await expect(nav.getByRole("link", { name: "Parsers", exact: true })).toBeVisible();
+  await expect(nav.getByRole("link", { name: "Random", exact: true })).toBeVisible();
+  await expect(nav.getByRole("link", { name: "String", exact: true })).toBeVisible();
   await expect(page.getByRole("status")).toBeVisible();
   await expect(
     page.getByText("Your data stays in your browser. Nothing is uploaded to our servers."),

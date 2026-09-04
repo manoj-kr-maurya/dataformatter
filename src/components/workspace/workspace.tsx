@@ -52,7 +52,11 @@ function outputFilename(result: TransformationResult | null, fallback: string): 
     case "BASE64_DECODE":
       return detected === "JSON" ? "decoded.json" : "decoded.txt";
     case "BASE64_TO_JSON":
+    case "JSON_DECODE_BASE64":
+    case "JSON_SALVAGE":
       return "decoded.json";
+    case "JSON_TO_JSONL":
+      return "documents.jsonl";
     case "JWT_DECODE":
       return "decoded-jwt.txt";
     case "JSON_PARSE":

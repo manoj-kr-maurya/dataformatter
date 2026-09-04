@@ -109,4 +109,120 @@ describe("autoTransform", () => {
     expect(twice.transformation).toBe("JSON_FORMAT");
     expect(twice.output).toBe(once.output);
   });
+
+  it("recursively decodes a base64 JSON value into a nested object", () => {
+    const input = '{"payload": "eyJmb28iOiJiYXIifQ=="}';
+    const result = autoTransform(input);
+    expect(result.success).toBe(true);
+    expect(result.transformation).toBe("JSON_DECODE_BASE64");
+    expect(result.output).toBe('{\n  "payload": {\n    "foo": "bar"\n  }\n}');
+    expect(result.message).toBe("Detected: JSON — recursively decoded Base64 field values");
+  });
+
+  it("recursively decodes base64 inside nested objects and arrays", () => {
+    const input = '{"user":{"roles":["eyJhZGRlZCI6dHJ1ZX0="]}}';
+    const result = autoTransform(input);
+    expect(result.success).toBe(true);
+    expect(result.output).toBe(
+      '{\n  "user": {\n    "roles": [\n      {\n        "added": true\n      }\n    ]\n  }\n}',
+    );
+  });
+
+  it("decodes a base64 plain-text value to a string", () => {
+    const input = '{"greeting": "SGVsbG8gV29ybGQ="}';
+    const result = autoTransform(input);
+    expect(result.success).toBe(true);
+    expect(result.transformation).toBe("JSON_DECODE_BASE64");
+    expect(result.output).toBe('{\n  "greeting": "Hello World"\n}');
+  });
+
+  it("does not decode ordinary strings that only look close to base64", () => {
+    const input = '{"msg": "Hello World"}';
+    const result = autoTransform(input);
+    expect(result.success).toBe(true);
+    expect(result.transformation).toBe("JSON_FORMAT");
+    expect(result.output).toBe('{\n  "msg": "Hello World"\n}');
+  });
+
+  it("is idempotent after recursive decode — output has no base64 left", () => {
+    const once = autoTransform('{"payload": "eyJmb28iOiJiYXIifQ=="}');
+    const twice = autoTransform(once.output);
+    expect(twice.success).toBe(true);
+    expect(twice.transformation).toBe("JSON_FORMAT");
+    expect(twice.output).toBe(once.output);
+  });
+
+  it("decodes a JWT value inside JSON into header/payload/signature", () => {
+    const jwt = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c";
+    const input = `{"token": "${jwt}"}`;
+    const result = autoTransform(input);
+    expect(result.success).toBe(true);
+    expect(result.transformation).toBe("JSON_DECODE_BASE64");
+    expect(result.output).toBe(
+      '{\n  "token": {\n    "header": {\n      "alg": "HS256",\n      "typ": "JWT"\n    },\n    "payload": {\n      "sub": "1234567890",\n      "name": "John Doe",\n      "iat": 1516239022\n    },\n    "signature": "SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c"\n  }\n}',
+    );
+    expect(result.message).toBe("Detected: JSON — recursively decoded Base64 field values");
+  });
+
+  it("salvages a leading JSON document and labels ignored trailing content", () => {
+    const input = '{"a": 1} this is not json';
+    const result = autoTransform(input);
+    expect(result.success).toBe(true);
+    expect(result.transformation).toBe("JSON_SALVAGE");
+    expect(result.output).toBe('{\n  "a": 1\n}');
+    expect(result.message).toContain("Partially valid JSON");
+    expect(result.message).toContain("Trailing content");
+  });
+
+  it("keeps unchanged behavior when no JSON document can be salvaged", () => {
+    const input = '{"name": "John", "age": 30';
+    const result = autoTransform(input);
+    expect(result.success).toBe(false);
+    expect(result.output).toBe(input);
+    expect(result.message).toContain("Unable to confidently detect");
+  });
+
+  it("joins multiple JSON documents as JSONL without losing data", () => {
+    const input = '{"a":1} {"b":2}';
+    const result = autoTransform(input);
+    expect(result.success).toBe(true);
+    expect(result.transformation).toBe("JSON_TO_JSONL");
+    expect(result.output).toBe('{"a":1}\n{"b":2}');
+    expect(result.message).toContain("2 JSON documents");
+  });
+
+  it("recursively decodes base64 values in each JSONL document", () => {
+    const input = '{"a":1} {"b":"eyJhIjoxfQ=="}';
+    const result = autoTransform(input);
+    expect(result.success).toBe(true);
+    expect(result.transformation).toBe("JSON_TO_JSONL");
+    expect(result.output).toBe('{"a":1}\n{"b":{"a":1}}');
+  });
+
+  it.each([
+    ['{"greeting":"SGVsbG8="}', '{\n  "greeting": "Hello"\n}'],
+    ['{"a":[{"b":"eyJjIjoxfQ=="}]}', '{\n  "a": [\n    {\n      "b": {\n        "c": 1\n      }\n    }\n  ]\n}'],
+  ])("recursively decodes nested base64 after base64→JSON for %s", (decodedJson, expected) => {
+    const input = btoa(decodedJson);
+    const result = autoTransform(input);
+    expect(result.transformation).toBe("JSON_DECODE_BASE64");
+    expect(result.output).toBe(expected);
+    expect(result.message).toContain("then recursively decoded");
+  });
+
+  it("decodes a JWT value inside base64→JSON into header/payload/signature", () => {
+    const inner = '{"token":"eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIxIn0.c2ln"}';
+    const result = autoTransform(btoa(inner));
+    expect(result.transformation).toBe("JSON_DECODE_BASE64");
+    const parsed = JSON.parse(result.output);
+    expect(parsed.token.header.alg).toBe("HS256");
+    expect(parsed.token.payload.sub).toBe("1");
+    expect(parsed.token.signature).toBe("c2ln");
+  });
+
+  it("keeps BASE64_TO_JSON when the decoded JSON has no nested base64", () => {
+    const result = autoTransform(btoa('{"name":"John"}'));
+    expect(result.transformation).toBe("BASE64_TO_JSON");
+    expect(result.output).toBe('{\n  "name": "John"\n}');
+  });
 });
