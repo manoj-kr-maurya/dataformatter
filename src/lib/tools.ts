@@ -681,6 +681,7 @@ export const TOOL_META: Record<ToolType, { label: string; description: string }>
 export const HOME_TOOL_ORDER: ToolType[] = [
   "JSON_FORMAT",
   "JSON_MINIFY",
+  "JSON_VALIDATE",
   "BASE64_TO_JSON",
   "JSON_TO_BASE64",
   "JWT_DECODE",

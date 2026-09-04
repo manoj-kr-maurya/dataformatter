@@ -15,14 +15,22 @@ import {
   BinaryIcon,
   BracesIcon,
   BracketsIcon,
+  BugIcon,
+  CalculatorIcon,
   ChevronIcon,
+  ClockIcon,
   DiceIcon,
+  GlobeIcon,
   HashIcon,
   HomeIcon,
   LinkIcon,
   LockIcon,
+  PanelIcon,
+  TerminalIcon,
   TextIcon,
 } from "@/components/ui/icons";
+import { Logo } from "@/components/brand/logo";
+import { usePersistedState } from "@/hooks/usePersistedState";
 import {
   AUTO_DETECT,
   BASE64_TOOL_ORDER,
@@ -37,7 +45,7 @@ import {
 } from "@/lib/tools";
 import type { ToolMode, ToolType } from "@/types/tools";
 
-type PageHref =
+export type PageHref =
   | "/"
   | "/encode-decode"
   | "/base64"
@@ -45,13 +53,43 @@ type PageHref =
   | "/parsers"
   | "/random-generators"
   | "/string-functions"
-  | "/cryptography-tools";
+  | "/cryptography-tools"
+  | "/compiler"
+  | "/api-client"
+  | "/api-tester"
+  | "/openapi"
+  | "/json-diff"
+  | "/har"
+  | "/api-diff"
+  | "/error-workspace"
+  | "/json-to-code"
+  | "/json-to-schema"
+  | "/curl-to-code"
+  | "/http-header-inspector"
+  | "/log-analyzer"
+  | "/stack-trace"
+  | "/env-validator"
+  | "/cron"
+  | "/timestamp"
+  | "/regex"
+  | "/fake-data"
+  | "/developer-calculator";
 
 type IconComponent = ComponentType<SVGProps<SVGSVGElement>>;
 
-/** Every tool category lives directly in the sidebar rail as a section with a
- *  hover fly-out of its internal tools. This is the single source of truth for
- *  the desktop rail and the mobile drawer. */
+/** Page-style entry nested under a rail section (e.g. languages under
+ *  Compiler). Unlike tools these are plain links, not workspace modes. */
+interface RailSubItem {
+  id: string;
+  label: string;
+  /** Defaults to the parent section's page. May carry a query (e.g. ?lang=). */
+  href?: string;
+  title?: string;
+}
+
+/** Every tool category lives directly in the sidebar rail as a section whose
+ *  internal tools open in a hover fly-out beside it. This is the single source
+ *  of truth for the desktop rail and the mobile drawer. */
 interface RailSection {
   id: string;
   /** Short label shown on the compact rail. */
@@ -65,6 +103,8 @@ interface RailSection {
   mode?: ToolMode;
   /** The section's internal tools, revealed on hover. */
   tools: ToolType[];
+  /** Nested page entries rendered under the section's tools. */
+  subItems?: RailSubItem[];
   title: string;
 }
 
@@ -139,6 +179,9 @@ const RAIL_SECTIONS: RailSection[] = [
     icon: DiceIcon,
     href: "/random-generators",
     tools: RANDOM_GENERATOR_TOOL_ORDER,
+    subItems: [
+      { id: "fake-data", href: "/fake-data", label: "Fake Data", title: "Generate realistic fake data in your browser" },
+    ],
     title: "Random Tools",
   },
   {
@@ -150,6 +193,122 @@ const RAIL_SECTIONS: RailSection[] = [
     tools: STRING_FUNCTION_TOOL_ORDER,
     title: "String Functions",
   },
+  {
+    id: "compiler",
+    label: "Compiler",
+    fullLabel: "Compiler",
+    icon: TerminalIcon,
+    href: "/compiler",
+    tools: [],
+    subItems: [
+      { id: "dart", href: "/compiler?lang=dart", label: "Dart", title: "Run Dart in your browser" },
+      {
+        id: "js",
+        href: "/compiler?lang=js",
+        label: "JavaScript",
+        title: "Run JavaScript in a sandboxed worker",
+      },
+      {
+        id: "ts",
+        href: "/compiler?lang=ts",
+        label: "TypeScript",
+        title: "Transpile & run TypeScript in your browser",
+      },
+    ],
+    title: "Compiler — run Dart, JavaScript and TypeScript in your browser",
+  },
+  {
+    id: "api",
+    label: "API",
+    fullLabel: "API Client",
+    icon: GlobeIcon,
+    href: "/api-client",
+    tools: [],
+    subItems: [
+      { id: "rest", label: "REST", title: "Build & send HTTP requests in your browser" },
+      { id: "api-tester", href: "/api-tester", label: "API Tester", title: "Send & debug HTTP requests in your browser" },
+      {
+        id: "openapi",
+        href: "/openapi",
+        label: "OpenAPI",
+        title: "View, validate & generate code from OpenAPI documents",
+      },
+      {
+        id: "http-headers",
+        href: "/http-header-inspector",
+        label: "HTTP Headers",
+        title: "Analyze cached or captured HTTP headers",
+      },
+    ],
+    title: "API Client — build & send HTTP requests entirely in your browser",
+  },
+  {
+    id: "converters",
+    label: "Converters",
+    fullLabel: "Converters",
+    icon: CalculatorIcon,
+    href: "/json-to-code",
+    tools: [],
+    subItems: [
+      {
+        id: "json-to-code",
+        href: "/json-to-code",
+        label: "JSON to Code",
+        title: "Generate type declarations from JSON samples",
+      },
+      {
+        id: "json-to-schema",
+        href: "/json-to-schema",
+        label: "JSON to Schema",
+        title: "Derive validation schemas (JSON Schema, Zod, Pydantic)",
+      },
+      {
+        id: "curl-to-code",
+        href: "/curl-to-code",
+        label: "cURL to Code",
+        title: "Convert cURL commands to JavaScript, Python & more",
+      },
+      {
+        id: "developer-calculator",
+        href: "/developer-calculator",
+        label: "Developer Calculator",
+        title: "Hex, bytes, percent & CRC-32 — built for developers",
+      },
+    ],
+    title: "Converters — JSON to code, schemas, cURL and the developer calculator",
+  },
+  {
+    id: "debug",
+    label: "Debug",
+    fullLabel: "Debug Tools",
+    icon: BugIcon,
+    href: "/json-diff",
+    tools: [],
+    subItems: [
+      { id: "json-diff", href: "/json-diff", label: "JSON Diff", title: "Compare two JSON documents" },
+      { id: "har", href: "/har", label: "HAR Debugger", title: "Analyze network captures & HAR files" },
+      { id: "api-diff", href: "/api-diff", label: "API Diff", title: "Detect breaking changes between JSON APIs" },
+      { id: "error-workspace", href: "/error-workspace", label: "Error Workspace", title: "Debug production errors, logs & stack traces" },
+      { id: "log-analyzer", href: "/log-analyzer", label: "Log Analyzer", title: "Count errors & spot spikes in logs" },
+      { id: "stack-trace", href: "/stack-trace", label: "Stack Trace", title: "Read Java, JS, Python & Go stack traces" },
+      { id: "env-validator", href: "/env-validator", label: "ENV Validator", title: "Validate & diff .env files locally" },
+      { id: "regex", href: "/regex", label: "Regex Tester", title: "Test regular expressions locally" },
+    ],
+    title: "Debug — inspect HAR captures, detect API breaking changes, debug errors, diff JSON, analyze logs and traces, validate env & regex",
+  },
+  {
+    id: "time",
+    label: "Time",
+    fullLabel: "Time Tools",
+    icon: ClockIcon,
+    href: "/timestamp",
+    tools: [],
+    subItems: [
+      { id: "timestamp", href: "/timestamp", label: "Timestamp", title: "Convert Unix time, ISO and HTTP dates" },
+      { id: "cron", href: "/cron", label: "Cron", title: "Validate, describe & schedule cron expressions" },
+    ],
+    title: "Time — timestamp conversion and cron expression scheduling",
+  },
 ];
 
 function sectionActive(section: RailSection, activeHref: PageHref, mode: ToolMode): boolean {
@@ -159,7 +318,26 @@ function sectionActive(section: RailSection, activeHref: PageHref, mode: ToolMod
   if (section.id === "home") {
     return activeHref === "/" && mode === AUTO_DETECT;
   }
-  return activeHref === section.href;
+  return (
+    activeHref === section.href ||
+    (section.subItems ?? []).some((sub) => sub.href === activeHref)
+  );
+}
+
+/** Sections whose contents are worth a fly-out hint on the rail itself. */
+function sectionHasChildren(section: RailSection): boolean {
+  return section.tools.length > 1 || (section.subItems?.length ?? 0) > 0;
+}
+
+/**
+ * Page that hosts a tool. Used by shells without a workspace (e.g. the
+ * compiler playground) so picking a fly-out tool still lands somewhere
+ * useful — the target page opens with auto-detect, which selects it.
+ */
+export function pageHrefForTool(tool: ToolMode): PageHref {
+  const section = RAIL_SECTIONS.find((entry) => entry.tools.includes(tool as ToolType));
+  // Sections without a dedicated page (JWT) are reachable from home.
+  return section?.href ?? "/";
 }
 
 function focusRail(id: string) {
@@ -173,22 +351,29 @@ interface SidebarProps {
   /** Mobile drawer visibility; the drawer is only rendered below `sm`. */
   open?: boolean;
   onClose?: () => void;
+  /** When true, tool clicks navigate to the section's page instead of calling onSelectTool. Use on standalone workbench pages (HAR, API-Diff, Error-Workspace) where there is no tool-switching workspace. */
+  standalone?: boolean;
 }
 
-export function Sidebar({ activeHref, mode, onSelectTool, open = false, onClose }: SidebarProps) {
+export function Sidebar({ activeHref, mode, onSelectTool, open = false, onClose, standalone }: SidebarProps) {
   const [activeId, setActiveId] = useState<string | null>(null);
   const [panelOpen, setPanelOpen] = useState(false);
   const [picked, setPicked] = useState(false);
   const [drawerSection, setDrawerSection] = useState<string | null>(null);
+  // Collapsed rail keeps its width budget tiny (~64px) and shows icons only.
+  const [railCollapsed, setRailCollapsed] = usePersistedState<boolean>("devtools-rail-collapsed", false);
+  // Vertical anchor of the fly-out: the hovered item's offset inside the rail,
+  // plus a fitted variant clamped after the panel's real height is known.
+  const [anchorTop, setAnchorTop] = useState(8);
+  const [fittedTop, setFittedTop] = useState<number | null>(null);
   const navRef = useRef<HTMLElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
   const drawerRef = useRef<HTMLDivElement>(null);
   const closeTimer = useRef<number | null>(null);
 
-  // Default to the section matching the current page/tool until hovered.
-  const shownSectionId = useMemo(
-    () => activeId ?? RAIL_SECTIONS.find((s) => sectionActive(s, activeHref, mode))?.id ?? "home",
-    [activeId, activeHref, mode],
+  const activeSection = useMemo(
+    () => RAIL_SECTIONS.find((s) => s.id === activeId) ?? null,
+    [activeId],
   );
 
   useEffect(() => () => {
@@ -198,7 +383,7 @@ export function Sidebar({ activeHref, mode, onSelectTool, open = false, onClose 
   }, []);
 
   /** Show the section's fly-out tools for a rail item (or the panel itself). */
-  const reveal = useCallback((id: string) => {
+  const reveal = useCallback((id: string, itemEl?: HTMLElement | null) => {
     if (closeTimer.current !== null) {
       window.clearTimeout(closeTimer.current);
       closeTimer.current = null;
@@ -206,6 +391,11 @@ export function Sidebar({ activeHref, mode, onSelectTool, open = false, onClose 
     setActiveId(id);
     setPicked(false);
     setPanelOpen(true);
+    if (itemEl && navRef.current) {
+      const navRect = navRef.current.getBoundingClientRect();
+      setAnchorTop(Math.max(8, itemEl.getBoundingClientRect().top - navRect.top - 6));
+      setFittedTop(null);
+    }
   }, []);
 
   /** Collapse the fly-out after the pointer leaves the rail/panel. */
@@ -217,6 +407,14 @@ export function Sidebar({ activeHref, mode, onSelectTool, open = false, onClose 
       closeTimer.current = null;
       setPanelOpen(false);
     }, 140);
+  }, []);
+
+  /** Pointer entered the fly-out — cancel any pending close. */
+  const cancelClose = useCallback(() => {
+    if (closeTimer.current !== null) {
+      window.clearTimeout(closeTimer.current);
+      closeTimer.current = null;
+    }
   }, []);
 
   /** Hide the fly-out for good until the next hover (after picking/navigating). */
@@ -236,6 +434,16 @@ export function Sidebar({ activeHref, mode, onSelectTool, open = false, onClose 
     },
     [onSelectTool, pick],
   );
+
+  // Clamp the fly-out vertically once its real height is measurable, so long
+  // lists stay inside the viewport instead of running past the fold.
+  useEffect(() => {
+    if (!panelOpen || !navRef.current || !panelRef.current) {
+      return;
+    }
+    const maxHeight = navRef.current.clientHeight - panelRef.current.offsetHeight - 12;
+    setFittedTop(anchorTop > maxHeight ? Math.max(8, maxHeight) : null);
+  }, [panelOpen, anchorTop, activeId]);
 
   // Outside clicks and Escape close the fly-out.
   useEffect(() => {
@@ -296,7 +504,7 @@ export function Sidebar({ activeHref, mode, onSelectTool, open = false, onClose 
     }
     if (event.key === "ArrowRight") {
       event.preventDefault();
-      reveal(section.id);
+      reveal(section.id, event.currentTarget);
       requestAnimationFrame(() => {
         panelRef.current?.querySelector<HTMLElement>("[data-tool]")?.focus();
       });
@@ -347,28 +555,54 @@ export function Sidebar({ activeHref, mode, onSelectTool, open = false, onClose 
     }`;
 
   const renderRailItem = (section: RailSection) => {
-    const active = sectionActive(section, activeHref, mode);
+    const highlighted =
+      sectionActive(section, activeHref, mode) || (panelOpen && activeId === section.id);
     const inner = (
       <>
         <section.icon className="h-4 w-4 shrink-0" />
-        <span className={`w-full truncate text-[10px] leading-tight ${active ? "font-medium" : ""}`}>
-          {section.label}
-        </span>
+        {!railCollapsed ? (
+          <span className={`flex w-full items-center justify-center gap-0.5 ${highlighted ? "font-medium" : ""}`}>
+            <span className="min-w-0 truncate text-[10px] leading-tight">{section.label}</span>
+            {sectionHasChildren(section) && (
+              <ChevronIcon className="h-2.5 w-2.5 shrink-0 rotate-90 text-zinc-400 dark:text-zinc-500" />
+            )}
+          </span>
+        ) : (
+          <span className="sr-only">{section.label}</span>
+        )}
       </>
     );
     if (section.mode) {
+      if (standalone) {
+        return (
+          <Link
+            key={section.id}
+            href={(section.href ?? "/") as PageHref}
+            data-rail={section.id}
+            aria-label={section.label}
+            aria-current={highlighted ? "page" : undefined}
+            title={section.title}
+            onClick={pick}
+            onMouseEnter={(event) => reveal(section.id, event.currentTarget)}
+            onKeyDown={(event) => handleRailKeyDown(event, section)}
+            className={railItemClass(highlighted)}
+          >
+            {inner}
+          </Link>
+        );
+      }
       return (
         <button
           key={section.id}
           type="button"
           data-rail={section.id}
           aria-label={section.label}
-          aria-current={active ? "true" : undefined}
+          aria-current={highlighted ? "true" : undefined}
           title={section.title}
           onClick={() => selectTool(section.mode as ToolType)}
-          onMouseEnter={() => reveal(section.id)}
+          onMouseEnter={(event) => reveal(section.id, event.currentTarget)}
           onKeyDown={(event) => handleRailKeyDown(event, section)}
-          className={railItemClass(active)}
+          className={railItemClass(highlighted)}
         >
           {inner}
         </button>
@@ -380,12 +614,12 @@ export function Sidebar({ activeHref, mode, onSelectTool, open = false, onClose 
         href={section.href as PageHref}
         data-rail={section.id}
         aria-label={section.label}
-        aria-current={active ? "page" : undefined}
+        aria-current={sectionActive(section, activeHref, mode) ? "page" : undefined}
         title={section.title}
         onClick={pick}
-        onMouseEnter={() => reveal(section.id)}
+        onMouseEnter={(event) => reveal(section.id, event.currentTarget)}
         onKeyDown={(event) => handleRailKeyDown(event, section)}
-        className={railItemClass(active)}
+        className={railItemClass(highlighted)}
       >
         {inner}
       </Link>
@@ -398,6 +632,21 @@ export function Sidebar({ activeHref, mode, onSelectTool, open = false, onClose 
         ? "bg-violet-500/15 font-medium text-violet-700 dark:bg-violet-500/15 dark:text-violet-300"
         : "text-zinc-700 hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-800"
     }`;
+
+  const toggleButton = (
+    <button
+      type="button"
+      aria-label={railCollapsed ? "Show Sidebar" : "Hide Sidebar"}
+      title={railCollapsed ? "Show Sidebar" : "Hide Sidebar"}
+      onClick={() => {
+        setPanelOpen(false);
+        setRailCollapsed(!railCollapsed);
+      }}
+      className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-zinc-500 transition-colors hover:bg-zinc-100 hover:text-zinc-900 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-violet-500 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-zinc-100"
+    >
+      <PanelIcon className="h-4 w-4" />
+    </button>
+  );
 
   return (
     <>
@@ -431,17 +680,28 @@ export function Sidebar({ activeHref, mode, onSelectTool, open = false, onClose 
                 <div key={section.id}>
                   <div className="flex items-center gap-1">
                     {section.mode ? (
-                      <button
-                        type="button"
-                        aria-current={active ? "true" : undefined}
-                        onClick={() => {
-                          onSelectTool(section.mode as ToolMode);
-                          onClose?.();
-                        }}
-                        className={drawerItemClass(active)}
-                      >
-                        {rowInner}
-                      </button>
+                      standalone ? (
+                        <Link
+                          href={(section.href ?? "/") as PageHref}
+                          aria-current={active ? "page" : undefined}
+                          onClick={onClose}
+                          className={drawerItemClass(active)}
+                        >
+                          {rowInner}
+                        </Link>
+                      ) : (
+                        <button
+                          type="button"
+                          aria-current={active ? "true" : undefined}
+                          onClick={() => {
+                            onSelectTool(section.mode as ToolMode);
+                            onClose?.();
+                          }}
+                          className={drawerItemClass(active)}
+                        >
+                          {rowInner}
+                        </button>
+                      )
                     ) : (
                       <Link
                         href={section.href as PageHref}
@@ -452,7 +712,7 @@ export function Sidebar({ activeHref, mode, onSelectTool, open = false, onClose 
                         {rowInner}
                       </Link>
                     )}
-                    {section.tools.length > 1 && (
+                    {(section.tools.length > 1 || (section.subItems?.length ?? 0) > 0) && (
                       <button
                         type="button"
                         aria-label={`${expanded ? "Collapse" : "Expand"} ${section.fullLabel}`}
@@ -468,114 +728,202 @@ export function Sidebar({ activeHref, mode, onSelectTool, open = false, onClose 
                   </div>
                   {expanded && (
                     <div className="ml-3 mt-0.5 space-y-0.5 border-l border-zinc-200 pl-3 dark:border-zinc-800">
-                      {section.tools.map((tool) => (
-                        <button
-                          key={tool}
-                          type="button"
-                          onClick={() => {
-                            onSelectTool(tool);
-                            onClose?.();
-                          }}
-                          className={drawerItemClass(mode === tool)}
-                        >
-                          <span className="truncate">{TOOL_META[tool].label}</span>
-                        </button>
-                      ))}
+                      {section.tools.map((tool) => {
+                        if (standalone) {
+                          return (
+                            <Link
+                              key={tool}
+                              href={pageHrefForTool(tool)}
+                              onClick={onClose}
+                              className={drawerItemClass(mode === tool)}
+                            >
+                              <span className="truncate">{TOOL_META[tool].label}</span>
+                            </Link>
+                          );
+                        }
+                        return (
+                          <button
+                            key={tool}
+                            type="button"
+                            onClick={() => {
+                              onSelectTool(tool);
+                              onClose?.();
+                            }}
+                            className={drawerItemClass(mode === tool)}
+                          >
+                            <span className="truncate">{TOOL_META[tool].label}</span>
+                          </button>
+                        );
+                      })}
+                      {(section.subItems ?? []).map((sub) => {
+                        const subHref = (sub.href ?? section.href) as PageHref;
+                        return (
+                          <Link
+                            key={sub.id}
+                            href={subHref}
+                            title={sub.title}
+                            aria-current={activeHref === subHref ? "page" : undefined}
+                            onClick={onClose}
+                            className={drawerItemClass(activeHref === subHref)}
+                          >
+                            <span className="truncate">{sub.label}</span>
+                          </Link>
+                        );
+                      })}
                     </div>
                   )}
                 </div>
               );
             })}
+
+            {/* Meta pages — mirrors the desktop rail's About/Contact row. */}
+            <div className="mt-2 flex items-center gap-2 border-t border-zinc-200 px-2 pt-2 dark:border-zinc-800">
+              <Link
+                href="/about"
+                onClick={onClose}
+                className="rounded px-1.5 py-1 text-xs font-medium text-zinc-400 transition-colors hover:text-violet-600 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-violet-500 dark:text-zinc-500 dark:hover:text-violet-300"
+              >
+                About
+              </Link>
+              <span aria-hidden="true" className="text-zinc-300 dark:text-zinc-700">·</span>
+              <Link
+                href="/contact"
+                onClick={onClose}
+                className="rounded px-1.5 py-1 text-xs font-medium text-zinc-400 transition-colors hover:text-violet-600 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-violet-500 dark:text-zinc-500 dark:hover:text-violet-300"
+              >
+                Contact
+              </Link>
+            </div>
           </div>
         </div>
       )}
 
       {/* Desktop rail — every tool category sits directly in the column, and
-          hovering one reveals a fly-out of its internal tools next to it. */}
+          hovering one reveals ITS OWN fly-out of internal tools floating over
+          the main content (never widening the rail or shifting the page). The
+          header hosts the brand mark and the collapse toggle; the collapsed
+          rail is icons-only (~64px) with tooltips carrying the names. */}
       <nav
         ref={navRef}
         aria-label="Primary"
         onMouseLeave={scheduleClose}
-        className="relative z-30 hidden w-[4.5rem] shrink-0 flex-col border-r border-zinc-200 bg-zinc-50/60 dark:border-zinc-800 dark:bg-zinc-900/40 sm:flex"
+        className={`relative z-30 hidden shrink-0 flex-col border-r border-zinc-200 bg-zinc-50/60 dark:border-zinc-800 dark:bg-zinc-900/40 sm:flex ${
+          railCollapsed ? "w-16" : "w-[4.5rem]"
+        }`}
       >
+        {/* Branding + collapse toggle */}
+        <div
+          className={`flex shrink-0 items-center border-b border-zinc-200 dark:border-zinc-800 ${
+            railCollapsed ? "flex-col gap-1 px-1 py-2" : "justify-between px-2 py-2"
+          }`}
+        >
+          <Link
+            href="/"
+            aria-label="DataFormatter home"
+            className="rounded-md focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-violet-500"
+          >
+            <Logo className="h-7 w-7 rounded-md [&>svg]:h-4 [&>svg]:w-4" />
+          </Link>
+          {toggleButton}
+        </div>
+
         <div className="flex min-h-0 flex-1 flex-col gap-0.5 overflow-y-auto overscroll-contain p-1.5">
           {RAIL_SECTIONS.map((section) => renderRailItem(section))}
         </div>
 
-        {panelOpen && !picked && (
+        {/* Meta pages — the only in-app entry points to /about and /contact. */}
+        <div className="flex shrink-0 flex-col items-center gap-0.5 border-t border-zinc-200 px-1 py-1.5 dark:border-zinc-800">
+          <Link
+            href="/about"
+            className="rounded px-2 py-0.5 text-[10px] font-medium text-zinc-400 transition-colors hover:text-violet-600 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-violet-500 dark:text-zinc-500 dark:hover:text-violet-300"
+          >
+            About
+          </Link>
+          <Link
+            href="/contact"
+            className="rounded px-2 py-0.5 text-[10px] font-medium text-zinc-400 transition-colors hover:text-violet-600 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-violet-500 dark:text-zinc-500 dark:hover:text-violet-300"
+          >
+            Contact
+          </Link>
+        </div>
+
+        {panelOpen && !picked && activeSection && (
           <div
             ref={panelRef}
             data-tool-flyout
             onKeyDown={handlePanelKeyDown}
-            className="menu-in absolute left-[4.75rem] top-2 z-50 w-60 rounded-lg border border-zinc-200 bg-white p-1 shadow-xl dark:border-zinc-800 dark:bg-zinc-900"
+            onMouseEnter={cancelClose}
+            style={{ top: fittedTop ?? anchorTop }}
+            className="menu-in absolute left-full z-50 ml-1.5 w-60 rounded-lg border border-zinc-200 bg-white shadow-xl dark:border-zinc-800 dark:bg-zinc-900"
           >
-            <div className="max-h-[70vh] overflow-y-auto">
-              {RAIL_SECTIONS.map((section) => {
-                const active = sectionActive(section, activeHref, mode);
-                const expanded = shownSectionId === section.id;
-                const rowInner = (
-                  <>
-                    <section.icon className="h-4 w-4 shrink-0 text-zinc-400 dark:text-zinc-500" />
-                    <span className="truncate">{section.fullLabel}</span>
-                    {expanded && (
-                      <ChevronIcon className="ml-auto h-3.5 w-3.5 shrink-0 rotate-90 text-zinc-400 dark:text-zinc-500" />
-                    )}
-                  </>
-                );
+            <div className="flex items-center gap-2 border-b border-zinc-200 px-3 py-2 dark:border-zinc-800">
+              <activeSection.icon className="h-4 w-4 shrink-0 text-violet-500 dark:text-violet-300" />
+              {activeSection.href ? (
+                <Link
+                  href={activeSection.href}
+                  title={activeSection.title}
+                  onClick={pick}
+                  className="truncate text-sm font-semibold text-zinc-900 dark:text-zinc-100"
+                >
+                  {activeSection.fullLabel}
+                </Link>
+              ) : (
+                <span className="truncate text-sm font-semibold text-zinc-900 dark:text-zinc-100">
+                  {activeSection.fullLabel}
+                </span>
+              )}
+            </div>
+            <div className="max-h-[70vh] overflow-y-auto p-1">
+              {activeSection.tools.map((tool) => {
+                const toolActive = mode === tool;
+                const toolClass = `block w-full rounded-md px-3 py-1.5 text-left text-xs transition-colors focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-violet-500 ${
+                  toolActive
+                    ? "font-medium text-violet-600 dark:text-violet-300"
+                    : "text-zinc-500 hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-zinc-100"
+                }`;
+                if (standalone) {
+                  return (
+                    <Link
+                      key={tool}
+                      href={pageHrefForTool(tool)}
+                      data-tool={tool}
+                      onClick={pick}
+                      className={toolClass}
+                    >
+                      {TOOL_META[tool].label}
+                    </Link>
+                  );
+                }
                 return (
-                  <div key={section.id} onMouseEnter={() => reveal(section.id)}>
-                    {section.mode ? (
-                      <button
-                        type="button"
-                        aria-current={active ? "true" : undefined}
-onClick={() => selectTool(section.mode as ToolType)}
-                        className={`flex w-full items-center gap-2.5 rounded-md px-3 py-2 text-sm transition-colors focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-violet-500 ${
-                          active
-                            ? "font-semibold text-violet-700 dark:text-violet-300"
-                            : "text-zinc-700 hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-300 dark:hover:bg-zinc-800 dark:hover:text-zinc-100"
-                        }`}
-                      >
-                        {rowInner}
-                      </button>
-                    ) : (
-                      <Link
-                        href={section.href as PageHref}
-                        aria-current={active ? "page" : undefined}
-                        onClick={pick}
-                        className={`flex w-full items-center gap-2.5 rounded-md px-3 py-2 text-sm transition-colors focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-violet-500 ${
-                          active
-                            ? "font-semibold text-violet-700 dark:text-violet-300"
-                            : "text-zinc-700 hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-300 dark:hover:bg-zinc-800 dark:hover:text-zinc-100"
-                        }`}
-                      >
-                        {rowInner}
-                      </Link>
-                    )}
-
-                    {expanded && (
-                      <ul className="mb-1 ml-3 space-y-0.5 border-l border-zinc-200 pl-2 dark:border-zinc-800">
-                        {section.tools.map((tool) => {
-                          const toolActive = mode === tool;
-                          return (
-                            <li key={tool}>
-                              <button
-                                type="button"
-                                data-tool={tool}
-                                onClick={() => selectTool(tool)}
-                                className={`w-full rounded-md px-3 py-1.5 text-left text-xs transition-colors focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-violet-500 ${
-                                  toolActive
-                                    ? "font-medium text-violet-600 dark:text-violet-300"
-                                    : "text-zinc-500 hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-zinc-100"
-                                }`}
-                              >
-                                {TOOL_META[tool].label}
-                              </button>
-                            </li>
-                          );
-                        })}
-                      </ul>
-                    )}
-                  </div>
+                  <button
+                    key={tool}
+                    type="button"
+                    data-tool={tool}
+                    onClick={() => selectTool(tool)}
+                    className={toolClass}
+                  >
+                    {TOOL_META[tool].label}
+                  </button>
+                );
+              })}
+              {(activeSection.subItems ?? []).map((sub) => {
+                const subHref = (sub.href ?? activeSection.href) as PageHref;
+                const subActive = activeHref === subHref;
+                return (
+                  <Link
+                    key={sub.id}
+                    href={subHref}
+                    title={sub.title}
+                    aria-current={subActive ? "page" : undefined}
+                    onClick={pick}
+                    className={`block w-full rounded-md px-3 py-1.5 text-left text-xs transition-colors focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-violet-500 ${
+                      subActive
+                        ? "font-medium text-violet-600 dark:text-violet-300"
+                        : "text-zinc-500 hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-zinc-100"
+                    }`}
+                  >
+                    {sub.label}
+                  </Link>
                 );
               })}
             </div>

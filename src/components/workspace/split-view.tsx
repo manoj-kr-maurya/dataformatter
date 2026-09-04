@@ -10,12 +10,12 @@ import {
 import { CodeEditor } from "@/components/editor/code-editor";
 import { Panel } from "@/components/editor/panel";
 import { EditorActions } from "@/components/controls/editor-actions";
+import { ShareMenu } from "@/components/ui/share-menu";
 import {
   CheckIcon,
   CopyIcon,
   DownloadIcon,
   PasteIcon,
-  ShareIcon,
   TrashIcon,
 } from "@/components/ui/icons";
 import { usePersistedState } from "@/hooks/usePersistedState";
@@ -39,7 +39,8 @@ interface SplitViewProps {
 
   onCopyOutput: () => void;
   onDownload: () => void;
-  onShare: () => void;
+  onCopyShareLink: () => void;
+  onNativeShare?: () => void;
 
   feedback: string | null;
   copied: boolean;
@@ -71,7 +72,8 @@ export function SplitView({
   outputWords,
   onCopyOutput,
   onDownload,
-  onShare,
+  onCopyShareLink,
+  onNativeShare,
   feedback,
   copied,
   isFullscreen,
@@ -227,32 +229,32 @@ export function SplitView({
           />
         </div>
         <footer className="flex h-11 shrink-0 items-center justify-between gap-2 border-t border-zinc-200 px-2.5 dark:border-zinc-800">
-          <EditorActions
-            actions={[
-              {
-                key: "copy-output",
-                label: copied ? "✓ Copied" : "Copy",
-                icon: copied ? <CheckIcon className="h-4 w-4" /> : <CopyIcon className="h-4 w-4" />,
-                onClick: onCopyOutput,
-                disabled: !output,
-                variant: copied ? "success" : "secondary",
-              },
-              {
-                key: "download",
-                label: "Download",
-                icon: <DownloadIcon className="h-4 w-4" />,
-                onClick: onDownload,
-                disabled: !output,
-              },
-              {
-                key: "share",
-                label: "Share",
-                icon: <ShareIcon className="h-4 w-4" />,
-                onClick: onShare,
-                disabled: !output,
-              },
-            ]}
-          />
+          <div className="flex min-w-0 items-center gap-1.5">
+            <EditorActions
+              actions={[
+                {
+                  key: "copy-output",
+                  label: copied ? "✓ Copied" : "Copy",
+                  icon: copied ? <CheckIcon className="h-4 w-4" /> : <CopyIcon className="h-4 w-4" />,
+                  onClick: onCopyOutput,
+                  disabled: !output,
+                  variant: copied ? "success" : "secondary",
+                },
+                {
+                  key: "download",
+                  label: "Download",
+                  icon: <DownloadIcon className="h-4 w-4" />,
+                  onClick: onDownload,
+                  disabled: !output,
+                },
+              ]}
+            />
+            <ShareMenu
+              onCopyLink={onCopyShareLink}
+              onNativeShare={onNativeShare}
+              disabled={!output}
+            />
+          </div>
           <span
             title={feedback ?? "⌘F find"}
             className={`hidden truncate font-mono text-[11px] sm:inline ${

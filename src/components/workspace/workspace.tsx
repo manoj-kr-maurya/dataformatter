@@ -18,6 +18,7 @@ import { moveEditorToLineColumn } from "@/lib/editor/go-to-error";
 import { createShareLink, isStoredOutputRequired, looksSensitive, SHARE_SCHEMA_VERSION } from "@/lib/share";
 import { AUTO_DETECT, TOOL_META, transform } from "@/lib/tools";
 import { getTextCounts } from "@/lib/text/counts";
+import type { ShareLinkResult } from "@/lib/share";
 import type { SharePayload } from "@/lib/share";
 import type { Language, ToolMode, ViewMode } from "@/types/tools";
 import type { TransformationResult } from "@/types/transformation";
@@ -51,7 +52,11 @@ function outputFilename(result: TransformationResult | null, fallback: string): 
     case "BASE64_DECODE":
       return detected === "JSON" ? "decoded.json" : "decoded.txt";
     case "BASE64_TO_JSON":
+    case "JSON_DECODE_BASE64":
+    case "JSON_SALVAGE":
       return "decoded.json";
+    case "JSON_TO_JSONL":
+      return "documents.jsonl";
     case "JWT_DECODE":
       return "decoded-jwt.txt";
     case "JSON_PARSE":
@@ -310,72 +315,112 @@ export function Workspace({ mode, onSelectTool, restorePayload }: WorkspaceProps
     [showFeedback],
   );
 
-  // Share the current workspace state as a compressed, self-contained URL.
-  // Everything happens locally — the payload lives only in the URL fragment.
-  const handleShare = useCallback(async () => {
-    const input = userInputRef.current;
-    const derived = result && result.originalInput === input ? result.output : "";
-    // Split view shares what's shown in the output pane (which may be a
-    // restored output). Single view always shares the transform result and
-    // records which content was on screen.
-    const output =
-      view === "split" && restoredOutputRef.current !== null
-        ? restoredOutputRef.current
-        : derived;
-    // Deterministic tools regenerate their output from the input on restore,
-    // so the URL only embeds the input — this is the biggest link-size win.
-    const storeOutput = isStoredOutputRequired(mode);
+  // Every kind of share embeds the user's data into a URL, so the feedback below
+// always says so explicitly — the URL itself carries the input/output.
+function shareDataNotice(message: string, payload: SharePayload): ShareNotice {
+  const sensitive = looksSensitive(payload.input, payload.output ?? "");
+  const detail = sensitive
+    ? "This URL looks like it contains secrets. Anyone with the link can view it — share only with people you trust."
+    : "This URL contains your data — anyone with the link can view it. Avoid sharing secrets, JWTs, tokens, or passwords this way.";
+  return { tone: "warning", message, detail };
+}
 
-    const payload: SharePayload = {
-      v: SHARE_SCHEMA_VERSION,
-      mode: view,
-      tool: mode,
-      autoDetect: autoOn,
-      wordWrap,
-      input,
-      output: storeOutput ? output : undefined,
-      display: view === "single" ? (displayedRef.current === input ? "input" : "output") : "output",
-    };
+function isTooLarge(link: { tooLarge: boolean }): boolean {
+  return link.tooLarge;
+}
 
-    let link;
-    try {
-      link = await createShareLink(payload);
-    } catch {
-      showShareNotice({ tone: "error", message: "Could not build a share link for this data." });
-      return;
+function tooLargeNotice(): ShareNotice {
+  return {
+    tone: "error",
+    message: "This data is too large to reliably share as a URL.",
+    detail: "Nothing was truncated — use the Download button to keep it locally.",
+  };
+}
+
+function copyFailNotice(detail: string): ShareNotice {
+  return { tone: "error", message: "Unable to copy link. Copy it manually.", detail };
+}
+
+// Build the compressed, self-contained URL for the current workspace state.
+// Everything happens locally — the payload lives only in the URL fragment.
+const buildShareLink = useCallback(async (): Promise<ShareLinkResult | null> => {
+  const input = userInputRef.current;
+  const derived = result && result.originalInput === input ? result.output : "";
+  // Split view shares what's shown in the output pane (which may be a restored
+  // output). Single view shares the transform result and records what content
+  // was on screen.
+  const output =
+    view === "split" && restoredOutputRef.current !== null
+      ? restoredOutputRef.current
+      : derived;
+  // Deterministic tools regenerate their output from the input on restore, so
+  // the URL only embeds the input — the biggest link-size win.
+  const storeOutput = isStoredOutputRequired(mode);
+
+  const payload: SharePayload = {
+    v: SHARE_SCHEMA_VERSION,
+    mode: view,
+    tool: mode,
+    autoDetect: autoOn,
+    wordWrap,
+    input,
+    output: storeOutput ? output : undefined,
+    display: view === "single" ? (displayedRef.current === input ? "input" : "output") : "output",
+  };
+
+  try {
+    return await createShareLink(payload);
+  } catch {
+    showShareNotice({ tone: "error", message: "Could not build a share link for this data." });
+    return null;
+  }
+}, [view, mode, autoOn, wordWrap, result, showShareNotice]);
+
+const handleCopyShareLink = useCallback(async () => {
+  const link = await buildShareLink();
+  if (!link) {
+    return;
+  }
+  if (isTooLarge(link)) {
+    showShareNotice(tooLargeNotice());
+    return;
+  }
+  const ok = await copyToClipboard(link.url);
+  if (ok) {
+    showShareNotice(shareDataNotice("Link copied", link.payload));
+  } else {
+    showShareNotice(copyFailNotice(link.url));
+  }
+}, [buildShareLink, showShareNotice]);
+
+const handleNativeShare = useCallback(async () => {
+  const link = await buildShareLink();
+  if (!link) {
+    return;
+  }
+  if (isTooLarge(link)) {
+    showShareNotice(tooLargeNotice());
+    return;
+  }
+  try {
+    await navigator.share({ title: "DataFormatter share", url: link.url });
+    showShareNotice(shareDataNotice("Link shared", link.payload));
+  } catch (error) {
+    if (error instanceof DOMException && error.name === "AbortError") {
+      return; // user cancelled the share sheet — do nothing
     }
-
-    if (link.tooLarge) {
-      showShareNotice({
-        tone: "error",
-        message: "This data is too large to reliably share as a URL.",
-        detail: "Use the Download button to keep it locally.",
-      });
-      return;
-    }
-
-    // Privacy-first: warn before putting embedded secrets into a URL.
-    const sensitive = looksSensitive(payload.input, payload.output ?? "");
-
+    // Web Share failed (e.g. blocked on insecure origins) — fall back to copy.
     const ok = await copyToClipboard(link.url);
     if (ok) {
-      showShareNotice(
-        sensitive
-          ? {
-              tone: "warning",
-              message: "Share link copied",
-              detail: "Warning: this link contains your data. Anyone with the link can view it.",
-            }
-          : { tone: "success", message: "Share link copied" },
-      );
+      showShareNotice(shareDataNotice("Link copied", link.payload));
     } else {
-      showShareNotice({
-        tone: "error",
-        message: "Unable to copy link. Copy it manually.",
-        detail: link.url,
-      });
+      showShareNotice(copyFailNotice(link.url));
     }
-  }, [view, mode, autoOn, wordWrap, result, showShareNotice]);
+  }
+}, [buildShareLink, showShareNotice]);
+
+const nativeShareAvailable =
+  typeof navigator !== "undefined" && typeof navigator.share === "function";
 
   const clearAll = useCallback(() => {
     restoredRef.current = false;
@@ -487,7 +532,7 @@ export function Workspace({ mode, onSelectTool, restorePayload }: WorkspaceProps
         />
       </div>
 
-      <div className="flex min-h-0 flex-1 flex-col px-3 py-2 sm:px-4">
+      <div className="flex min-h-0 flex-1 flex-col pl-1.5 pr-3 py-2 sm:pl-2 sm:pr-4">
         {view === "single" ? (
           <SingleView
             title={singleLabel}
@@ -502,7 +547,10 @@ export function Workspace({ mode, onSelectTool, restorePayload }: WorkspaceProps
             onCopy={() => void copyWithFeedback(displayedRef.current)}
             onRestore={handleRestore}
             onClear={clearAll}
-            onShare={() => void handleShare()}
+            onCopyShareLink={() => void handleCopyShareLink()}
+            onNativeShare={
+              nativeShareAvailable ? () => void handleNativeShare() : undefined
+            }
             onDownload={() => {
               downloadText(
                 outputFilename(result, singleLabel.toLowerCase()),
@@ -535,6 +583,10 @@ export function Workspace({ mode, onSelectTool, restorePayload }: WorkspaceProps
             outputWords={outputCounts.words}
             outputLines={outputCounts.lines}
             onCopyOutput={() => void copyWithFeedback(outputText)}
+            onCopyShareLink={() => void handleCopyShareLink()}
+            onNativeShare={
+              nativeShareAvailable ? () => void handleNativeShare() : undefined
+            }
             onDownload={() => {
               downloadText(
                 outputFilename(result, "decoded"),
@@ -542,7 +594,6 @@ export function Workspace({ mode, onSelectTool, restorePayload }: WorkspaceProps
                 outputLanguage === "json" ? "application/json" : "text/plain",
               );
             }}
-            onShare={() => void handleShare()}
             feedback={feedback}
             copied={copied}
             isFullscreen={isFullscreen}

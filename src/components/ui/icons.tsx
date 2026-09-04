@@ -389,3 +389,85 @@ export function ShareIcon(props: IconProps) {
     </svg>
   );
 }
+
+export function PlayIcon(props: IconProps) {
+  return (
+    <svg {...base} {...props}>
+      <polygon points="6 3 20 12 6 21 6 3" />
+    </svg>
+  );
+}
+
+export function RotateIcon(props: IconProps) {
+  return (
+    <svg {...base} {...props}>
+      <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" />
+      <path d="M3 3v5h5" />
+    </svg>
+  );
+}
+
+export function TerminalIcon(props: IconProps) {
+  return (
+    <svg {...base} {...props}>
+      <polyline points="4 17 10 11 4 5" />
+      <line x1="12" x2="20" y1="19" y2="19" />
+    </svg>
+  );
+}
+
+export function PanelIcon(props: IconProps) {
+  return (
+    <svg {...base} {...props}>
+      <rect x="3" y="3" width="18" height="18" rx="2" />
+      <line x1="9" x2="9" y1="3" y2="21" />
+    </svg>
+  );
+}
+
+export function GlobeIcon(props: IconProps) {
+  return (
+    <svg {...base} {...props}>
+      <circle cx="12" cy="12" r="9" />
+      <line x1="3" x2="21" y1="12" y2="12" />
+      <ellipse cx="12" cy="12" rx="4" ry="9" />
+    </svg>
+  );
+}
+
+export function ClockIcon(props: IconProps) {
+  return (
+    <svg {...base} {...props}>
+      <circle cx="12" cy="12" r="9" />
+      <path d="M12 7v5l3 2" />
+    </svg>
+  );
+}
+
+export function CalculatorIcon(props: IconProps) {
+  return (
+    <svg {...base} {...props}>
+      <rect x="4" y="2" width="16" height="20" rx="2" />
+      <line x1="8" x2="16" y1="6" y2="6" />
+      <line x1="8" x2="8" y1="10" y2="10" />
+      <line x1="8" x2="16" y1="14" y2="14" />
+      <line x1="8" x2="8" y1="17" y2="17" />
+      <line x1="8" x2="16" y1="20" y2="20" />
+      <line x1="16" x2="16" y1="10" y2="10" />
+      <line x1="16" x2="16" y1="17" y2="17" />
+    </svg>
+  );
+}
+
+export function BugIcon(props: IconProps) {
+  return (
+    <svg {...base} {...props}>
+      <rect x="7" y="8" width="10" height="12" rx="3" />
+      <path d="M12 8V4" />
+      <path d="M8 2.5 12 5l4-2.5" />
+      <path d="M4 12h3M17 12h3M5 7l3 3M19 7l-3 3M7 15H4M20 15h-3M5 20l3-3M19 20l-3-3" />
+      <circle cx="9" cy="13" r="0.5" fill="currentColor" stroke="none" />
+      <circle cx="15" cy="13" r="0.5" fill="currentColor" stroke="none" />
+    </svg>
+  );
+}

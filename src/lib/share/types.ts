@@ -1,6 +1,18 @@
 import type { ToolMode, ViewMode } from "@/types/tools";
 
-export const SHARE_SCHEMA_VERSION = 1 as const;
+/**
+ * On-wire schema version.
+ *
+ * v1 — verbose keys, every field always present (legacy, still decoded).
+ * v2 — compact single-letter keys with defaults omitted; `m` required, `t` is
+ *      the full tool id string.
+ * v3 — v2 compact keys, plus: `m` omitted when Single (default) and `t` is a
+ *      short base62 index into {@link SHARE_TOOL_CODES}.
+ */
+export const SHARE_SCHEMA_VERSION = 3 as const;
+
+/** v1 links used verbose keys and always carried every field. Still decoded. */
+export const SHARE_LEGACY_SCHEMA_VERSION = 1 as const;
 
 export const SHARE_HASH_PREFIX = "#/share/";
 
