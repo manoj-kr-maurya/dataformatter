@@ -1,4 +1,6 @@
 import { parseJson } from "@/lib/json/validate";
+import { detectBase64 } from "@/lib/detection/detectBase64";
+import { parseJwt } from "@/lib/jwt/decode";
 
 export interface JsonDocument {
   /** The document text (trimmed). */
@@ -122,4 +124,118 @@ export function salvageJsonFragment(input: string): SalvageResult {
     value: first.value,
     trailing: trailing.length > 0 ? trailing : undefined,
   };
+}
+
+export interface RepairResult {
+  /** True when a missing trailing bracket was appended and the result parses. */
+  repaired: boolean;
+  /** The repaired, parsed value. */
+  value?: unknown;
+}
+
+/**
+ * Attempt to repair an unterminated JSON value by appending the closing
+ * brackets needed to balance the top-level openers, then parsing. This handles
+ * common incomplete pastes like `{"a":"SGVsbG8="` → `{"a":"SGVsbG8="}`.
+ *
+ * Only appends closers at the end; it does not rewrite or reorder content.
+ * Returns `repaired: false` when the result still does not parse.
+ */
+export function repairJsonFragment(input: string): RepairResult {
+  const trimmed = input.trim();
+  if (!trimmed) {
+    return { repaired: false };
+  }
+
+  const stack: Array<"{" | "["> = [];
+  let inString = false;
+  let escaped = false;
+
+  for (let i = 0; i < trimmed.length; i++) {
+    const char = trimmed[i];
+
+    if (inString) {
+      if (escaped) {
+        escaped = false;
+      } else if (char === "\\") {
+        escaped = true;
+      } else if (char === '"') {
+        inString = false;
+      }
+      continue;
+    }
+
+    if (char === '"') {
+      inString = true;
+      continue;
+    }
+
+    if (char === "{" || char === "[") {
+      stack.push(char as "{" | "[");
+    } else if (char === "}" || char === "]") {
+      if (stack.length > 0) {
+        stack.pop();
+      }
+    }
+  }
+
+  if (stack.length === 0) {
+    return { repaired: false };
+  }
+
+  const closers = stack
+    .slice()
+    .reverse()
+    .map((opener) => (opener === "{" ? "}" : "]"))
+    .join("");
+
+  const candidate = trimmed + closers;
+  const parsed = parseJson(candidate);
+  if (parsed.ok) {
+    return { repaired: true, value: parsed.value };
+  }
+
+  return { repaired: false };
+}
+
+export interface FragmentDecodeResult {
+  /** True when at least one complete Base64 (or JWT) value was decoded. */
+  decoded: boolean;
+  /** A best-effort, clearly-labeled reconstruction with decoded values. */
+  output: string;
+}
+
+/**
+ * Fallback (step 2) when an incomplete JSON fragment cannot be repaired into
+ * valid JSON: locate the intact Base64/JWT string values it contains and decode
+ * just those, returning a clearly-labeled partial reconstruction. Structure is
+ * approximated only by the presence of complete, decodable values; anything
+ * that is not confidently decodable is left verbatim.
+ */
+export function decodeIntactBase64InFragment(input: string): FragmentDecodeResult {
+  const trimmed = input.trim();
+  if (!trimmed) {
+    return { decoded: false, output: input };
+  }
+
+  let changed = false;
+  const replaced = trimmed.replace(/"([A-Za-z0-9+/=_-]+)"/g, (quoted, inner: string) => {
+    const detected = detectBase64(inner);
+    if (detected.ok && detected.decoded !== undefined) {
+      changed = true;
+      return JSON.stringify(detected.decoded);
+    }
+    const jwt = parseJwt(inner);
+    if (jwt.ok) {
+      changed = true;
+      return JSON.stringify({
+        header: jwt.value.header,
+        payload: jwt.value.payload,
+        signature: jwt.value.signature,
+      });
+    }
+    return quoted;
+  });
+
+  return { decoded: changed, output: changed ? replaced : trimmed };
 }

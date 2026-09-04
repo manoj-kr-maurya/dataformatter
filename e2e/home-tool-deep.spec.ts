@@ -86,10 +86,26 @@ test("home auto-detect: partial JSON salvages document and labels ignored traili
   expect(await statusText(page)).toContain("Trailing content");
 });
 
-test("home auto-detect: broken JSON without a complete document stays unchanged", async ({ page }) => {
+test("home auto-detect: broken JSON that cannot be recovered stays unchanged", async ({ page }) => {
   await page.goto("/");
-  await typeIntoEditor(page, '{"name": "John", "age": 30');
+  await typeIntoEditor(page, '{"a" 1}');
   expect(await statusText(page)).toContain("Unable to confidently detect");
+});
+
+test("home auto-detect: unterminated JSON is auto-repaired and base64 decoded", async ({ page }) => {
+  await page.goto("/");
+  await typeIntoEditor(page, '{"a":"SGVsbG8="');
+  const out = await outputText(page);
+  expect(out).toContain('"Hello"');
+  expect(await statusText(page)).toContain("auto-closed and parsed");
+});
+
+test("home auto-detect: incomplete fragment with intact base64 is partially decoded", async ({ page }) => {
+  await page.goto("/");
+  await typeIntoEditor(page, '{"a": "SGVsbG8=",');
+  const out = await outputText(page);
+  expect(out).toContain('"Hello"');
+  expect(await statusText(page)).toContain("may be partial");
 });
 
 test("home auto-detect: deep 3-level recursion fully unwraps", async ({ page }) => {

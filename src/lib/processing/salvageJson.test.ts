@@ -1,5 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { salvageJsonFragment, splitJsonDocuments } from "@/lib/processing/salvageJson";
+import {
+  salvageJsonFragment,
+  splitJsonDocuments,
+  repairJsonFragment,
+  decodeIntactBase64InFragment,
+} from "@/lib/processing/salvageJson";
 
 describe("splitJsonDocuments", () => {
   it("returns all complete JSON documents in order", () => {
@@ -87,5 +92,59 @@ describe("salvageJsonFragment", () => {
 
   it("returns found=false for plain text with no JSON", () => {
     expect(salvageJsonFragment("hello world {").found).toBe(false);
+  });
+});
+
+describe("repairJsonFragment", () => {
+  it("auto-closes an unterminated object", () => {
+    const result = repairJsonFragment('{"a":"SGVsbG8="');
+    expect(result.repaired).toBe(true);
+    expect(result.value).toEqual({ a: "SGVsbG8=" });
+  });
+
+  it("auto-closes nested openers", () => {
+    const result = repairJsonFragment('{"a":{"b":[1,2');
+    expect(result.repaired).toBe(true);
+    expect(result.value).toEqual({ a: { b: [1, 2] } });
+  });
+
+  it("auto-closes an unterminated array", () => {
+    const result = repairJsonFragment('[1,2,"x"');
+    expect(result.repaired).toBe(true);
+    expect(result.value).toEqual([1, 2, "x"]);
+  });
+
+  it("ignores brackets inside string values", () => {
+    const result = repairJsonFragment('{"s":"a } b"');
+    expect(result.repaired).toBe(true);
+    expect(result.value).toEqual({ s: "a } b" });
+  });
+
+  it("returns repaired=false when closing brackets do not fix the error", () => {
+    expect(repairJsonFragment('{"a" 1}').repaired).toBe(false);
+    expect(repairJsonFragment('{"a": 1,}').repaired).toBe(false);
+  });
+
+  it("returns repaired=false for empty input", () => {
+    expect(repairJsonFragment("   ").repaired).toBe(false);
+  });
+});
+
+describe("decodeIntactBase64InFragment", () => {
+  it("decodes intact base64 string values and leaves the rest", () => {
+    const result = decodeIntactBase64InFragment('{"a": "SGVsbG8=",');
+    expect(result.decoded).toBe(true);
+    expect(result.output).toBe('{"a": "Hello",');
+  });
+
+  it("leaves non-base64 strings verbatim", () => {
+    const result = decodeIntactBase64InFragment('{"a": "hello",');
+    expect(result.decoded).toBe(false);
+    expect(result.output).toBe('{"a": "hello",');
+  });
+
+  it("reports decoded=false for empty input", () => {
+    const result = decodeIntactBase64InFragment("   ");
+    expect(result.decoded).toBe(false);
   });
 });

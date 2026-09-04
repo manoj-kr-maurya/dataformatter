@@ -174,12 +174,63 @@ describe("autoTransform", () => {
     expect(result.message).toContain("Trailing content");
   });
 
-  it("keeps unchanged behavior when no JSON document can be salvaged", () => {
-    const input = '{"name": "John", "age": 30';
+  it("recursively decodes base64 in a salvaged document", () => {
+    const input = '{"payload":"eyJmb28iOiJiYXIifQ=="} junk here';
+    const result = autoTransform(input);
+    expect(result.success).toBe(true);
+    expect(result.transformation).toBe("JSON_SALVAGE");
+    expect(result.output).toBe('{\n  "payload": {\n    "foo": "bar"\n  }\n}');
+    expect(result.message).toContain("recursively decoded Base64");
+  });
+
+  it("does not say 'recursively decoded' when the salvaged document has no base64", () => {
+    const result = autoTransform('{"a":1} trailing');
+    expect(result.transformation).toBe("JSON_SALVAGE");
+    expect(result.message).not.toContain("recursively decoded");
+    expect(result.message).toContain("extracted the complete document.");
+  });
+
+  it("keeps unchanged behavior when JSON cannot be salvaged, repaired, or decoded", () => {
+    const input = '{"a" 1}';
     const result = autoTransform(input);
     expect(result.success).toBe(false);
     expect(result.output).toBe(input);
     expect(result.message).toContain("Unable to confidently detect");
+  });
+
+  it("auto-repairs an unterminated JSON value and recursively decodes base64", () => {
+    const result = autoTransform('{"a":"SGVsbG8="');
+    expect(result.success).toBe(true);
+    expect(result.transformation).toBe("JSON_SALVAGE");
+    expect(result.output).toBe('{\n  "a": "Hello"\n}');
+    expect(result.message).toContain("auto-closed and parsed");
+    expect(result.message).toContain("recursively decoded");
+  });
+
+  it("auto-repairs unclosed nested JSON and decodes nested base64", () => {
+    const result = autoTransform('{"payload":{"deep":"eyJ4IjoxfQ=="');
+    expect(result.success).toBe(true);
+    expect(result.output).toBe(
+      '{\n  "payload": {\n    "deep": {\n      "x": 1\n    }\n  }\n}',
+    );
+  });
+
+  it("auto-repairs without a decode note when there is no base64", () => {
+    const result = autoTransform('{"name": "John", "age": 30');
+    expect(result.success).toBe(true);
+    expect(result.transformation).toBe("JSON_SALVAGE");
+    expect(result.output).toBe('{\n  "name": "John",\n  "age": 30\n}');
+    expect(result.message).toContain("auto-closed and parsed");
+    expect(result.message).not.toContain("recursively decoded");
+  });
+
+  it("decodes intact base64 values in a fragment when repair fails", () => {
+    const result = autoTransform('{"a": "SGVsbG8=",');
+    expect(result.success).toBe(true);
+    expect(result.transformation).toBe("JSON_SALVAGE");
+    expect(result.output).toBe('{"a": "Hello",');
+    expect(result.message).toContain("decoded intact Base64");
+    expect(result.message).toContain("may be partial");
   });
 
   it("joins multiple JSON documents as JSONL without losing data", () => {

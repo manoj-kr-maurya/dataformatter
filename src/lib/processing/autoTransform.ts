@@ -3,7 +3,7 @@ import { decodeJsonBase64Recursive, jsonHasDecodableBase64 } from "@/lib/process
 import type { TransformationResult } from "@/types/transformation";
 import { failResult, okResult } from "@/lib/transformers/builders";
 import { formatJwtOutput } from "@/lib/jwt/format";
-import { splitJsonDocuments } from "@/lib/processing/salvageJson";
+import { splitJsonDocuments, repairJsonFragment, decodeIntactBase64InFragment } from "@/lib/processing/salvageJson";
 
 /**
  * Auto-detection pipeline used by the IDE mode:
@@ -118,16 +118,52 @@ function salvageUnknown(input: string): TransformationResult {
     const trailing = input
       .slice(input.indexOf(salvaged.text) + salvaged.text.length)
       .trim();
-    const output = JSON.stringify(salvaged.value, null, 2);
+    const decoded = decodeJsonBase64Recursive(salvaged.value);
+    const output = JSON.stringify(decoded.value, null, 2);
     const ignored = trailing.length
       ? ` Trailing content "${trimForMessage(trailing, 40)}" was ignored.`
+      : "";
+    const decodeNote = decoded.changed
+      ? " and recursively decoded Base64 field values"
       : "";
     return okResult(
       input,
       output,
       "JSON_SALVAGE",
       "JSON",
-      `Partially valid JSON — extracted the complete document.${ignored}`,
+      `Partially valid JSON — extracted the complete document${decodeNote}.${ignored}`,
+      "JSON",
+    );
+  }
+
+  // Step 3: no complete document — try to auto-repair an unterminated JSON value
+  // by appending its missing closing brackets, then decode any base64 inside.
+  const repaired = repairJsonFragment(input);
+  if (repaired.repaired && repaired.value !== undefined) {
+    const decoded = decodeJsonBase64Recursive(repaired.value);
+    const output = JSON.stringify(decoded.value, null, 2);
+    const decodeNote = decoded.changed
+      ? "; recursively decoded Base64 field values"
+      : "";
+    return okResult(
+      input,
+      output,
+      "JSON_SALVAGE",
+      "JSON",
+      `Incomplete JSON — auto-closed and parsed${decodeNote}.`,
+      "JSON",
+    );
+  }
+
+  // Step 2: repair failed — decode any intact Base64/JWT values still present.
+  const fragment = decodeIntactBase64InFragment(input);
+  if (fragment.decoded) {
+    return okResult(
+      input,
+      fragment.output,
+      "JSON_SALVAGE",
+      "JSON",
+      "Incomplete JSON — decoded intact Base64/JWT values (structure may be partial).",
       "JSON",
     );
   }
