@@ -1,18 +1,17 @@
 import type { Metadata } from "next";
-import { ToolLandingPage } from "@/components/seo/tool-landing";
+import Link from "next/link";
+import { JsonDiffWorkbench } from "@/components/devtools/json-diff-workbench";
+import { ToolSeoContent } from "@/components/seo/tool-seo-content";
 import {
   Section,
   Bullets,
-  Faq,
-  FaqJsonLd,
   Example,
   QuickStart,
   UseCases,
   Troubleshooting,
   ProTips,
 } from "@/components/seo/content-blocks";
-import { JsonDiffWorkbench } from "@/components/devtools/json-diff-workbench";
-import { buildMetadata } from "@/lib/seo";
+import { buildMetadata, FOOTER_LINKS, SITE_NAME } from "@/lib/seo";
 
 export const metadata: Metadata = buildMetadata("/json-diff");
 
@@ -45,106 +44,129 @@ const faqs = [
 
 export default function JsonDiffPage() {
   return (
-    <ToolLandingPage
-      path="/json-diff"
-      summary="Compare two JSON documents side by side and see exactly what changed. Paste your before and after JSON into the live tool — every added, removed and changed value is reported as a precise JSON path."
-    >
-      <JsonDiffWorkbench />
-      <QuickStart
-        steps={[
-          "Paste the original JSON into Original (A) and the edited version into Changed (B).",
-          "Read the summary chips for added, removed and changed counts.",
-          "Scan the table: each row shows the path, the kind of change, and the before/after values.",
-          "Switch to Unified for a copy-paste friendly, line-oriented view of the same diff.",
-        ]}
-      />
-      <FaqJsonLd items={faqs} />
-
-      <Section title="What JSON diff compares">
-        <p>
-          The tool parses both documents completely before comparing, so ordering inside objects and
-          all whitespace are correctly ignored — only meaningful differences surface. Comparison
-          rules:
-        </p>
-        <Bullets
-          items={[
-            "Objects compare key by key; key order never matters.",
-            "Arrays compare element by element at the same index.",
-            "Values compare strictly: number, string, boolean, null and nested value all have distinct types.",
-            "A type change (\"version\": 2 vs \"version\": \"2\") is a changed value, reported with before and after.",
+    <>
+      <JsonDiffWorkbench activeHref="/json-diff" />
+      <ToolSeoContent
+        path="/json-diff"
+        summary="Compare two JSON documents side by side and see exactly what changed. Paste your before and after JSON into the live tool — every added, removed and changed value is reported as a precise JSON path."
+        faqs={faqs}
+      >
+        <QuickStart
+          steps={[
+            "Paste the original JSON into Original (A) and the edited version into Changed (B).",
+            "Read the summary chips for added, removed and changed counts.",
+            "Scan the table: each row shows the path, the kind of change, and the before/after values.",
+            "Switch to Unified for a copy-paste friendly, line-oriented view of the same diff.",
           ]}
         />
-      </Section>
 
-      <Section title="How to diff JSON online">
-        <Bullets
-          items={[
-            "Paste the two versions into the A and B editors — results update instantly.",
-            "Use Swap to flip which side is treated as original.",
-            "Click Expanded rows count to jump past huge tables, or use Copy Diff to hand the result to a colleague.",
-            "Keep everything in-browser for private payloads: nothing is transmitted.",
-          ]}
-        />
-        <Example
-          input={'{ "name": "Sketch", "version": 2, "tags": ["free", "pro"] }'}
-          output={'- $.version  before 2\n+ $.version  after 3\n- $.tags[1] before "pro"\n+ $.license  after "MIT"'}
-          inputLabel="Change to one side"
-          outputLabel="What the diff reports"
-        />
-      </Section>
+        <Section title="What JSON diff compares">
+          <p>
+            The tool parses both documents completely before comparing, so ordering inside objects and
+            all whitespace are correctly ignored — only meaningful differences surface. Comparison
+            rules:
+          </p>
+          <Bullets
+            items={[
+              "Objects compare key by key; key order never matters.",
+              "Arrays compare element by element at the same index.",
+              "Values compare strictly: number, string, boolean, null and nested value all have distinct types.",
+              "A type change (\"version\": 2 vs \"version\": \"2\") is a changed value, reported with before and after.",
+            ]}
+          />
+        </Section>
 
-      <Section title="Who diffs JSON — and when">
-        <UseCases
-          cases={[
-            {
-              title: "Reviewing teammate PRs",
-              body: "A config or fixture changed in a pull request — but the diff is buried in a giant file. Paste both versions here to see a compact list of what actually moved.",
-            },
-            {
-              title: "Confirming API response drift",
-              body: "Run an endpoint before and after a deploy, save both responses, and diff them. You'll see exactly which fields the new version added, removed or renamed.",
-            },
-            {
-              title: "Verifying migrations",
-              body: "Diff the exported state before and after a data migration to confirm only the intended keys changed.",
-            },
-          ]}
-        />
-      </Section>
+        <Section title="How to diff JSON online">
+          <Bullets
+            items={[
+              "Paste the two versions into the A and B editors — results update instantly.",
+              "Use Swap to flip which side is treated as original.",
+              "Click Expanded rows count to jump past huge tables, or use Copy Diff to hand the result to a colleague.",
+              "Keep everything in-browser for private payloads: nothing is transmitted.",
+            ]}
+          />
+          <Example
+            input={'{ "name": "Sketch", "version": 2, "tags": ["free", "pro"] }'}
+            output={'- $.version  before 2\n+ $.version  after 3\n- $.tags[1] before "pro"\n+ $.license  after "MIT"'}
+            inputLabel="Change to one side"
+            outputLabel="What the diff reports"
+          />
+        </Section>
 
-      <Section title="Common diff surprises">
-        <Troubleshooting
-          items={[
-            {
-              error: "\"7\" != 7",
-              cause: "One document stores numbers as numbers, the other as quoted strings (for example an export that quotes everything).",
-              fix: "Normalize types on one side before comparing — parse the numeric strings back to numbers.",
-            },
-            {
-              error: "Everything shifted, table is a sea of red",
-              cause: "An element was inserted or removed in the middle of an array, shifting every later index.",
-              fix: "Diff at the object level instead, or sort array records by a stable key so positions align.",
-            },
-            {
-              error: "Parse error on one side",
-              cause: "A truncated or malformed document — often a copy that ended mid-payload.",
-              fix: "Re-copy the full document; the reported line and column points at the first invalid token.",
-            },
-          ]}
-        />
-      </Section>
+        <Section title="Who diffs JSON — and when">
+          <UseCases
+            cases={[
+              {
+                title: "Reviewing teammate PRs",
+                body: "A config or fixture changed in a pull request — but the diff is buried in a giant file. Paste both versions here to see a compact list of what actually moved.",
+              },
+              {
+                title: "Confirming API response drift",
+                body: "Run an endpoint before and after a deploy, save both responses, and diff them. You'll see exactly which fields the new version added, removed or renamed.",
+              },
+              {
+                title: "Verifying migrations",
+                body: "Diff the exported state before and after a data migration to confirm only the intended keys changed.",
+              },
+            ]}
+          />
+        </Section>
 
-      <Section title="Pro tips">
-        <ProTips
-          tips={[
-            "Tiny formatting changes never appear — the diff is structural, not textual.",
-            "Nested changes are flattened to dot paths like $.owner.address.city so they're easy to locate and reason about.",
-            "Still using someone else's online diff tool? This one never sends your API responses across the network.",
-          ]}
-        />
-      </Section>
+        <Section title="Common diff surprises">
+          <Troubleshooting
+            items={[
+              {
+                error: "\"7\" != 7",
+                cause: "One document stores numbers as numbers, the other as quoted strings (for example an export that quotes everything).",
+                fix: "Normalize types on one side before comparing — parse the numeric strings back to numbers.",
+              },
+              {
+                error: "Everything shifted, table is a sea of red",
+                cause: "An element was inserted or removed in the middle of an array, shifting every later index.",
+                fix: "Diff at the object level instead, or sort array records by a stable key so positions align.",
+              },
+              {
+                error: "Parse error on one side",
+                cause: "A truncated or malformed document — often a copy that ended mid-payload.",
+                fix: "Re-copy the full document; the reported line and column points at the first invalid token.",
+              },
+            ]}
+          />
+        </Section>
 
-      <Faq items={faqs} />
-    </ToolLandingPage>
+        <Section title="Pro tips">
+          <ProTips
+            tips={[
+              "Tiny formatting changes never appear — the diff is structural, not textual.",
+              "Nested changes are flattened to dot paths like $.owner.address.city so they're easy to locate and reason about.",
+              "Still using someone else's online diff tool? This one never sends your API responses across the network.",
+            ]}
+          />
+        </Section>
+      </ToolSeoContent>
+
+      <footer className="border-t border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-950">
+        <div className="mx-auto w-full max-w-3xl px-4 py-4 sm:px-6">
+          <p className="text-xs leading-relaxed text-zinc-500 dark:text-zinc-400">
+            {SITE_NAME} — free online developer data tools that run entirely in your browser. Your
+            data stays private: nothing you paste is ever uploaded to a server.
+          </p>
+          <nav
+            aria-label="All tools"
+            className="mt-2 flex flex-wrap gap-x-3 gap-y-1 text-xs text-zinc-500 dark:text-zinc-400"
+          >
+            {FOOTER_LINKS.map((link) => (
+              <Link
+                key={link.href}
+                href={link.href}
+                className="hover:text-zinc-900 hover:underline dark:hover:text-zinc-100"
+              >
+                {link.label}
+              </Link>
+            ))}
+          </nav>
+        </div>
+      </footer>
+    </>
   );
 }

@@ -1,15 +1,18 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import Link from "next/link";
 import { CodeEditor } from "@/components/editor/code-editor";
+import { Logo } from "@/components/brand/logo";
+import { ThemeToggle } from "@/components/theme/theme-toggle";
+import { Sidebar, type PageHref } from "@/components/app/sidebar";
+import { CompressIcon, MenuIcon, ShieldIcon } from "@/components/ui/icons";
 import {
-  Toolbox,
   CopyButton,
   DownloadButton,
   ClearButton,
   Stat,
   Segmented,
-  Hint,
 } from "@/components/devtools/shared";
 import { analyzeLogs, type LevelCount } from "@/lib/logs/analyze";
 
@@ -30,9 +33,11 @@ const LEVEL_COLORS: Record<string, string> = {
   TRACE: "bg-zinc-100 text-zinc-400 dark:bg-zinc-800 dark:text-zinc-400",
 };
 
-export function LogAnalyzerWorkbench() {
+export function LogAnalyzerWorkbench({ activeHref = "/log-analyzer" }: { activeHref?: PageHref }) {
   const [text, setText] = useState(SAMPLE_LOG);
   const [tab, setTab] = useState<"levels" | "errors" | "timeline">("levels");
+  const [navExpanded, setNavExpanded] = useState(true);
+  const [navDrawerOpen, setNavDrawerOpen] = useState(false);
 
   const analysis = useMemo(() => analyzeLogs(text), [text]);
 
@@ -62,80 +67,156 @@ export function LogAnalyzerWorkbench() {
     : null;
 
   return (
-    <div className="flex flex-col gap-3">
-      <div className="flex flex-wrap items-center gap-2">
-        <Stat label="lines" value={analysis.total} />
-        <Stat label="errors" value={analysis.levels.find((row) => row.level === "ERROR")?.count ?? 0} tone={analysis.levels.some((row) => row.level === "ERROR" && row.count > 0) ? "error" : "default"} />
-        <Stat label="unique errors" value={analysis.uniqueErrors} tone={analysis.uniqueErrors > 0 ? "warn" : "default"} />
-        <Stat label="unknown level" value={analysis.unknownLevel} tone={analysis.unknownLevel > 0 ? "warn" : "default"} />
-        <div className="ml-auto flex items-center gap-2">
-          <Segmented
-            ariaLabel="Analysis view"
-            value={tab}
-            onChange={setTab}
-            options={[
-              { value: "levels", label: "Levels" },
-              { value: "errors", label: "Error groups" },
-              { value: "timeline", label: "Timeline" },
-            ]}
+    <div className="flex h-dvh flex-col bg-zinc-50 dark:bg-zinc-950">
+      <header className="flex h-12 shrink-0 items-center justify-between gap-3 border-b border-zinc-200 bg-zinc-50/80 px-3 dark:border-zinc-800 dark:bg-zinc-900/40">
+        <div className="flex min-w-0 items-center gap-2">
+          <button
+            type="button"
+            aria-label="Open tools navigation"
+            onClick={() => setNavDrawerOpen(true)}
+            className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-md text-zinc-500 transition-colors hover:bg-zinc-100 hover:text-zinc-900 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-violet-500 sm:hidden dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-zinc-100"
+          >
+            <MenuIcon className="h-4 w-4" />
+          </button>
+          <button
+            type="button"
+            aria-label={navExpanded ? "Collapse sidebar" : "Expand sidebar"}
+            aria-expanded={navExpanded}
+            onClick={() => setNavExpanded((prev) => !prev)}
+            className="hidden h-8 w-8 items-center justify-center rounded-md text-zinc-500 transition-colors hover:bg-zinc-100 hover:text-zinc-900 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-violet-500 sm:inline-flex dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-zinc-100"
+          >
+            <CompressIcon className="h-4 w-4" />
+          </button>
+          <Link
+            href="/"
+            aria-label="DataFormatter home"
+            className="rounded-md focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-violet-500"
+          >
+            <Logo className="h-7 w-7 rounded-md [&>svg]:h-4 [&>svg]:w-4" />
+          </Link>
+          <span className="truncate text-sm font-semibold text-zinc-900 dark:text-zinc-50">
+            Log Analyzer
+          </span>
+        </div>
+        <div className="flex shrink-0 items-center gap-2">
+          <span className="hidden items-center gap-1 rounded-md border border-emerald-500/30 bg-emerald-50 px-2 py-1 text-[11px] font-medium text-emerald-700 sm:inline-flex dark:bg-emerald-500/10 dark:text-emerald-300">
+            <ShieldIcon className="h-3 w-3" />
+            Local-only · nothing is uploaded
+          </span>
+          <ThemeToggle />
+        </div>
+      </header>
+
+      <div className="flex min-h-0 min-w-0 flex-1">
+        {navExpanded && (
+          <Sidebar
+            activeHref={activeHref}
+            mode="AUTO_DETECT"
+            onSelectTool={() => void 0}
+            open={navDrawerOpen}
+            onClose={() => setNavDrawerOpen(false)}
+            standalone
           />
-          <CopyButton text={report} label="Copy report" />
-          <DownloadButton filename="log-analysis.txt" text={report} label="Download" />
-        </div>
-      </div>
-
-      <Toolbox title="Logs" actions={<ClearButton onClick={() => setText("")} disabled={text.length === 0} />}>
-        <div className="min-h-[220px]">
-          <CodeEditor value={text} onChange={setText} language="text" ariaLabel="Log lines" />
-        </div>
-        <Hint>
-          Paste log lines (JSON logs, Java/Node prefixes, nginx access logs or plain text). Line
-          count and analysis are capped at 50,000 lines for speed.
-        </Hint>
-      </Toolbox>
-
-      <Toolbox title="Analysis" actions={<span className="font-mono text-[10px] text-zinc-400">{analysis.total} lines</span>}>
-        {analysis.total === 0 ? (
-          <p className="px-1 py-2 text-sm text-zinc-500 dark:text-zinc-400">Nothing to analyze yet — paste logs above.</p>
-        ) : tab === "levels" ? (
-          analysis.timeline ? (
-            <div className="flex flex-wrap gap-x-6 gap-y-2">
-              {levelChips.map((row) => (
-                <span key={row.level} className="inline-flex items-baseline gap-2 rounded-lg bg-zinc-100 px-3 py-1.5 dark:bg-zinc-800">
-                  <span className={`rounded px-1.5 py-0.5 text-[10px] font-bold uppercase ${LEVEL_COLORS[row.level] ?? "bg-zinc-200 text-zinc-600 dark:bg-zinc-700 dark:text-zinc-300"}`}>
-                    {row.level}
-                  </span>
-                  <span className="font-mono text-sm font-semibold tabular-nums text-zinc-700 dark:text-zinc-200">{row.count}</span>
-                </span>
-              ))}
-            </div>
-          ) : (
-            <p className="px-1 py-1 text-xs text-zinc-400 dark:text-zinc-500">
-              No timestamps or levels were recognized — paste a sample from a logger that emits level
-              labels like INFO, ERROR or WARN.
-            </p>
-          )
-        ) : tab === "errors" ? (
-          analysis.errorGroups.length === 0 ? (
-            <p className="px-1 py-2 text-sm text-zinc-500 dark:text-zinc-400">No ERROR-level lines detected.</p>
-          ) : (
-            <ul className="flex flex-col divide-y divide-zinc-100 dark:divide-zinc-800/70">
-              {analysis.errorGroups.map((group) => (
-                <li key={group.key} className="flex items-baseline gap-3 py-2">
-                  <span className="shrink-0 rounded bg-red-100 px-1.5 py-0.5 font-mono text-[10px] font-bold text-red-700 dark:bg-red-500/15 dark:text-red-300">
-                    {group.count}x
-                  </span>
-                  <span className="font-mono text-xs text-zinc-700 dark:text-zinc-200">{group.message}</span>
-                </li>
-              ))}
-            </ul>
-          )
-        ) : analysis.timeline ? (
-          <TimelineBars buckets={analysis.timeline} peak={peakHour} />
-        ) : (
-          <p className="px-1 py-2 text-sm text-zinc-500 dark:text-zinc-400">Timestamps were not detectable, so no timeline can be built.</p>
         )}
-      </Toolbox>
+        <main className="min-h-0 min-w-0 flex-1 overflow-y-auto">
+          <div className="flex min-h-full flex-col gap-3 p-3 lg:flex-row">
+            {/* Input panel */}
+            <section className="flex min-h-0 flex-col overflow-hidden rounded-xl border border-zinc-200 bg-white shadow-sm dark:border-zinc-800 dark:bg-zinc-950/40 lg:w-1/2">
+              <div className="flex h-9 shrink-0 items-center justify-between gap-2 border-b border-zinc-200 px-3 dark:border-zinc-800">
+                <h2 className="truncate text-xs font-semibold uppercase tracking-wider text-zinc-400 dark:text-zinc-500">
+                  Logs
+                </h2>
+                <div className="flex shrink-0 items-center gap-1">
+                  <ClearButton onClick={() => setText("")} disabled={text.length === 0} />
+                </div>
+              </div>
+              <div className="min-h-72 flex-1 lg:min-h-0">
+                <CodeEditor value={text} onChange={setText} language="text" ariaLabel="Log lines" />
+              </div>
+              <div className="flex shrink-0 flex-wrap items-center gap-x-3 gap-y-1 border-t border-zinc-200 px-3 py-1.5 dark:border-zinc-800">
+                <span className="truncate text-[11px] text-zinc-400 dark:text-zinc-500">
+                  JSON logs, Java/Node prefixes, nginx access logs or plain text — capped at 50,000 lines.
+                </span>
+              </div>
+            </section>
+
+            {/* Controls + analysis column */}
+            <div className="flex min-h-0 flex-col gap-3 lg:w-1/2">
+              <div className="flex flex-wrap items-center gap-1.5 rounded-xl border border-zinc-200 bg-white p-3 shadow-sm dark:border-zinc-800 dark:bg-zinc-950/40">
+                <Stat label="lines" value={analysis.total} />
+                <Stat label="errors" value={analysis.levels.find((row) => row.level === "ERROR")?.count ?? 0} tone={analysis.levels.some((row) => row.level === "ERROR" && row.count > 0) ? "error" : "default"} />
+                <Stat label="unique errors" value={analysis.uniqueErrors} tone={analysis.uniqueErrors > 0 ? "warn" : "default"} />
+                <Stat label="unknown level" value={analysis.unknownLevel} tone={analysis.unknownLevel > 0 ? "warn" : "default"} />
+                <div className="ml-auto flex flex-wrap items-center gap-2">
+                  <Segmented
+                    ariaLabel="Analysis view"
+                    value={tab}
+                    onChange={setTab}
+                    options={[
+                      { value: "levels", label: "Levels" },
+                      { value: "errors", label: "Error groups" },
+                      { value: "timeline", label: "Timeline" },
+                    ]}
+                  />
+                  <CopyButton text={report} label="Copy report" />
+                  <DownloadButton filename="log-analysis.txt" text={report} label="Download" />
+                </div>
+              </div>
+
+              <section className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-xl border border-zinc-200 bg-white shadow-sm dark:border-zinc-800 dark:bg-zinc-950/40">
+                <div className="flex h-9 shrink-0 items-center justify-between gap-2 border-b border-zinc-200 px-3 dark:border-zinc-800">
+                  <h2 className="truncate text-xs font-semibold uppercase tracking-wider text-zinc-400 dark:text-zinc-500">
+                    Analysis
+                  </h2>
+                  <span className="font-mono text-[10px] text-zinc-400">{analysis.total} lines</span>
+                </div>
+                <div className="min-h-0 flex-1 overflow-auto p-3">
+                  {analysis.total === 0 ? (
+                    <p className="px-1 py-2 text-sm text-zinc-500 dark:text-zinc-400">Nothing to analyze yet — paste logs above.</p>
+                  ) : tab === "levels" ? (
+                    analysis.timeline ? (
+                      <div className="flex flex-wrap gap-x-6 gap-y-2">
+                        {levelChips.map((row) => (
+                          <span key={row.level} className="inline-flex items-baseline gap-2 rounded-lg bg-zinc-100 px-3 py-1.5 dark:bg-zinc-800">
+                            <span className={`rounded px-1.5 py-0.5 text-[10px] font-bold uppercase ${LEVEL_COLORS[row.level] ?? "bg-zinc-200 text-zinc-600 dark:bg-zinc-700 dark:text-zinc-300"}`}>
+                              {row.level}
+                            </span>
+                            <span className="font-mono text-sm font-semibold tabular-nums text-zinc-700 dark:text-zinc-200">{row.count}</span>
+                          </span>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="px-1 py-1 text-xs text-zinc-400 dark:text-zinc-500">
+                        No timestamps or levels were recognized — paste a sample from a logger that emits level
+                        labels like INFO, ERROR or WARN.
+                      </p>
+                    )
+                  ) : tab === "errors" ? (
+                    analysis.errorGroups.length === 0 ? (
+                      <p className="px-1 py-2 text-sm text-zinc-500 dark:text-zinc-400">No ERROR-level lines detected.</p>
+                    ) : (
+                      <ul className="flex flex-col divide-y divide-zinc-100 dark:divide-zinc-800/70">
+                        {analysis.errorGroups.map((group) => (
+                          <li key={group.key} className="flex items-baseline gap-3 py-2">
+                            <span className="shrink-0 rounded bg-red-100 px-1.5 py-0.5 font-mono text-[10px] font-bold text-red-700 dark:bg-red-500/15 dark:text-red-300">
+                              {group.count}x
+                            </span>
+                            <span className="font-mono text-xs text-zinc-700 dark:text-zinc-200">{group.message}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    )
+                  ) : analysis.timeline ? (
+                    <TimelineBars buckets={analysis.timeline} peak={peakHour} />
+                  ) : (
+                    <p className="px-1 py-2 text-sm text-zinc-500 dark:text-zinc-400">Timestamps were not detectable, so no timeline can be built.</p>
+                  )}
+                </div>
+              </section>
+            </div>
+          </div>
+        </main>
+      </div>
     </div>
   );
 }
