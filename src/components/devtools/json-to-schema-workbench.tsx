@@ -12,7 +12,10 @@ import {
   MenuIcon,
   PasteIcon,
   ShieldIcon,
+  WandIcon,
+  WrapIcon,
 } from "@/components/ui/icons";
+import { usePersistedState } from "@/hooks/usePersistedState";
 import {
   CopyButton,
   DownloadButton,
@@ -40,6 +43,7 @@ export function JsonToSchemaWorkbench({ activeHref = "/json-to-schema" }: { acti
   const [target, setTarget] = useState(SCHEMA_GENERATORS[0].id);
   const [navExpanded, setNavExpanded] = useState(true);
   const [navDrawerOpen, setNavDrawerOpen] = useState(false);
+  const [wordWrap, setWordWrap] = usePersistedState<boolean>("devtools-json-to-schema-wordwrap", true);
 
   const generator = SCHEMA_GENERATORS.find((gen) => gen.id === target) ?? SCHEMA_GENERATORS[0];
 
@@ -86,6 +90,13 @@ export function JsonToSchemaWorkbench({ activeHref = "/json-to-schema" }: { acti
       if (pasted.trim()) setText(pasted);
     } catch {
       /* clipboard permission denied */
+    }
+  }
+
+  function handleFormat() {
+    const parsed = parseJson(text);
+    if ("value" in parsed) {
+      setText(JSON.stringify(parsed.value, null, 2));
     }
   }
 
@@ -150,6 +161,31 @@ export function JsonToSchemaWorkbench({ activeHref = "/json-to-schema" }: { acti
                   JSON input
                 </span>
                 <div className="flex shrink-0 items-center gap-1">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    aria-pressed={wordWrap}
+                    title="Toggle word wrap for the input editor"
+                    onClick={() => setWordWrap((current) => !current)}
+                    className={
+                      wordWrap
+                        ? "bg-violet-600 text-white shadow-sm shadow-violet-600/20 hover:bg-violet-700 dark:bg-violet-600 dark:hover:bg-violet-700"
+                        : "text-zinc-500 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100"
+                    }
+                  >
+                    <WrapIcon className="h-3.5 w-3.5" />
+                    Wrap
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    disabled={error !== null}
+                    onClick={handleFormat}
+                    title="Prettify JSON with 2-space indentation"
+                  >
+                    <WandIcon className="h-3.5 w-3.5" />
+                    Format
+                  </Button>
                   <Button variant="ghost" size="sm" onClick={() => void handlePaste()} title="Paste from the clipboard">
                     <PasteIcon className="h-3.5 w-3.5" />
                     Paste
@@ -164,6 +200,7 @@ export function JsonToSchemaWorkbench({ activeHref = "/json-to-schema" }: { acti
                   language="json"
                   ariaLabel="JSON input for schema generation"
                   placeholder="Paste a JSON document…"
+                  wordWrap={wordWrap}
                 />
               </div>
               <div className="flex shrink-0 flex-wrap items-center gap-x-3 gap-y-1 border-t border-zinc-200 px-3 py-1.5 dark:border-zinc-800">

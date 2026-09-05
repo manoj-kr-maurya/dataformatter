@@ -18,7 +18,7 @@ export const metadata: Metadata = buildMetadata("/json-to-schema");
 const faqs = [
   {
     q: "How does JSON become a schema?",
-    a: "Your JSON is reduced to a type model (objects, arrays, scalars and named string formats like email, uuid, date or date-time), then that model is rendered as JSON Schema, Zod, Pydantic, an OpenAPI schema, or a NestJS DTO.",
+    a: "Your JSON is reduced to a type model (objects, arrays, scalars and named string formats like email, uuid, date or date-time), then that model is rendered as JSON Schema, Zod, Pydantic, an OpenAPI schema, a NestJS DTO, or a Prisma model.",
   },
   {
     q: "Can it build a schema from several samples?",
@@ -38,7 +38,7 @@ const faqs = [
   },
   {
     q: "Which formats are exported?",
-    a: "JSON Schema (draft with standard keywords), Zod schema, Pydantic models for Python, an OpenAPI 3 component schema, and a NestJS DTO class with class-validator decorators.",
+    a: "JSON Schema (draft with standard keywords), Zod schema, Pydantic models for Python, an OpenAPI 3 component schema, a NestJS DTO class with class-validator decorators, and a Prisma model.",
   },
 ] as const;
 
@@ -48,14 +48,14 @@ export default function JsonToSchemaPage() {
       <JsonToSchemaWorkbench activeHref="/json-to-schema" />
       <ToolSeoContent
         path="/json-to-schema"
-        summary="Build a validation schema from JSON samples in seconds. Paste one or more documents and get JSON Schema, Zod, Pydantic, OpenAPI or a NestJS DTO — derived locally, never uploaded."
+        summary="Build a validation schema from JSON samples in seconds. Paste one or more documents and get JSON Schema, Zod, Pydantic, OpenAPI, a NestJS DTO or a Prisma model — derived locally, never uploaded."
         faqs={faqs}
       >
         <QuickStart
           steps={[
             "Paste a JSON document (or several, to teach the inferrer about optional fields).",
             "Name the root model if you use Pydantic, NestJS or OpenAPI.",
-            "Choose an output: JSON Schema, Zod, Pydantic, OpenAPI or NestJS DTO.",
+            "Choose an output: JSON Schema, Zod, Pydantic, OpenAPI, NestJS DTO or Prisma.",
             "Copy or download the generated schema and drop it into your project.",
           ]}
         />
@@ -68,6 +68,7 @@ export default function JsonToSchemaPage() {
               "Pydantic — typing-based BaseModel classes with field types and optional markers.",
               "OpenAPI — component schema with nullable handling for optional properties.",
               "NestJS DTO — class-validator decorators (@IsString, @IsEmail, @IsEnum…) on a TypeScript class.",
+              "Prisma — a model with scalar-list and Json types ready for your Prisma schema.",
             ]}
           />
         </Section>

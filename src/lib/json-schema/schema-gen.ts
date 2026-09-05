@@ -225,6 +225,45 @@ const nestJsGenerator: SchemaGenerator = {
   },
 };
 
+// --------------------------------------------------------------- Prisma
+
+/** Prisma scalar-list types are only available for scalar items. */
+function prismaType(node: SchemaNode): string {
+  switch (node.kind) {
+    case "scalar":
+      switch (node.scalar) {
+        case "boolean": return "Boolean";
+        case "integer": return "Int";
+        case "number": return "Float";
+        case "null": return "Json";
+        case "string": return "String";
+      }
+      return "String";
+    case "array": {
+      const items = node.items ?? { kind: "scalar", scalar: "string" };
+      if (items.kind === "scalar") return `${prismaType(items)}[]`;
+      return "Json";
+    }
+    case "object":
+      return "Json";
+  }
+}
+
+const prismaGenerator: SchemaGenerator = {
+  id: "prisma",
+  label: "Prisma schema",
+  extension: "prisma",
+  generate: (node, typeName) => {
+    const props = rootObject(node).props ?? [];
+    const lines: string[] = [`model ${pascalName(typeName)} {`];
+    for (const p of props) {
+      lines.push(`  ${fieldName(p.name)}  ${prismaType(p.node)}${p.optional ? "?" : ""}`);
+    }
+    lines.push("}");
+    return lines.join("\n");
+  },
+};
+
 function pascalName(name: string): string {
   const cleaned = name.replace(/[^A-Za-z0-9]/g, "_").replace(/^[0-9]+/, "_$&");
   return cleaned.replace(/^./, (c) => c.toUpperCase());
@@ -241,6 +280,7 @@ export const SCHEMA_GENERATORS: readonly SchemaGenerator[] = [
   pydanticGenerator,
   openApiGenerator,
   nestJsGenerator,
+  prismaGenerator,
 ];
 
 export function generateSchema(id: string, node: SchemaNode, typeName = ROOT_NAME): string {
