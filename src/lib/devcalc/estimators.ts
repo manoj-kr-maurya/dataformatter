@@ -26,8 +26,8 @@ export function computeConcurrency(rps: number, latencyMs: number): number {
   return rps * (latencyMs / 1000);
 }
 
-export function rpsPerUnit(rps: number): { perMinute: number; perHour: number; perDay: number } {
-  return { perMinute: rps * 60, perHour: rps * 3600, perDay: rps * DAY_SECONDS };
+export function rpsPerUnit(rps: number): { perMinute: number; perHour: number; perDay: number; perMonth: number } {
+  return { perMinute: rps * 60, perHour: rps * 3600, perDay: rps * DAY_SECONDS, perMonth: rps * MONTH_SECONDS };
 }
 
 export interface BandwidthResult {
@@ -50,6 +50,33 @@ export function computeBandwidth(rps: number, requestBytes: number, responseByte
     gbPerDay: (bytesPerSec * DAY_SECONDS) / 1e9,
     gbPerMonth: (bytesPerSec * MONTH_SECONDS) / 1e9,
     tbPerMonth: (bytesPerSec * MONTH_SECONDS) / 1e12,
+  };
+}
+
+export interface ApiTrafficResult {
+  requestsPerDay: number;
+  requestsPerSec: number;
+  bytesPerSec: number;
+  mbPerSec: number;
+  gbPerDay: number;
+  gbPerMonth: number;
+  tbPerMonth: number;
+}
+
+/** Daily API traffic estimate from requests/day × request/response payloads. */
+export function computeApiTraffic(requestsPerDay: number, requestBytes: number, responseBytes: number): ApiTrafficResult {
+  if (requestsPerDay < 0 || requestBytes < 0 || responseBytes < 0) throw new Error("Values must not be negative.");
+  const perRequest = requestBytes + responseBytes;
+  const bytesPerDay = requestsPerDay * perRequest;
+  const bytesPerSec = bytesPerDay / DAY_SECONDS;
+  return {
+    requestsPerDay,
+    requestsPerSec: requestsPerDay / DAY_SECONDS,
+    bytesPerSec,
+    mbPerSec: bytesPerSec / 1e6,
+    gbPerDay: bytesPerDay / 1e9,
+    gbPerMonth: (bytesPerDay * 30) / 1e9,
+    tbPerMonth: (bytesPerDay * 30) / 1e12,
   };
 }
 

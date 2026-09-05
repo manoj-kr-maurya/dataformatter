@@ -8,8 +8,8 @@ import { humanBytes } from "@/lib/devcalc/engine";
 
 const DEFAULT_JSON = '{"name":"DataFormatter","tags":["dev","tools"],"open":true,"meta":{"id":42,"ok":null}}';
 
-export function JsonSizeCalc({ onLog }: { onLog?: (entry: CalcLogEntry) => void }) {
-  const [text, setText] = useState(DEFAULT_JSON);
+export function JsonSizeCalc({ onLog, initValue }: { onLog?: (entry: CalcLogEntry) => void; initValue?: string }) {
+  const [text, setText] = useState(() => initValue ?? DEFAULT_JSON);
 
   const result = useMemo(() => analyzeJson(text), [text]);
   const metrics = useMemo(() => textBreakdown(text), [text]);

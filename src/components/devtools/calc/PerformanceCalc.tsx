@@ -5,9 +5,9 @@ import { Toolbox, ClearButton, Hint, CopyButton } from "@/components/devtools/sh
 import { BigValue, ErrorBox, NumberField, ResultGrid, ResultRow, StatusChip, useCalcLog, type CalcLogEntry } from "@/components/devtools/calc/common";
 import { computeConcurrency, rpsPerUnit } from "@/lib/devcalc/estimators";
 
-export function PerformanceCalc({ onLog }: { onLog?: (entry: CalcLogEntry) => void }) {
-  const [rps, setRps] = useState("2000");
-  const [latency, setLatency] = useState("150");
+export function PerformanceCalc({ onLog, initValue }: { onLog?: (entry: CalcLogEntry) => void; initValue?: string }) {
+  const [rps, setRps] = useState(() => initValue?.split(":")[0] ?? "2000");
+  const [latency, setLatency] = useState(() => initValue?.split(":")[1] ?? "150");
 
   const rpsNum = Number(rps);
   const latencyNum = Number(latency);
@@ -30,7 +30,7 @@ export function PerformanceCalc({ onLog }: { onLog?: (entry: CalcLogEntry) => vo
           <NumberField label="Requests/sec" value={rps} onChange={setRps} placeholder="2000" inputMode="decimal" width="w-28" />
           <NumberField label="Avg latency" value={latency} onChange={setLatency} placeholder="150" inputMode="decimal" width="w-24" unit="ms" />
         </div>
-        <Hint>Concurrency = RPS × latency (seconds). This is Little&apos;s law: the average number of in-flight requests the system must sustain.</Hint>
+        <Hint>Concurrency = RPS × latency (seconds). This is Little&apos;s law: the average number of in-flight requests the system must sustain. Month rows assume a 30-day month.</Hint>
       </Toolbox>
 
       {result.error ? (
@@ -46,6 +46,7 @@ export function PerformanceCalc({ onLog }: { onLog?: (entry: CalcLogEntry) => vo
               <ResultRow label="Per minute" value={result.units ? result.units.perMinute.toLocaleString("en-US") : ""} copy={String(result.units?.perMinute)} />
               <ResultRow label="Per hour" value={result.units ? result.units.perHour.toLocaleString("en-US") : ""} copy={String(result.units?.perHour)} />
               <ResultRow label="Per day" value={result.units ? result.units.perDay.toLocaleString("en-US") : ""} copy={String(result.units?.perDay)} />
+              <ResultRow label="Per month (30-day)" value={result.units ? result.units.perMonth.toLocaleString("en-US") : ""} copy={String(result.units?.perMonth)} />
             </ResultGrid>
           </Toolbox>
         </>

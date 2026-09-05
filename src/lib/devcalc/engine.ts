@@ -131,6 +131,14 @@ const OPS: Record<string, { prec: number; right: boolean; fn: (a: number, b: num
   "%": { prec: 2, right: false, fn: (a, b) => a % b },
   "+": { prec: 1, right: false, fn: (a, b) => a + b },
   "-": { prec: 1, right: false, fn: (a, b) => a - b },
+  // Bitwise operators sit between additive and relational precedence (JS), but
+  // shifts are expressed arithmetically (a * 2^b) so 1 << 31 reads 2147483648,
+  // not the signed 32-bit wrap. "^" stays exponentiation here.
+  "<<": { prec: 0.75, right: false, fn: (a, b) => a * Math.pow(2, Math.trunc(b)) },
+  ">>": { prec: 0.75, right: false, fn: (a, b) => Math.floor(a / Math.pow(2, Math.trunc(b))) },
+  ">>>": { prec: 0.75, right: false, fn: (a, b) => Math.floor(Math.max(0, a) / Math.pow(2, Math.trunc(b))) },
+  "&": { prec: 0.5, right: false, fn: (a, b) => Number(BigInt(Math.trunc(a)) & BigInt(Math.trunc(b))) },
+  "|": { prec: 0.25, right: false, fn: (a, b) => Number(BigInt(Math.trunc(a)) | BigInt(Math.trunc(b))) },
 };
 
 const FUNCTIONS: Record<string, (...args: number[]) => number> = {
@@ -221,6 +229,10 @@ export function tokenizeExpression(input: string): Token[] {
     if (ch === ")") { tokens.push({ kind: "rparen" }); i++; continue; }
     if (ch === ",") { tokens.push({ kind: "comma" }); i++; continue; }
     if (ch === "*" && text[i + 1] === "*") { tokens.push({ kind: "op", value: "**" }); i += 2; continue; }
+    if (ch === ">" && text[i + 1] === ">" && text[i + 2] === ">") { tokens.push({ kind: "op", value: ">>>" }); i += 3; continue; }
+    if (ch === "<" && text[i + 1] === "<") { tokens.push({ kind: "op", value: "<<" }); i += 2; continue; }
+    if (ch === ">" && text[i + 1] === ">") { tokens.push({ kind: "op", value: ">>" }); i += 2; continue; }
+    if (ch === "&" || ch === "|") { tokens.push({ kind: "op", value: ch }); i++; continue; }
     if (OPS[ch]) { tokens.push({ kind: "op", value: ch }); i++; continue; }
     throw new Error(`Unexpected character "${ch}".`);
   }

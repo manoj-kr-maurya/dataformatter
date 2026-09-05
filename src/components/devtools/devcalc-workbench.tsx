@@ -39,11 +39,13 @@ import { CacheCalc } from "@/components/devtools/calc/CacheCalc";
 import { EncodingCalc } from "@/components/devtools/calc/EncodingCalc";
 import { StatsCalc } from "@/components/devtools/calc/StatsCalc";
 import { StringAnalyzerCalc } from "@/components/devtools/calc/StringAnalyzerCalc";
+import { LatencyCalc } from "@/components/devtools/calc/LatencyCalc";
+import { ApiTrafficCalc } from "@/components/devtools/calc/ApiTrafficCalc";
 import { CalcHistory, type HistoryEntry } from "@/components/devtools/calc/HistoryCalc";
 
 type Tab = "expression" | "radix" | "bytes" | "percent" | "crc32";
 type CalcGroup = "basics" | "bits" | "data" | "time" | "network" | "perf" | "database" | "encoding" | "stats" | "history";
-type CalcTool = "expression" | "radix" | "bytes" | "percent" | "crc32" | "bitwise" | "inttypes" | "twos" | "float" | "datasize" | "jsonsize" | "timestamp" | "cidr" | "performance" | "bandwidth" | "queue" | "storage" | "cache" | "encoding" | "stats" | "string" | "history";
+type CalcTool = "expression" | "radix" | "bytes" | "percent" | "crc32" | "bitwise" | "inttypes" | "twos" | "float" | "datasize" | "jsonsize" | "timestamp" | "cidr" | "performance" | "bandwidth" | "queue" | "storage" | "cache" | "encoding" | "stats" | "string" | "latency" | "apitraffic" | "history";
 
 const GROUP_OPTIONS: { value: CalcGroup; label: string }[] = [
   { value: "basics", label: "Basics" },
@@ -79,8 +81,10 @@ const TOOL_OPTIONS: Record<CalcGroup, { value: CalcTool; label: string }[]> = {
   time: [{ value: "timestamp", label: "Timestamp & duration" }],
   network: [{ value: "cidr", label: "IPv4 CIDR" }],
   perf: [
+    { value: "latency", label: "Latency" },
     { value: "performance", label: "Performance" },
     { value: "bandwidth", label: "Bandwidth" },
+    { value: "apitraffic", label: "API traffic" },
     { value: "queue", label: "Queue" },
   ],
   database: [
@@ -94,6 +98,48 @@ const TOOL_OPTIONS: Record<CalcGroup, { value: CalcTool; label: string }[]> = {
   ],
   history: [{ value: "history" as CalcTool, label: "History" }],
 };
+
+interface CalcExample {
+  label: string;
+  group: CalcGroup;
+  tool: CalcTool;
+  value: string;
+}
+
+const EXAMPLES: CalcExample[] = [
+  { label: "255 → hex", group: "basics", tool: "radix", value: "255" },
+  { label: "1 << 31", group: "basics", tool: "expression", value: "1 << 31" },
+  { label: "42 & 15", group: "bits", tool: "bitwise", value: "42 & 15" },
+  { label: "1 GiB → bytes", group: "data", tool: "datasize", value: "1:GiB" },
+  { label: "JSON payload", group: "data", tool: "jsonsize", value: '{"user":"ada","plan":"pro","active":true,"meta":{"orders":[1,2,3],"visits":1024}}' },
+  { label: "CIDR /24", group: "network", tool: "cidr", value: "192.168.1.0/24" },
+  { label: "P95 / P99", group: "stats", tool: "stats", value: "80\n90\n95\n100\n120\n200" },
+  { label: "Latency 150 ms", group: "perf", tool: "latency", value: "150:ms" },
+  { label: "RPS → concurrency", group: "perf", tool: "performance", value: "2000:150" },
+  { label: "API bandwidth", group: "perf", tool: "bandwidth", value: "5000:0:20" },
+  { label: "1M req/day", group: "perf", tool: "apitraffic", value: "1000000:1:KB:20:KB" },
+];
+
+function ExamplesBar({ onApply }: { onApply: (example: CalcExample) => void }) {
+  return (
+    <Toolbox title="Examples">
+      <div className="flex flex-wrap items-center gap-1.5">
+        {EXAMPLES.map((example) => (
+          <button
+            key={example.label}
+            type="button"
+            aria-label={example.label}
+            onClick={() => onApply(example)}
+            className="rounded-full border border-zinc-200 bg-white px-2.5 py-1 font-mono text-[11px] text-zinc-600 transition-colors hover:border-violet-300 hover:text-violet-600 focus-visible:outline-2 focus-visible:outline-violet-500 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-400 dark:hover:border-violet-700 dark:hover:text-violet-300"
+          >
+            {example.label}
+          </button>
+        ))}
+      </div>
+      <p className="mt-2 text-[11px] text-zinc-400 dark:text-zinc-500">Click an example to load it into the matching calculator.</p>
+    </Toolbox>
+  );
+}
 
 export function DevCalcWorkbench({ activeHref = "/developer-calculator" }: { activeHref?: PageHref }) {
   const [tab, setTab] = useState<Tab>("expression");
@@ -110,6 +156,36 @@ export function DevCalcWorkbench({ activeHref = "/developer-calculator" }: { act
   const [group, setGroup] = useState<CalcGroup>("basics");
   const [tool, setTool] = useState<CalcTool>("expression");
   const [history, setHistory] = usePersistedState<HistoryEntry[]>("devcalc-history", []);
+  const [seedId, setSeedId] = useState(0);
+  const [activeSeed, setActiveSeed] = useState<{ id: number; tool: CalcTool; value: string } | null>(null);
+
+  const applyExample = useCallback(
+    (example: CalcExample) => {
+      setGroup(example.group);
+      setTool(example.tool);
+      if (example.group === "basics") {
+        setTab(example.tool as Tab);
+        if (example.tool === "expression") setExpr(example.value);
+        else if (example.tool === "radix") setRadixInput(example.value);
+        setActiveSeed(null);
+        return;
+      }
+      const nextId = seedId + 1;
+      setSeedId(nextId);
+      setActiveSeed({ id: nextId, tool: example.tool, value: example.value });
+    },
+    [seedId],
+  );
+
+  const seedValueFor = useCallback(
+    (target: CalcTool) => (activeSeed && activeSeed.tool === target ? activeSeed.value : undefined),
+    [activeSeed],
+  );
+
+  const seedKeyFor = useCallback(
+    (target: CalcTool) => (activeSeed && activeSeed.tool === target ? `seed-${activeSeed.id}` : "default"),
+    [activeSeed],
+  );
 
   const changeGroup = useCallback((next: CalcGroup) => {
     setGroup(next);
@@ -267,6 +343,8 @@ export function DevCalcWorkbench({ activeHref = "/developer-calculator" }: { act
               </div>
             )}
 
+            {group !== "history" && <ExamplesBar onApply={applyExample} />}
+
             {group === "history" ? (
               <Toolbox title="Calculation history">
                 <CalcHistory entries={history} onClear={() => setHistory([])} onDelete={deleteEntry} onRestore={restoreEntry} />
@@ -284,7 +362,7 @@ export function DevCalcWorkbench({ activeHref = "/developer-calculator" }: { act
                     aria-label="Arithmetic expression"
                     spellCheck={false}
                   />
-                  <Hint>Operators + - * / % **, parentheses, and hex/binary/octal literals (0xFF, 0b1010, 0o17).</Hint>
+                  <Hint>Operators + - * / % ** ^, shifts/bitwise &lt;&lt; &gt;&gt; &gt;&gt;&gt; &amp; |, parentheses, and hex/binary/octal literals (0xFF, 0b1010, 0o17). Shifts are arithmetic: 1 &lt;&lt; 31 = 2³¹.</Hint>
                 </Toolbox>
                 {exprResult.error ? (
                   <p className="rounded-md bg-red-50 px-3 py-2 text-sm text-red-700 dark:bg-red-500/10 dark:text-red-300">{exprResult.error}</p>
@@ -436,25 +514,29 @@ export function DevCalcWorkbench({ activeHref = "/developer-calculator" }: { act
               (() => {
                 switch (tool) {
                   case "bitwise":
-                    return <BitwiseCalc onLog={logCalc} />;
+                    return <BitwiseCalc key={seedKeyFor("bitwise")} onLog={logCalc} initValue={seedValueFor("bitwise")} />;
                   case "inttypes":
-                    return <IntegerTypesCalc onLog={logCalc} />;
+                    return <IntegerTypesCalc key={seedKeyFor("inttypes")} onLog={logCalc} initValue={seedValueFor("inttypes")} />;
                   case "twos":
                     return <TwosComplementCalc onLog={logCalc} />;
                   case "float":
                     return <FloatCalc onLog={logCalc} />;
                   case "datasize":
-                    return <DataSizeCalc onLog={logCalc} />;
+                    return <DataSizeCalc key={seedKeyFor("datasize")} onLog={logCalc} initValue={seedValueFor("datasize")} />;
                   case "jsonsize":
-                    return <JsonSizeCalc onLog={logCalc} />;
+                    return <JsonSizeCalc key={seedKeyFor("jsonsize")} onLog={logCalc} initValue={seedValueFor("jsonsize")} />;
                   case "timestamp":
                     return <TimestampCalc onLog={logCalc} />;
                   case "cidr":
-                    return <CidrCalc onLog={logCalc} />;
+                    return <CidrCalc key={seedKeyFor("cidr")} onLog={logCalc} initValue={seedValueFor("cidr")} />;
+                  case "latency":
+                    return <LatencyCalc key={seedKeyFor("latency")} onLog={logCalc} initValue={seedValueFor("latency")} />;
                   case "performance":
-                    return <PerformanceCalc onLog={logCalc} />;
+                    return <PerformanceCalc key={seedKeyFor("performance")} onLog={logCalc} initValue={seedValueFor("performance")} />;
                   case "bandwidth":
-                    return <BandwidthCalc onLog={logCalc} />;
+                    return <BandwidthCalc key={seedKeyFor("bandwidth")} onLog={logCalc} initValue={seedValueFor("bandwidth")} />;
+                  case "apitraffic":
+                    return <ApiTrafficCalc key={seedKeyFor("apitraffic")} onLog={logCalc} initValue={seedValueFor("apitraffic")} />;
                   case "queue":
                     return <QueueCalc onLog={logCalc} />;
                   case "storage":
@@ -464,7 +546,7 @@ export function DevCalcWorkbench({ activeHref = "/developer-calculator" }: { act
                   case "encoding":
                     return <EncodingCalc onLog={logCalc} />;
                   case "stats":
-                    return <StatsCalc onLog={logCalc} />;
+                    return <StatsCalc key={seedKeyFor("stats")} onLog={logCalc} initValue={seedValueFor("stats")} />;
                   case "string":
                     return <StringAnalyzerCalc onLog={logCalc} />;
                   default:

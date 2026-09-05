@@ -3,19 +3,37 @@
 import { useMemo, useState } from "react";
 import { Toolbox, ClearButton, Hint, CopyButton } from "@/components/devtools/shared";
 import { BigValue, ErrorBox, ResultGrid, ResultRow, SelectField, useCalcLog, type CalcLogEntry } from "@/components/devtools/calc/common";
-import { evaluateBitwise, bitwiseBreakdown, type SignedWidth } from "@/lib/devcalc/bits";
+import { evaluateBitwise, bitwiseBreakdown, bitwiseTower, type SignedWidth } from "@/lib/devcalc/bits";
 
-export function BitwiseCalc({ onLog }: { onLog?: (entry: CalcLogEntry) => void }) {
-  const [expr, setExpr] = useState("42 & 15");
+function TowerRow({ label, cell }: { label?: string; cell: { binary: string; hex: string; decimal: string } }) {
+  return (
+    <div className="flex items-center justify-between gap-3">
+      <span className="w-8 shrink-0 text-[10px] font-semibold uppercase tracking-wide text-zinc-400 dark:text-zinc-500">{label ?? "="}</span>
+      <code className="min-w-0 break-all font-mono text-xs text-zinc-800 dark:text-zinc-200">{cell.binary}</code>
+      <span className="shrink-0 text-right font-mono text-[10px] text-zinc-500 dark:text-zinc-400">
+        {cell.hex} · {cell.decimal}
+      </span>
+    </div>
+  );
+}
+
+export function BitwiseCalc({ onLog, initValue }: { onLog?: (entry: CalcLogEntry) => void; initValue?: string }) {
+  const [expr, setExpr] = useState(() => initValue ?? "42 & 15");
   const [width, setWidth] = useState("32");
 
   const result = useMemo(() => {
     const signedWidth = Number(width) as SignedWidth;
     try {
       const value = evaluateBitwise(expr, signedWidth);
-      return { value, breakdown: bitwiseBreakdown(value, signedWidth), error: null as string | null };
+      let tower = null;
+      try {
+        tower = bitwiseTower(expr, signedWidth);
+      } catch {
+        /* tower is optional — fall back to result breakdown only */
+      }
+      return { value, breakdown: bitwiseBreakdown(value, signedWidth), tower, error: null as string | null };
     } catch (cause) {
-      return { value: 0n, breakdown: null, error: cause instanceof Error ? cause.message : String(cause) };
+      return { value: 0n, breakdown: null, tower: null, error: cause instanceof Error ? cause.message : String(cause) };
     }
   }, [expr, width]);
 
@@ -39,14 +57,28 @@ export function BitwiseCalc({ onLog }: { onLog?: (entry: CalcLogEntry) => void }
           />
           <SelectField label="Bit width" value={width} onChange={setWidth} options={["8", "16", "32", "64"]} />
         </div>
-        <Hint>Operators: &amp; | ^ ~ &lt;&lt; &gt;&gt; &gt;&gt;&gt; with parentheses. Results are truncated to the chosen width.</Hint>
+        <Hint>Operators: &amp; | ^ ~ &lt;&lt; &gt;&gt; &gt;&gt;&gt; with parentheses. Values are masked to the chosen width.</Hint>
       </Toolbox>
 
       {result.error ? (
         <ErrorBox message={result.error} />
       ) : result.breakdown ? (
         <>
-          <Toolbox title="Result" actions={result.breakdown.overflow ? <ErrorBox message={`Truncated to ${width} bits`} /> : undefined}>
+          {result.tower && (
+            <Toolbox title="Binary view">
+              <div className="flex flex-col gap-2">
+                <TowerRow label="A" cell={result.tower.left} />
+                <div className="flex items-center justify-between gap-3">
+                  <span className="w-8 text-xs font-semibold text-violet-500">{result.tower.op}</span>
+                  <span className="text-[10px] uppercase tracking-wide text-zinc-400 dark:text-zinc-500">operand B</span>
+                </div>
+                <TowerRow label="B" cell={result.tower.right} />
+                <div className="border-t border-dashed border-zinc-300 dark:border-zinc-700" />
+                <TowerRow cell={result.tower.result} />
+              </div>
+            </Toolbox>
+          )}
+          <Toolbox title="Result" actions={result.breakdown.overflow ? <ErrorBox message={`Masked to ${width} bits — truncated`} /> : undefined}>
             <BigValue value={result.breakdown.signed.toString()} copy={primary} tone={result.breakdown.overflow ? "warn" : "ok"} />
           </Toolbox>
           <Toolbox title="Breakdown" actions={<CopyButton text={primary} label="Copy all" />}>

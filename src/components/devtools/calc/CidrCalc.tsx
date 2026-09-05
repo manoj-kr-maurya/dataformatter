@@ -5,8 +5,8 @@ import { Toolbox, ClearButton, Hint, CopyButton } from "@/components/devtools/sh
 import { BigValue, ErrorBox, ResultGrid, ResultRow, StatusChip, useCalcLog, type CalcLogEntry } from "@/components/devtools/calc/common";
 import { cidrBreakdown } from "@/lib/devcalc/network";
 
-export function CidrCalc({ onLog }: { onLog?: (entry: CalcLogEntry) => void }) {
-  const [input, setInput] = useState("192.168.1.0/24");
+export function CidrCalc({ onLog, initValue }: { onLog?: (entry: CalcLogEntry) => void; initValue?: string }) {
+  const [input, setInput] = useState(() => initValue ?? "192.168.1.0/24");
 
   const result = useMemo(() => {
     try {

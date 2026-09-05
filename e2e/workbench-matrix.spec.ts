@@ -224,6 +224,31 @@ test.describe("workbench input→output matrix", () => {
     await expect(toolbox(page, "A is what % of B?")).toContainText("25%");
   });
 
+  test("Developer calculator examples seed their tools and bitwise renders a tower", async ({ page }) => {
+    await page.goto("/developer-calculator");
+
+    await page.getByRole("button", { name: "1 << 31", exact: true }).click();
+    await expect(toolbox(page, "Result")).toContainText("2147483648");
+
+    await page.getByRole("button", { name: "42 & 15", exact: true }).click();
+    await expect(toolbox(page, "Binary view")).toBeVisible();
+    await expect(toolbox(page, "Breakdown")).toContainText("0x0000000A");
+
+    await page.getByRole("button", { name: "1M req/day", exact: true }).click();
+    await expect(page.getByLabel("Requests / day")).toHaveValue("1000000");
+    await expect(toolbox(page, "Traffic")).toContainText("Requests / sec");
+    await expect(toolbox(page, "Traffic")).toContainText("19.56 GB");
+
+    await page.getByRole("button", { name: "Latency 150 ms", exact: true }).click();
+    await expect(page.getByLabel("Value")).toHaveValue("150");
+    await expect(toolbox(page, "Conversions")).toContainText("0.15");
+
+    await page.getByRole("button", { name: "API bandwidth", exact: true }).click();
+    await expect(page.getByLabel("Requests/sec")).toHaveValue("5000");
+    await expect(toolbox(page, "Bandwidth")).toContainText("95.37 MB");
+    await expect(toolbox(page, "Incoming & outgoing")).toBeVisible();
+  });
+
   test("Fake data detects fields from a pasted sample and stays deterministic", async ({ page }) => {
     await page.goto("/fake-data");
     const preview = page.locator("pre").first();

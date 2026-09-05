@@ -5,8 +5,8 @@ import { Toolbox, ClearButton, Hint, CopyButton } from "@/components/devtools/sh
 import { ResultGrid, ResultRow, StatusChip, useCalcLog, type CalcLogEntry } from "@/components/devtools/calc/common";
 import { computeStats, formatNumber } from "@/lib/devcalc/stats";
 
-export function StatsCalc({ onLog }: { onLog?: (entry: CalcLogEntry) => void }) {
-  const [text, setText] = useState("10\n20\n30\n40\n50");
+export function StatsCalc({ onLog, initValue }: { onLog?: (entry: CalcLogEntry) => void; initValue?: string }) {
+  const [text, setText] = useState(() => initValue ?? "10\n20\n30\n40\n50");
 
   const result = useMemo(() => {
     const values = text.split(/[,\s]+/).filter((t) => t !== "");

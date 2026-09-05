@@ -199,3 +199,88 @@ export function evaluateBitwise(expr: string, width: SignedWidth): bigint {
   if (pos !== tokens.length) throw new Error("Trailing input after bitwise expression.");
   return result & mask;
 }
+
+/** Labels of every integer type `value` fits into, smallest first. */
+export function fittingTypes(value: bigint): string[] {
+  return Object.values(INTEGER_TYPES)
+    .filter((t) => value >= t.min && value <= t.max)
+    .sort((a, b) => a.bits - b.bits || (a.sign === b.sign ? 0 : a.sign === "unsigned" ? 1 : -1))
+    .map((t) => t.label);
+}
+
+/** Explain what `raw` actually becomes when stored as `type` (wrap-around). */
+export function wrapMessage(raw: bigint, type: IntegerType): string {
+  const mask = (1n << BigInt(type.bits)) - 1n;
+  const wrapped = type.sign === "signed" ? interpretSigned(raw & mask, type.bits) : raw & mask;
+  return `${raw} does not fit ${type.label} (range ${type.min}…${type.max}); it wraps to ${wrapped}.`;
+}
+
+interface BitTowerCell {
+  binary: string;
+  hex: string;
+  decimal: string;
+}
+
+export interface BitTower {
+  op: string;
+  left: BitTowerCell;
+  right: BitTowerCell;
+  result: BitTowerCell;
+}
+
+/**
+ * Split an expression at its top-level (lowest-precedence) bitwise operator so
+ * a bitwise visual can show both operands and the result stacked in binary.
+ * Returns null for single operands, unary expressions or unparseable input.
+ */
+export function topLevelBinarySplit(expr: string): { op: string; left: string; right: string } | null {
+  const text = expr.replace(/\s+/g, "");
+  let depth = 0;
+  let best: { op: string; at: number; len: number; prec: number } | null = null;
+  for (let i = 0; i < text.length; ) {
+    const ch = text[i];
+    if (ch === "(") { depth++; i++; continue; }
+    if (ch === ")") { depth--; i++; continue; }
+    if (depth === 0 && (ch === "0" || /[1-9A-Za-z_]/.test(ch))) {
+      let j = i;
+      while (j < text.length && /[0-9A-Za-z_]/.test(text[j])) j++;
+      i = j;
+      continue;
+    }
+    let op: string | null = null;
+    let len = 0;
+    if (text[i + 2] === ">" && text[i] === ">" && text[i + 1] === ">") { op = ">>>"; len = 3; }
+    else if (text[i + 1] === "<" && text[i] === "<") { op = "<<"; len = 2; }
+    else if (text[i + 1] === ">" && text[i] === ">") { op = ">>"; len = 2; }
+    else if (ch === "&" || ch === "|" || ch === "^") { op = ch; len = 1; }
+    if (op) {
+      if (depth === 0) {
+        const prec = BIT_PREC[op] ?? 0;
+        if (!best || prec < best.prec) best = { op, at: i, len, prec };
+      }
+      i += len;
+      continue;
+    }
+    i++;
+  }
+  if (!best) return null;
+  const left = text.slice(0, best.at);
+  const right = text.slice(best.at + best.len);
+  if (!left || !right) return null;
+  return { op: best.op, left, right };
+}
+
+/** Breakdown both operands and the result for the bitwise visual. */
+export function bitwiseTower(expr: string, width: SignedWidth): BitTower | null {
+  const split = topLevelBinarySplit(expr);
+  if (!split) return null;
+  const left = bitwiseBreakdown(evaluateBitwise(split.left, width), width);
+  const right = bitwiseBreakdown(evaluateBitwise(split.right, width), width);
+  const result = bitwiseBreakdown(evaluateBitwise(expr, width), width);
+  return {
+    op: split.op,
+    left: { binary: left.binary, hex: left.hex, decimal: left.decimal },
+    right: { binary: right.binary, hex: right.hex, decimal: right.decimal },
+    result: { binary: result.binary, hex: result.hex, decimal: result.decimal },
+  };
+}

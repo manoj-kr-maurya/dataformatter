@@ -3,12 +3,14 @@
 import { useMemo, useState } from "react";
 import { Toolbox, ClearButton, Hint, CopyButton } from "@/components/devtools/shared";
 import { ResultGrid, ResultRow, useCalcLog, type CalcLogEntry } from "@/components/devtools/calc/common";
-import { encodingBreakdown } from "@/lib/devcalc/encoding";
+import { encodingBreakdown, encodingSizeComparison } from "@/lib/devcalc/encoding";
+import { humanBytes } from "@/lib/devcalc/engine";
 
 export function EncodingCalc({ onLog }: { onLog?: (entry: CalcLogEntry) => void }) {
   const [text, setText] = useState("Hello");
 
   const result = useMemo(() => encodingBreakdown(text), [text]);
+  const comparison = useMemo(() => encodingSizeComparison(text), [text]);
 
   useCalcLog(onLog, `encoding "${text.slice(0, 24)}${text.length > 24 ? "…" : ""}"`, `${result.utf8Bytes} UTF-8 bytes`);
 
@@ -36,6 +38,23 @@ export function EncodingCalc({ onLog }: { onLog?: (entry: CalcLogEntry) => void 
           <ResultRow label="URL-encoded" value={`${result.urlChars} chars`} copy={result.url} />
         </ResultGrid>
       </Toolbox>
+
+      {comparison.length > 1 && (
+        <Toolbox title="Size comparison" actions={<CopyButton text={comparison.map((r) => `${r.label}: ${r.size} B (+${r.pct != null ? r.pct.toFixed(1) : "–"}%)`).join(", ")} label="Copy all" />}>
+          <ResultGrid>
+            {comparison.map((row) => (
+              <ResultRow
+                key={row.label}
+                label={row.label}
+                value={`${humanBytes(row.size)} · +${row.pct != null ? row.pct.toFixed(1) : "–"}%`}
+                tone={row.pct === 0 ? "ok" : "warn"}
+                copy={row.pct != null ? `${row.label} ${row.size} bytes (+${row.pct.toFixed(1)}% vs UTF-8)` : undefined}
+              />
+            ))}
+          </ResultGrid>
+          <p className="mt-2 px-1 text-xs text-zinc-500 dark:text-zinc-400">Increase vs the UTF-8 byte size of the source. Some encodings can be smaller for non-ASCII text (e.g. UTF-16 LE for €).</p>
+        </Toolbox>
+      )}
 
       {result.base64 && (
         <Toolbox title="Encoded values">

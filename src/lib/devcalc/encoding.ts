@@ -49,3 +49,29 @@ export function encodingBreakdown(text: string): EncodingBreakdown {
     allAscii,
   };
 }
+
+export interface EncodingCompareRow {
+  label: string;
+  size: number;
+  pct: number | null;
+}
+
+/**
+ * Sorted byte-size comparison across encodings, relative to the UTF-8 bytes
+ * of the source (always the smallest for valid text). `pct` is the increase
+ * over that baseline; null when there is no comparable baseline.
+ */
+export function encodingSizeComparison(text: string): EncodingCompareRow[] {
+  const b = encodingBreakdown(text);
+  const rows: EncodingCompareRow[] = [
+    { label: "UTF-8", size: b.utf8Bytes, pct: 0 },
+    { label: "UTF-16 (LE)", size: b.utf16Bytes, pct: b.utf8Bytes > 0 ? (b.utf16Bytes / b.utf8Bytes - 1) * 100 : null },
+    { label: "ASCII", size: b.asciiBytes ?? 0, pct: b.asciiBytes == null ? null : b.utf8Bytes > 0 ? (b.asciiBytes / b.utf8Bytes - 1) * 100 : null },
+    { label: "Base64", size: b.base64Bytes, pct: b.utf8Bytes > 0 ? (b.base64Bytes / b.utf8Bytes - 1) * 100 : null },
+    { label: "Hex", size: b.hexChars, pct: b.utf8Bytes > 0 ? (b.hexChars / b.utf8Bytes - 1) * 100 : null },
+    { label: "URL-encoded", size: b.urlBytes, pct: b.utf8Bytes > 0 ? (b.urlBytes / b.utf8Bytes - 1) * 100 : null },
+  ];
+  return rows
+    .filter((r) => r.size > 0 && r.pct != null)
+    .sort((a, b) => a.size - b.size);
+}

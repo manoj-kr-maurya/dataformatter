@@ -15,9 +15,15 @@ function UnitTable({ rows }: { rows: SizeRow[] }) {
   );
 }
 
-export function DataSizeCalc({ onLog }: { onLog?: (entry: CalcLogEntry) => void }) {
-  const [value, setValue] = useState("1");
-  const [unit, setUnit] = useState("KiB");
+export function DataSizeCalc({ onLog, initValue }: { onLog?: (entry: CalcLogEntry) => void; initValue?: string }) {
+  const [value, setValue] = useState(() => initValue?.split(":")[0] ?? "1");
+  const [unit, setUnit] = useState(() => {
+    if (initValue) {
+      const nu = initValue.split(":")[1];
+      if (nu != null && [...DECIMAL_UNITS, ...BINARY_UNITS].includes(nu as (typeof DECIMAL_UNITS)[number] | (typeof BINARY_UNITS)[number])) return nu;
+    }
+    return "KiB";
+  });
 
   const result = useMemo(() => {
     try {

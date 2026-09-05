@@ -7,14 +7,18 @@ import {
   toTwosComplement,
   bitwiseBreakdown,
   evaluateBitwise,
+  bitwiseTower,
+  fittingTypes,
+  wrapMessage,
 } from "@/lib/devcalc/bits";
 import { floatDetails, floatLayout } from "@/lib/devcalc/float";
 import { sizeConversions } from "@/lib/devcalc/units";
 import { cidrBreakdown } from "@/lib/devcalc/network";
 import { textBreakdown, analyzeJson } from "@/lib/devcalc/textsize";
-import { encodingBreakdown } from "@/lib/devcalc/encoding";
+import { encodingBreakdown, encodingSizeComparison } from "@/lib/devcalc/encoding";
 import { computeStats } from "@/lib/devcalc/stats";
-import { computeConcurrency, computeBandwidth, estimateStorage, estimateCache, estimateQueue } from "@/lib/devcalc/estimators";
+import { computeConcurrency, computeBandwidth, computeApiTraffic, estimateStorage, estimateCache, estimateQueue, rpsPerUnit } from "@/lib/devcalc/estimators";
+import { parseDurationString, breakdownDuration, formatDurationBreakdown } from "@/lib/devcalc/time";
 
 describe("expression engine extensions", () => {
   it("supports ** power", () => {
@@ -57,6 +61,18 @@ describe("expression engine extensions", () => {
     expect(() => evaluateExpression("evil(1)")).toThrow();
     expect(() => evaluateExpression("2 + foo")).toThrow();
     expect(() => evaluateExpression("min()")).toThrow();
+  });
+
+  it("supports shift and mask operators arithmetically", () => {
+    expect(evaluateExpression("1 << 31")).toBe(2147483648);
+    expect(evaluateExpression("2 ** 32")).toBe(4294967296);
+    expect(evaluateExpression("8 >> 1")).toBe(4);
+    expect(evaluateExpression("15 >>> 2")).toBe(3);
+    expect(evaluateExpression("42 & 15")).toBe(10);
+    expect(evaluateExpression("42 | 15")).toBe(47);
+    expect(evaluateExpression("1 + 2 << 3")).toBe(24);
+    expect(evaluateExpression("3 * (1 | 2) + 1")).toBe(10);
+    expect(evaluateExpression("0xF0 & 0x3C")).toBe(48);
   });
 });
 
@@ -113,6 +129,47 @@ describe("bitwise calculator", () => {
   it("throws on malformed input", () => {
     expect(() => evaluateBitwise("42 &", 32)).toThrow();
     expect(() => evaluateBitwise("(1 | 2", 32)).toThrow();
+  });
+
+  it("builds the operand/result binary tower for the visual", () => {
+    const tower = bitwiseTower("42 & 15", 32);
+    expect(tower).not.toBeNull();
+    if (!tower) return;
+    expect(tower.op).toBe("&");
+    expect(tower.left.hex).toBe("0x0000002A");
+    expect(tower.right.binary).toBe("00000000000000000000000000001111");
+    expect(tower.result.binary).toBe("00000000000000000000000000001010");
+  });
+
+  it("splits at the lowest-precedence top-level operator", () => {
+    const tower = bitwiseTower("(1 << 3) | 0b101", 8);
+    expect(tower).not.toBeNull();
+    if (!tower) return;
+    expect(tower.op).toBe("|");
+    expect(tower.left.binary).toBe("00001000");
+    expect(tower.right.binary).toBe("00000101");
+    expect(tower.result.decimal).toBe("13");
+  });
+
+  it("returns null for single operands", () => {
+    expect(bitwiseTower("0xFF", 32)).toBeNull();
+    expect(bitwiseTower("~0", 8)).toBeNull();
+  });
+
+  it("lists the types a value fits into", () => {
+    expect(fittingTypes(255n)).toContain("UInt8");
+    expect(fittingTypes(-128n)).toContain("Int8");
+    expect(fittingTypes(255n)).not.toContain("Int8");
+    expect(fittingTypes(2n ** 40n)).not.toContain("Int32");
+    expect(fittingTypes(2n ** 40n)).toContain("Int64");
+    expect(fittingTypes(2n ** 40n)).toContain("UInt64");
+  });
+
+  it("explains overflow with the wrapped value", () => {
+    expect(wrapMessage(256n, INTEGER_TYPES.UInt8)).toContain("wraps to 0");
+    expect(wrapMessage(-129n, INTEGER_TYPES.Int8)).toContain("wraps to 127");
+    expect(wrapMessage(32768n, INTEGER_TYPES.Int16)).toContain("wraps to -32768");
+    expect(wrapMessage(-32769n, INTEGER_TYPES.Int16)).toContain("wraps to 32767");
   });
 });
 
@@ -315,5 +372,79 @@ describe("estimators", () => {
     const q = estimateQueue({ eventsPerSec: 1000, eventBytes: 2048, retentionDays: 7, replication: 3 });
     expect(q.eventsPerDay).toBe(86400000);
     expect(q.retainedBytes).toBeGreaterThan(q.rawPerDayBytes);
+  });
+
+  it("computes per-month request counts (30-day month)", () => {
+    expect(rpsPerUnit(100).perMonth).toBe(100 * 30 * 86400);
+    expect(rpsPerUnit(2000).perMonth).toBe(2000 * 30 * 86400);
+  });
+
+  it("estimates daily API traffic correctly", () => {
+    const t = computeApiTraffic(1_000_000, 1000, 20000);
+    expect(t.requestsPerDay).toBe(1_000_000);
+    expect(t.requestsPerSec).toBeCloseTo(11.574, 2);
+    expect(t.gbPerDay).toBeCloseTo(21, 0);
+    expect(t.tbPerMonth).toBeCloseTo(0.63, 2);
+  });
+});
+
+describe("encoding size comparison", () => {
+  it("shows UTF-8 as baseline with zero percent", () => {
+    const rows = encodingSizeComparison("Hello");
+    expect(rows.length).toBeGreaterThan(1);
+    const utf8 = rows.find((r) => r.label === "UTF-8");
+    expect(utf8).toBeDefined();
+    expect(utf8!.size).toBe(5);
+    expect(utf8!.pct).toBe(0);
+  });
+
+  it("marks Base64 as +60% for ASCII and lists encodings in ascending size", () => {
+    const rows = encodingSizeComparison("Hello");
+    const base64 = rows.find((r) => r.label === "Base64");
+    expect(base64?.size).toBe(8);
+    expect(base64?.pct).toBeCloseTo(60, 1);
+    expect(rows[0].label).toBe("UTF-8");
+  });
+
+  it("can produce negative percentages when another encoding is smaller", () => {
+    const rows = encodingSizeComparison("€");
+    const utf16 = rows.find((r) => r.label === "UTF-16 (LE)");
+    expect(utf16?.size).toBe(2);
+    expect(utf16?.pct).toBeLessThan(0);
+  });
+});
+
+describe("duration toolkit", () => {
+  it("parses compound human durations", () => {
+    expect(parseDurationString("2h 35m 20s")).toBe(2 * 3600000 + 35 * 60000 + 20 * 1000);
+    expect(parseDurationString("1w 2d")).toBe(604800000 + 172800000);
+    expect(parseDurationString("500ms")).toBe(500);
+    expect(parseDurationString("1.5h")).toBe(5400000);
+    expect(parseDurationString("45 s")).toBe(45000);
+    expect(parseDurationString("10d3h")).toBe(10 * 86400000 + 3 * 3600000);
+  });
+
+  it("rejects invalid input", () => {
+    expect(() => parseDurationString("hello")).toThrow();
+    expect(() => parseDurationString("")).toThrow();
+    expect(() => parseDurationString("10")).toThrow();
+    expect(() => parseDurationString("10 x")).toThrow();
+  });
+
+  it("splits milliseconds into correct components", () => {
+    const b = breakdownDuration(777600000);
+    expect(b.weeks).toBe(1);
+    expect(b.days).toBe(2);
+    expect(b.hours).toBe(0);
+    expect(b.minutes).toBe(0);
+    expect(b.seconds).toBe(0);
+    expect(b.milliseconds).toBe(0);
+  });
+
+  it("renders a compact human string", () => {
+    expect(formatDurationBreakdown(9320000)).toBe("2h 35m 20s");
+    expect(formatDurationBreakdown(0)).toBe("0ms");
+    expect(formatDurationBreakdown(500)).toBe("500ms");
+    expect(formatDurationBreakdown(777600000)).toBe("1w 2d");
   });
 });
