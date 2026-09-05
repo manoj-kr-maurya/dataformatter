@@ -1,18 +1,17 @@
 import type { Metadata } from "next";
-import { ToolLandingPage } from "@/components/seo/tool-landing";
+import Link from "next/link";
+import { JsonToSchemaWorkbench } from "@/components/devtools/json-to-schema-workbench";
+import { ToolSeoContent } from "@/components/seo/tool-seo-content";
 import {
   Section,
   Bullets,
-  Faq,
-  FaqJsonLd,
   Example,
   QuickStart,
   UseCases,
   Troubleshooting,
   ProTips,
 } from "@/components/seo/content-blocks";
-import { JsonToSchemaWorkbench } from "@/components/devtools/json-to-schema-workbench";
-import { buildMetadata } from "@/lib/seo";
+import { buildMetadata, FOOTER_LINKS, SITE_NAME } from "@/lib/seo";
 
 export const metadata: Metadata = buildMetadata("/json-to-schema");
 
@@ -45,103 +44,126 @@ const faqs = [
 
 export default function JsonToSchemaPage() {
   return (
-    <ToolLandingPage
-      path="/json-to-schema"
-      summary="Build a validation schema from JSON samples in seconds. Paste one or more documents and get JSON Schema, Zod, Pydantic, OpenAPI or a NestJS DTO — derived locally, never uploaded."
-    >
-      <JsonToSchemaWorkbench />
-      <QuickStart
-        steps={[
-          "Paste a JSON document (or several, to teach the inferrer about optional fields).",
-          "Name the root model if you use Pydantic, NestJS or OpenAPI.",
-          "Choose an output: JSON Schema, Zod, Pydantic, OpenAPI or NestJS DTO.",
-          "Copy or download the generated schema and drop it into your project.",
-        ]}
-      />
-      <FaqJsonLd items={faqs} />
-
-      <Section title="What JSON to schema generates">
-        <Bullets
-          items={[
-            "JSON Schema — standard type, required, properties, items and format keywords.",
-            "Zod — z.object() chains with .email()/.uuid()/.datetime() validators.",
-            "Pydantic — typing-based BaseModel classes with field types and optional markers.",
-            "OpenAPI — component schema with nullable handling for optional properties.",
-            "NestJS DTO — class-validator decorators (@IsString, @IsEmail, @IsEnum…) on a TypeScript class.",
+    <>
+      <JsonToSchemaWorkbench activeHref="/json-to-schema" />
+      <ToolSeoContent
+        path="/json-to-schema"
+        summary="Build a validation schema from JSON samples in seconds. Paste one or more documents and get JSON Schema, Zod, Pydantic, OpenAPI or a NestJS DTO — derived locally, never uploaded."
+        faqs={faqs}
+      >
+        <QuickStart
+          steps={[
+            "Paste a JSON document (or several, to teach the inferrer about optional fields).",
+            "Name the root model if you use Pydantic, NestJS or OpenAPI.",
+            "Choose an output: JSON Schema, Zod, Pydantic, OpenAPI or NestJS DTO.",
+            "Copy or download the generated schema and drop it into your project.",
           ]}
         />
-      </Section>
 
-      <Section title="How to derive a schema online">
-        <Bullets
-          items={[
-            "Paste a sample document — the inference step summarizes the types first.",
-            "Provide several samples when fields are conditional, so they become optional.",
-            "Scan the format hints chip to see how many named formats were recognized.",
-            "Switch formats to compare the same model in each family of tools.",
-          ]}
-        />
-        <Example
-          input={`{ "id": 42, "email": "a@b.io" }`}
-          output={`{\n  "type": "object",\n  "required": ["id", "email"],\n  "properties": {\n    "id": { "type": "integer" },\n    "email": { "type": "string", "format": "email" }\n  }\n}`}
-          inputLabel="JSON sample"
-          outputLabel="JSON Schema output"
-        />
-      </Section>
+        <Section title="What JSON to schema generates">
+          <Bullets
+            items={[
+              "JSON Schema — standard type, required, properties, items and format keywords.",
+              "Zod — z.object() chains with .email()/.uuid()/.datetime() validators.",
+              "Pydantic — typing-based BaseModel classes with field types and optional markers.",
+              "OpenAPI — component schema with nullable handling for optional properties.",
+              "NestJS DTO — class-validator decorators (@IsString, @IsEmail, @IsEnum…) on a TypeScript class.",
+            ]}
+          />
+        </Section>
 
-      <Section title="Who converts JSON to schema — and when">
-        <UseCases
-          cases={[
-            {
-              title: "Adding runtime validation to TypeScript",
-              body: "Paste a response sample, generate the Zod schema, and use it at the API boundary to fail fast on malformed data.",
-            },
-            {
-              title: "Python backend contracts",
-              body: "Derive Pydantic models from a colleague's JSON so request bodies are validated with typing support in your editor.",
-            },
-            {
-              title: "Repository hygiene",
-              body: "Generate an OpenAPI or JSON Schema from fixture data so every consumer can validate against a single, documented contract.",
-            },
-          ]}
-        />
-      </Section>
+        <Section title="How to derive a schema online">
+          <Bullets
+            items={[
+              "Paste a sample document — the inference step summarizes the types first.",
+              "Provide several samples when fields are conditional, so they become optional.",
+              "Scan the format hints chip to see how many named formats were recognized.",
+              "Switch formats to compare the same model in each family of tools.",
+            ]}
+          />
+          <Example
+            input={`{ "id": 42, "email": "a@b.io" }`}
+            output={`{\n  "type": "object",\n  "required": ["id", "email"],\n  "properties": {\n    "id": { "type": "integer" },\n    "email": { "type": "string", "format": "email" }\n  }\n}`}
+            inputLabel="JSON sample"
+            outputLabel="JSON Schema output"
+          />
+        </Section>
 
-      <Section title="Common issues">
-        <Troubleshooting
-          items={[
-            {
-              error: "Field wrongly required",
-              cause: "Every observed key is required by default — a single sample hides optionality.",
-              fix: "Paste a few representative documents so missing keys are detected and marked optional.",
-            },
-            {
-              error: "Arrays with mixed element types",
-              cause: "A heterogeneous array (numbers and strings together) has no single element type.",
-              fix: "Keep arrays homogeneous, or wrap heterogeneous records as objects so each field keeps its type.",
-            },
-            {
-              error: "Format not detected",
-              cause: "Date-times without the T (e.g. space-separated) or padded/odd-shaped UUIDs fall back to plain string.",
-              fix: "Normalize to ISO-8601 / standard UUID shape first, then regenerate.",
-            },
-          ]}
-        />
-      </Section>
+        <Section title="Who converts JSON to schema — and when">
+          <UseCases
+            cases={[
+              {
+                title: "Adding runtime validation to TypeScript",
+                body: "Paste a response sample, generate the Zod schema, and use it at the API boundary to fail fast on malformed data.",
+              },
+              {
+                title: "Python backend contracts",
+                body: "Derive Pydantic models from a colleague's JSON so request bodies are validated with typing support in your editor.",
+              },
+              {
+                title: "Repository hygiene",
+                body: "Generate an OpenAPI or JSON Schema from fixture data so every consumer can validate against a single, documented contract.",
+              },
+            ]}
+          />
+        </Section>
 
-      <Section title="Pro tips">
-        <ProTips
-          tips={[
-            "Multiple samples beat one: unions and optionality only appear across documents.",
-            "Pairs with JSON-to-Code: schema for validation, types for compile-time safety.",
-            "JSON Diff is the perfect companion when your API contract evolves and you need to re-derive.",
-            "Because nothing is uploaded, you can generate schemas from real, sensitive payloads.",
-          ]}
-        />
-      </Section>
+        <Section title="Common issues">
+          <Troubleshooting
+            items={[
+              {
+                error: "Field wrongly required",
+                cause: "Every observed key is required by default — a single sample hides optionality.",
+                fix: "Paste a few representative documents so missing keys are detected and marked optional.",
+              },
+              {
+                error: "Arrays with mixed element types",
+                cause: "A heterogeneous array (numbers and strings together) has no single element type.",
+                fix: "Keep arrays homogeneous, or wrap heterogeneous records as objects so each field keeps its type.",
+              },
+              {
+                error: "Format not detected",
+                cause: "Date-times without the T (e.g. space-separated) or padded/odd-shaped UUIDs fall back to plain string.",
+                fix: "Normalize to ISO-8601 / standard UUID shape first, then regenerate.",
+              },
+            ]}
+          />
+        </Section>
 
-      <Faq items={faqs} />
-    </ToolLandingPage>
+        <Section title="Pro tips">
+          <ProTips
+            tips={[
+              "Multiple samples beat one: unions and optionality only appear across documents.",
+              "Pairs with JSON-to-Code: schema for validation, types for compile-time safety.",
+              "JSON Diff is the perfect companion when your API contract evolves and you need to re-derive.",
+              "Because nothing is uploaded, you can generate schemas from real, sensitive payloads.",
+            ]}
+          />
+        </Section>
+      </ToolSeoContent>
+
+      <footer className="border-t border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-950">
+        <div className="mx-auto w-full max-w-3xl px-4 py-4 sm:px-6">
+          <p className="text-xs leading-relaxed text-zinc-500 dark:text-zinc-400">
+            {SITE_NAME} — free online developer data tools that run entirely in your browser. Your
+            data stays private: nothing you paste is ever uploaded to a server.
+          </p>
+          <nav
+            aria-label="All tools"
+            className="mt-2 flex flex-wrap gap-x-3 gap-y-1 text-xs text-zinc-500 dark:text-zinc-400"
+          >
+            {FOOTER_LINKS.map((link) => (
+              <Link
+                key={link.href}
+                href={link.href}
+                className="hover:text-zinc-900 hover:underline dark:hover:text-zinc-100"
+              >
+                {link.label}
+              </Link>
+            ))}
+          </nav>
+        </div>
+      </footer>
+    </>
   );
 }
