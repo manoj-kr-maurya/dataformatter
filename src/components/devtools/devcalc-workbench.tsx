@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import Link from "next/link";
 import { Logo } from "@/components/brand/logo";
 import { ThemeToggle } from "@/components/theme/theme-toggle";
@@ -21,8 +21,79 @@ import {
   Hint,
 } from "@/components/devtools/shared";
 import { radixOf, bytesOf, percentBetween, crc32, humanBytes, evaluateExpression } from "@/lib/devcalc/engine";
+import { usePersistedState } from "@/hooks/usePersistedState";
+import type { CalcLogEntry } from "@/components/devtools/calc/common";
+import { BitwiseCalc } from "@/components/devtools/calc/BitwiseCalc";
+import { IntegerTypesCalc } from "@/components/devtools/calc/IntegerTypesCalc";
+import { TwosComplementCalc } from "@/components/devtools/calc/TwosComplementCalc";
+import { FloatCalc } from "@/components/devtools/calc/FloatCalc";
+import { DataSizeCalc } from "@/components/devtools/calc/DataSizeCalc";
+import { JsonSizeCalc } from "@/components/devtools/calc/JsonSizeCalc";
+import { TimestampCalc } from "@/components/devtools/calc/TimestampCalc";
+import { CidrCalc } from "@/components/devtools/calc/CidrCalc";
+import { PerformanceCalc } from "@/components/devtools/calc/PerformanceCalc";
+import { BandwidthCalc } from "@/components/devtools/calc/BandwidthCalc";
+import { QueueCalc } from "@/components/devtools/calc/QueueCalc";
+import { StorageCalc } from "@/components/devtools/calc/StorageCalc";
+import { CacheCalc } from "@/components/devtools/calc/CacheCalc";
+import { EncodingCalc } from "@/components/devtools/calc/EncodingCalc";
+import { StatsCalc } from "@/components/devtools/calc/StatsCalc";
+import { StringAnalyzerCalc } from "@/components/devtools/calc/StringAnalyzerCalc";
+import { CalcHistory, type HistoryEntry } from "@/components/devtools/calc/HistoryCalc";
 
 type Tab = "expression" | "radix" | "bytes" | "percent" | "crc32";
+type CalcGroup = "basics" | "bits" | "data" | "time" | "network" | "perf" | "database" | "encoding" | "stats" | "history";
+type CalcTool = "expression" | "radix" | "bytes" | "percent" | "crc32" | "bitwise" | "inttypes" | "twos" | "float" | "datasize" | "jsonsize" | "timestamp" | "cidr" | "performance" | "bandwidth" | "queue" | "storage" | "cache" | "encoding" | "stats" | "string" | "history";
+
+const GROUP_OPTIONS: { value: CalcGroup; label: string }[] = [
+  { value: "basics", label: "Basics" },
+  { value: "bits", label: "Bits" },
+  { value: "data", label: "Data" },
+  { value: "time", label: "Time" },
+  { value: "network", label: "Network" },
+  { value: "perf", label: "Perf & scale" },
+  { value: "database", label: "Database" },
+  { value: "encoding", label: "Encoding" },
+  { value: "stats", label: "Stats & text" },
+  { value: "history", label: "History" },
+];
+
+const TOOL_OPTIONS: Record<CalcGroup, { value: CalcTool; label: string }[]> = {
+  basics: [
+    { value: "expression", label: "Expression" },
+    { value: "radix", label: "Radix" },
+    { value: "bytes", label: "Bytes" },
+    { value: "percent", label: "Percent" },
+    { value: "crc32", label: "CRC32" },
+  ],
+  bits: [
+    { value: "bitwise", label: "Bitwise" },
+    { value: "inttypes", label: "Integer types" },
+    { value: "twos", label: "Two's complement" },
+    { value: "float", label: "Float" },
+  ],
+  data: [
+    { value: "datasize", label: "Data size" },
+    { value: "jsonsize", label: "JSON size" },
+  ],
+  time: [{ value: "timestamp", label: "Timestamp & duration" }],
+  network: [{ value: "cidr", label: "IPv4 CIDR" }],
+  perf: [
+    { value: "performance", label: "Performance" },
+    { value: "bandwidth", label: "Bandwidth" },
+    { value: "queue", label: "Queue" },
+  ],
+  database: [
+    { value: "storage", label: "Storage" },
+    { value: "cache", label: "Cache" },
+  ],
+  encoding: [{ value: "encoding", label: "Encoding size" }],
+  stats: [
+    { value: "stats", label: "Statistics" },
+    { value: "string", label: "String analysis" },
+  ],
+  history: [{ value: "history" as CalcTool, label: "History" }],
+};
 
 export function DevCalcWorkbench({ activeHref = "/developer-calculator" }: { activeHref?: PageHref }) {
   const [tab, setTab] = useState<Tab>("expression");
@@ -35,6 +106,59 @@ export function DevCalcWorkbench({ activeHref = "/developer-calculator" }: { act
   const [crcText, setCrcText] = useState("hello");
   const [navExpanded, setNavExpanded] = useState(true);
   const [navDrawerOpen, setNavDrawerOpen] = useState(false);
+
+  const [group, setGroup] = useState<CalcGroup>("basics");
+  const [tool, setTool] = useState<CalcTool>("expression");
+  const [history, setHistory] = usePersistedState<HistoryEntry[]>("devcalc-history", []);
+
+  const changeGroup = useCallback((next: CalcGroup) => {
+    setGroup(next);
+    const first = TOOL_OPTIONS[next][0].value;
+    setTool(first);
+    if (next === "basics") setTab("expression");
+  }, []);
+
+  const changeTool = useCallback((next: CalcTool) => {
+    setTool(next);
+    if (group === "basics") setTab(next as Tab);
+  }, [group]);
+
+  const logCalc = useCallback(
+    (entry: CalcLogEntry) => {
+      const groupLabel = GROUP_OPTIONS.find((g) => g.value === group)?.label ?? "Basics";
+      const toolLabel = TOOL_OPTIONS[group].find((t) => t.value === tool)?.label ?? "Tool";
+      setHistory((prev) =>
+        [
+          {
+            id: `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`,
+            time: new Date().toLocaleTimeString(),
+            group: groupLabel,
+            tool: toolLabel,
+            groupKey: group,
+            toolKey: tool,
+            input: entry.input,
+            output: entry.output,
+          },
+          ...prev,
+        ].slice(0, 100),
+      );
+    },
+    [group, tool, setHistory],
+  );
+
+  const restoreEntry = useCallback(
+    (entry: HistoryEntry) => {
+      setGroup(entry.groupKey === "basics" ? "basics" : (entry.groupKey as CalcGroup));
+      setTool(entry.toolKey as CalcTool);
+      if (entry.groupKey === "basics") setTab("expression");
+    },
+    [],
+  );
+
+  const deleteEntry = useCallback(
+    (id: string) => setHistory((prev) => prev.filter((entry) => entry.id !== id)),
+    [setHistory],
+  );
 
   const exprResult = useMemo(() => {
     try {
@@ -134,21 +258,22 @@ export function DevCalcWorkbench({ activeHref = "/developer-calculator" }: { act
         <main className="min-h-0 min-w-0 flex-1 overflow-y-auto">
           <div className="mx-auto flex min-h-full w-full max-w-3xl flex-col gap-3 p-3">
             <div className="flex flex-wrap items-center gap-2">
-              <Segmented
-                ariaLabel="Calculator mode"
-                value={tab}
-                onChange={setTab}
-                options={[
-                  { value: "expression", label: "Expression" },
-                  { value: "radix", label: "Radix" },
-                  { value: "bytes", label: "Bytes" },
-                  { value: "percent", label: "Percent" },
-                  { value: "crc32", label: "CRC32" },
-                ]}
-              />
+              <Segmented ariaLabel="Calculator group" value={group} onChange={changeGroup} options={GROUP_OPTIONS} />
             </div>
 
-            {tab === "expression" && (
+            {TOOL_OPTIONS[group].length > 1 && (
+              <div className="flex flex-wrap items-center gap-2">
+                <Segmented ariaLabel="Calculator tool" value={tool} onChange={changeTool} options={TOOL_OPTIONS[group]} />
+              </div>
+            )}
+
+            {group === "history" ? (
+              <Toolbox title="Calculation history">
+                <CalcHistory entries={history} onClear={() => setHistory([])} onDelete={deleteEntry} onRestore={restoreEntry} />
+              </Toolbox>
+            ) : group === "basics" ? (
+              <>
+                {tab === "expression" && (
               <>
                 <Toolbox title="Expression" actions={<ClearButton onClick={() => setExpr("")} disabled={expr.length === 0} />}>
                   <input
@@ -305,6 +430,47 @@ export function DevCalcWorkbench({ activeHref = "/developer-calculator" }: { act
                   </Toolbox>
                 )}
               </>
+            )}
+              </>
+            ) : (
+              (() => {
+                switch (tool) {
+                  case "bitwise":
+                    return <BitwiseCalc onLog={logCalc} />;
+                  case "inttypes":
+                    return <IntegerTypesCalc onLog={logCalc} />;
+                  case "twos":
+                    return <TwosComplementCalc onLog={logCalc} />;
+                  case "float":
+                    return <FloatCalc onLog={logCalc} />;
+                  case "datasize":
+                    return <DataSizeCalc onLog={logCalc} />;
+                  case "jsonsize":
+                    return <JsonSizeCalc onLog={logCalc} />;
+                  case "timestamp":
+                    return <TimestampCalc onLog={logCalc} />;
+                  case "cidr":
+                    return <CidrCalc onLog={logCalc} />;
+                  case "performance":
+                    return <PerformanceCalc onLog={logCalc} />;
+                  case "bandwidth":
+                    return <BandwidthCalc onLog={logCalc} />;
+                  case "queue":
+                    return <QueueCalc onLog={logCalc} />;
+                  case "storage":
+                    return <StorageCalc onLog={logCalc} />;
+                  case "cache":
+                    return <CacheCalc onLog={logCalc} />;
+                  case "encoding":
+                    return <EncodingCalc onLog={logCalc} />;
+                  case "stats":
+                    return <StatsCalc onLog={logCalc} />;
+                  case "string":
+                    return <StringAnalyzerCalc onLog={logCalc} />;
+                  default:
+                    return null;
+                }
+              })()
             )}
           </div>
         </main>

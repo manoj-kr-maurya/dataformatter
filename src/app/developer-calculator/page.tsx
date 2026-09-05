@@ -18,7 +18,7 @@ export const metadata: Metadata = buildMetadata("/developer-calculator");
 const faqs = [
   {
     q: "What's different from a normal calculator?",
-    a: "It's built for code: binary/hex/octal literals in arithmetic, radix conversion with signed-width masking, byte counting with UTF-8 hex and Base64 output, percent math, and CRC-32 hashing. No eval() is ever used — expressions run through a small operator-precedence parser.",
+    a: "It's built for code: hex/binary/octal literals, bitwise operators and two's complement, IEEE-754 float layout, bit-width masking, byte and encoding sizes, IPv4 CIDR math, JSON size, plus performance, bandwidth, storage, cache and queue estimators. No eval() is ever used — everything runs through small operator-precedence parsers.",
   },
   {
     q: "Can I use 0xFF and 0b1010 in expressions?",
@@ -26,11 +26,15 @@ const faqs = [
   },
   {
     q: "What does signed width mean in Radix mode?",
-    a: "Masking a value to 8/16/32 bits shows what C-style casts and bitwise operations actually produce at that width — useful for byte arithmetics, checksums and register work.",
+    a: "Masking a value to 8/16/32 bits shows what C-style casts and bitwise operations actually produce at that width — useful for byte arithmetics, checksums and register work. The Two's complement tool shows the full signed representation for any width.",
   },
   {
     q: "What does Bytes mode measure?",
-    a: "UTF-8 byte length of your text plus its hex dump and Base64 encoding — so you can predict payload sizes before you send them.",
+    a: "UTF-8 byte length of your text plus its hex dump and Base64 encoding — so you can predict payload sizes before you send them. The Data-size tool converts between KB/MB/GB (decimal) and KiB/MiB/GiB (binary) exactly.",
+  },
+  {
+    q: "How do the estimator tools work?",
+    a: "Concurrency uses Little's law (RPS × latency), bandwidth is RPS × request+response size, and the storage/cache/queue tools apply your replication, growth, retention and overhead inputs with the math shown in the UI. They're planning estimates, not guarantees.",
   },
   {
     q: "Is CRC-32 deterministic?",
@@ -38,7 +42,7 @@ const faqs = [
   },
   {
     q: "Is anything uploaded?",
-    a: "No. Every calculation runs locally in your browser, including the CRC-32 hash — safe even for code fragments and secret samples.",
+    a: "No. Every calculation runs locally in your browser, including the CRC-32 hash and your calculation history — safe even for code fragments and secret samples.",
   },
 ] as const;
 
@@ -48,14 +52,15 @@ export default function DevCalcPage() {
       <DevCalcWorkbench activeHref="/developer-calculator" />
       <ToolSeoContent
         path="/developer-calculator"
-        summary="A calculator built for developers: evaluate expressions with hex/binary literals, convert between radices, measure byte size, do percent math and compute CRC-32 — all locally."
+        summary="A calculator built for developers: expressions with hex/binary literals, bitwise math, two's complement, IEEE-754 floats, byte and JSON sizes, IPv4 CIDR, timestamps, and performance, bandwidth, storage and cache estimators — all locally."
         faqs={faqs}
       >
         <QuickStart
           steps={[
             "Start on the Expression tab with a literal like 0xFF * 4.",
-            "Hit Radix to see any decimal/hex/binary/octal number in all four bases.",
+            "Hit Radix to see a number in all four bases, or Two's complement for signed widths.",
             "Use Bytes on API payloads to predict request size before sending.",
+            "Estimate concurrency, bandwidth or cache memory as you plan a service.",
             "Grab a CRC-32 when you need a quick content fingerprint.",
           ]}
         />
@@ -63,11 +68,12 @@ export default function DevCalcPage() {
         <Section title="What the developer calculator does">
           <Bullets
             items={[
-              "Arithmetic with + - * / % **, parens and 0x/0b/0o literals.",
-              "Radix conversion: decimal, hex, binary, octal plus optional 8/16/32-bit masking and the printable ASCII character.",
-              "UTF-8 byte length, hex dump and Base64 for any text.",
-              "Percent math: 'A is what percent of B?' with zero-guarding.",
-              "CRC-32 hashing returning the unsigned 32-bit integer and its hex form.",
+              "Arithmetic with + - * / % **, parens, 0x/0b/0o literals, functions (sqrt, log, min, max…), constants and scientific notation.",
+              "Bitwise operator parser (& | ^ ~ << >> >>>) with width masking, integer-type ranges (Int8…UInt64), two's complement and overflow flags.",
+              "IEEE-754 float32/float64 bit layout: sign, exponent, mantissa, subnormals, infinity and NaN.",
+              "Data size in decimal vs binary units, JSON size (pretty vs minified), encoding sizes (UTF-8/16, hex, Base64, URL).",
+              "Timestamps & durations, IPv4 CIDR ranges, statistics and percentiles, string analysis.",
+              "Percent math and CRC-32 hashing returning the unsigned 32-bit integer and its hex form.",
             ]}
           />
         </Section>
@@ -76,9 +82,9 @@ export default function DevCalcPage() {
           <Bullets
             items={[
               "Size an API body with Bytes, then trim it to fit your limit.",
-              "Convert a device register value to hex with a 16-bit mask.",
-              "Check 'phase B is what percent of phase A' when planning time estimates.",
-              "Fingerprint two payloads with CRC-32 to confirm byte-identical content.",
+              "Check an 8-bit signed cast with Two's complement or a 192.168.1.0/24 subnet with CIDR.",
+              "Validate a bump to 120ms average latency: concurrency = RPS × latency.",
+              "Confirm two config blobs are byte-identical with CRC-32.",
             ]}
           />
           <Example
@@ -98,7 +104,11 @@ export default function DevCalcPage() {
               },
               {
                 title: "Byte-level debugging",
-                body: "Masked radix output reveals what an 8-bit signed cast does to a value that 'looks fine' in decimal.",
+                body: "Masked radix output reveals what an 8-bit signed cast does to a value that 'looks fine' in decimal; the float tool shows why 0.1 + 0.2 isn't 0.3.",
+              },
+              {
+                title: "Capacity planning",
+                body: "Put realistic RPS and latency into Performance, or a key count and value size into Cache, to sanity-check your sizing before you scale.",
               },
               {
                 title: "Sanity-checking hashes",
@@ -113,8 +123,8 @@ export default function DevCalcPage() {
             items={[
               {
                 error: "Radix mode refuses a negative number",
-                cause: "Radix conversion is defined for non-negative integers only (two's-complement formatting is out of scope).",
-                fix: "Mask with a signed width to see the width-truncated representation instead.",
+                cause: "Radix conversion is defined for non-negative integers only.",
+                fix: "Mask with a signed width to see the width-truncated representation, or use the Two's complement tool for the full signed view.",
               },
               {
                 error: "Expression says 'Result is not finite'",
@@ -134,7 +144,9 @@ export default function DevCalcPage() {
           <ProTips
             tips={[
               "Radix accepts a 0x/0b/0o prefix directly, so paste-what-you-copy works from docs.",
-              "Percent mode guards against B=0 with a clear message instead of NaN.",
+              "Percentage mode guards against B=0 with a clear message instead of NaN.",
+              "Estimator tools show the exact formula under the results, so the numbers are auditable.",
+              "Calculation history is stored only in your browser — clear it from the History tab.",
               "CRC-32 runs locally — use it on files you'd never upload to a public hash site.",
             ]}
           />

@@ -117,17 +117,43 @@ export function humanBytes(bytes: number): string {
 
 type Token =
   | { kind: "num"; value: number }
+  | { kind: "id"; value: string }
   | { kind: "op"; value: string }
+  | { kind: "comma" }
   | { kind: "lparen" }
   | { kind: "rparen" };
 
 const OPS: Record<string, { prec: number; right: boolean; fn: (a: number, b: number) => number }> = {
   "^": { prec: 3, right: true, fn: (a, b) => Math.pow(a, b) },
+  "**": { prec: 3, right: true, fn: (a, b) => Math.pow(a, b) },
   "*": { prec: 2, right: false, fn: (a, b) => a * b },
   "/": { prec: 2, right: false, fn: (a, b) => a / b },
   "%": { prec: 2, right: false, fn: (a, b) => a % b },
   "+": { prec: 1, right: false, fn: (a, b) => a + b },
   "-": { prec: 1, right: false, fn: (a, b) => a - b },
+};
+
+const FUNCTIONS: Record<string, (...args: number[]) => number> = {
+  sqrt: (x) => Math.sqrt(x),
+  abs: (x) => Math.abs(x),
+  round: (x) => Math.round(x),
+  floor: (x) => Math.floor(x),
+  ceil: (x) => Math.ceil(x),
+  pow: (x, y) => Math.pow(x, y),
+  log: (x) => Math.log(x),
+  log10: (x) => Math.log10(x),
+  exp: (x) => Math.exp(x),
+  min: (...xs) => Math.min(...xs),
+  max: (...xs) => Math.max(...xs),
+};
+
+const CONSTANTS: Record<string, number> = {
+  PI: Math.PI,
+  E: Math.E,
+  TAU: Math.PI * 2,
+  pi: Math.PI,
+  e: Math.E,
+  tau: Math.PI * 2,
 };
 
 export function tokenizeExpression(input: string): Token[] {
@@ -138,20 +164,63 @@ export function tokenizeExpression(input: string): Token[] {
     const ch = text[i];
     if (/[0-9.]/.test(ch)) {
       let j = i;
-      while (j < text.length && /[0-9.aA-FfXxObB_]/.test(text[j])) j++;
+      if (ch === "0" && /[xX]/.test(text[i + 1] ?? "")) {
+        j = i + 2;
+        while (j < text.length && /[0-9a-fA-F_]/.test(text[j])) j++;
+        const raw = text.slice(i, j).replace(/_/g, "");
+        i = j;
+        const value = parseInt(raw.slice(2), 16);
+        if (!Number.isFinite(value)) throw new Error(`Cannot read number "${raw}".`);
+        tokens.push({ kind: "num", value });
+        continue;
+      }
+      if (ch === "0" && /[bB]/.test(text[i + 1] ?? "")) {
+        j = i + 2;
+        while (j < text.length && /[01_]/.test(text[j])) j++;
+        const raw = text.slice(i, j).replace(/_/g, "");
+        i = j;
+        const value = parseInt(raw.slice(2), 2);
+        if (!Number.isFinite(value)) throw new Error(`Cannot read number "${raw}".`);
+        tokens.push({ kind: "num", value });
+        continue;
+      }
+      if (ch === "0" && /[oO]/.test(text[i + 1] ?? "")) {
+        j = i + 2;
+        while (j < text.length && /[0-7_]/.test(text[j])) j++;
+        const raw = text.slice(i, j).replace(/_/g, "");
+        i = j;
+        const value = parseInt(raw.slice(2), 8);
+        if (!Number.isFinite(value)) throw new Error(`Cannot read number "${raw}".`);
+        tokens.push({ kind: "num", value });
+        continue;
+      }
+      while (j < text.length && /[0-9._]/.test(text[j])) j++;
+      if (j < text.length && (text[j] === "e" || text[j] === "E")) {
+        let k = j + 1;
+        if (k < text.length && (text[k] === "+" || text[k] === "-")) k++;
+        if (k < text.length && /[0-9]/.test(text[k])) {
+          while (k < text.length && /[0-9]/.test(text[k])) k++;
+          j = k;
+        }
+      }
       const raw = text.slice(i, j).replace(/_/g, "");
-      let value: number;
-      if (/^0x/i.test(raw)) value = parseInt(raw.slice(2), 16);
-      else if (/^0b/i.test(raw)) value = parseInt(raw.slice(2), 2);
-      else if (/^0o/i.test(raw)) value = parseInt(raw.slice(2), 8);
-      else value = Number(raw);
+      i = j;
+      const value = Number(raw);
       if (!Number.isFinite(value)) throw new Error(`Cannot read number "${raw}".`);
       tokens.push({ kind: "num", value });
+      continue;
+    }
+    if (/[a-zA-Z_]/.test(ch)) {
+      let j = i;
+      while (j < text.length && /[a-zA-Z0-9_]/.test(text[j])) j++;
+      tokens.push({ kind: "id", value: text.slice(i, j) });
       i = j;
       continue;
     }
     if (ch === "(") { tokens.push({ kind: "lparen" }); i++; continue; }
     if (ch === ")") { tokens.push({ kind: "rparen" }); i++; continue; }
+    if (ch === ",") { tokens.push({ kind: "comma" }); i++; continue; }
+    if (ch === "*" && text[i + 1] === "*") { tokens.push({ kind: "op", value: "**" }); i += 2; continue; }
     if (OPS[ch]) { tokens.push({ kind: "op", value: ch }); i++; continue; }
     throw new Error(`Unexpected character "${ch}".`);
   }
@@ -178,6 +247,35 @@ export function evaluateExpression(input: string): number {
       if (!close || close.kind !== "rparen") throw new Error("Missing closing paren.");
       pos++;
       return value;
+    }
+    if (token.kind === "id") {
+      pos++;
+      const name = token.value;
+      if (peek()?.kind === "lparen") {
+        pos++;
+        const args: number[] = [];
+        if (peek()?.kind !== "rparen") {
+          args.push(parseExpr(0));
+          while (peek()?.kind === "comma") {
+            pos++;
+            args.push(parseExpr(0));
+          }
+        }
+        const close = peek();
+        if (!close || close.kind !== "rparen") throw new Error(`Missing ")" after ${name}(.`);
+        pos++;
+        const fn = FUNCTIONS[name];
+        if (!fn) throw new Error(`Unknown function "${name}".`);
+        if (args.length === 0 && (name === "min" || name === "max")) {
+          throw new Error(`${name}() needs at least one argument.`);
+        }
+        const value = fn(...args);
+        if (!Number.isFinite(value)) throw new Error(`Result is not finite for ${name}().`);
+        return value;
+      }
+      const constant = CONSTANTS[name];
+      if (constant === undefined) throw new Error(`Unknown identifier "${name}".`);
+      return constant;
     }
     throw new Error("Expected a number.");
   }
