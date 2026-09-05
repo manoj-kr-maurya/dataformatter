@@ -135,7 +135,7 @@ export function JsonToCodeWorkbench({ activeHref = "/json-to-code" }: { activeHr
             standalone
           />
         )}
-        <main className="min-h-0 min-w-0 flex-1 overflow-y-auto overscroll-contain">
+        <main className="min-h-0 min-w-0 flex-1 overflow-y-auto">
           <div className="flex min-h-full flex-col gap-3 p-3 lg:flex-row">
             {/* Input panel */}
             <section className="flex min-h-0 flex-col overflow-hidden rounded-xl border border-zinc-200 bg-white shadow-sm dark:border-zinc-800 dark:bg-zinc-950/40 lg:w-1/2">
@@ -151,7 +151,7 @@ export function JsonToCodeWorkbench({ activeHref = "/json-to-code" }: { activeHr
                   <ClearButton onClick={() => setText("")} disabled={text.length === 0} />
                 </div>
               </div>
-              <div className="h-72 shrink-0">
+              <div className="min-h-72 flex-1 lg:min-h-0">
                 <CodeEditor
                   value={text}
                   onChange={setText}
