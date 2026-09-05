@@ -174,7 +174,13 @@ test.describe("workbench input→output matrix", () => {
     await expect(toolbox(page, "Next runs").locator("tbody tr")).toHaveCount(3);
   });
 
-  test("Timestamp converter decodes ms and epoch-0", async ({ page }) => {
+  test("Timestamp converter decodes ms and epoch-0", async ({ browser }) => {
+    const context = await browser.newContext({ locale: "fr-FR", timezoneId: "Europe/Paris" });
+    const page = await context.newPage();
+    const hydrationErrors: string[] = [];
+    page.on("pageerror", (error) => {
+      if (error.message.includes("Hydration failed")) hydrationErrors.push(error.message);
+    });
     await page.goto("/timestamp");
     await expect(page.getByText("1736956800", { exact: true })).toBeVisible();
     await expect(page.getByText("2025-01-15T16:00:00.000Z", { exact: true })).toBeVisible();
@@ -182,6 +188,9 @@ test.describe("workbench input→output matrix", () => {
     await page.getByRole("button", { name: "Unix 0", exact: true }).click();
     await expect(page.getByText("1970-01-01T00:00:00.000Z", { exact: true })).toBeVisible();
     await expect(page.getByText("0", { exact: true }).first()).toBeVisible();
+
+    expect(hydrationErrors).toEqual([]);
+    await context.close();
   });
 
   test("ENV validator finds no issues and diffs two files", async ({ page }) => {

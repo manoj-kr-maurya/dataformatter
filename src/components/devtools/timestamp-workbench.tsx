@@ -67,11 +67,11 @@ export function TimestampWorkbench() {
       <div className="flex flex-wrap items-center gap-2">
         {parts && (
           <>
-            <Stat label={parts.isFuture ? "future" : "past"} value={parts.relative} tone="default" />
+            <Stat label={parts.isFuture ? "future" : "past"} value={parts.relative} tone="default" suppressHydrationWarning />
           </>
         )}
         {zoneNow && (
-          <Stat label={`now in ${zone}`} value={`${zoneNow.date} ${zoneNow.time}`} />
+          <Stat label={`now in ${zone}`} value={`${zoneNow.date} ${zoneNow.time}`} suppressHydrationWarning />
         )}
         <div className="ml-auto flex items-center gap-2">
           <CopyButton text={report} label="Copy" />
@@ -109,7 +109,7 @@ export function TimestampWorkbench() {
         <>
           <div className="flex flex-wrap items-end gap-4">
             <Field label="Clock reference">
-              <span className={inputClass} aria-hidden>{new Date(now).toISOString()}</span>
+              <span className={inputClass} aria-hidden suppressHydrationWarning>{new Date(now).toISOString()}</span>
             </Field>
             <Field label="Reference zone">
               <select className={inputClass} value={zone} onChange={(event) => setZone(event.target.value)} aria-label="Reference zone">
@@ -124,7 +124,7 @@ export function TimestampWorkbench() {
             <Toolbox
               title="Conversions"
               actions={
-                <span className="font-mono text-[10px] text-zinc-400">
+                <span className="font-mono text-[10px] text-zinc-400" suppressHydrationWarning>
                   {parts.isFuture ? `in ${parts.relative}` : `${parts.relative} ago`}
                 </span>
               }
@@ -144,7 +144,7 @@ export function TimestampWorkbench() {
                 <ConversionRow label="ISO-8601" value={parts.iso} />
                 <ConversionRow label="UTC" value={parts.utc} />
                 <div className="sm:col-span-2">
-                  <ConversionRow label="Your local time" value={parts.local} />
+                  <ConversionRow label="Your local time" value={parts.local} suppressHydrationWarning />
                 </div>
               </dl>
             </Toolbox>
@@ -155,11 +155,11 @@ export function TimestampWorkbench() {
   );
 }
 
-function ConversionRow({ label, value }: { label: string; value: string }) {
+function ConversionRow({ label, value, suppressHydrationWarning = false }: { label: string; value: string; suppressHydrationWarning?: boolean }) {
   return (
     <div className="flex items-baseline justify-between gap-3 border-b border-zinc-100 pb-1 sm:col-span-2 dark:border-zinc-800/60">
       <dt className="shrink-0 text-[11px] font-medium uppercase tracking-wide text-zinc-400 dark:text-zinc-500">{label}</dt>
-      <dd className="truncate font-mono text-xs text-zinc-700 dark:text-zinc-200">{value}</dd>
+      <dd className="truncate font-mono text-xs text-zinc-700 dark:text-zinc-200" suppressHydrationWarning={suppressHydrationWarning}>{value}</dd>
     </div>
   );
 }

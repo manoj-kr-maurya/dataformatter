@@ -186,10 +186,12 @@ export function Stat({
   label,
   value,
   tone = "default",
+  suppressHydrationWarning = false,
 }: {
   label: string;
   value: ReactNode;
   tone?: "default" | "warn" | "error" | "ok";
+  suppressHydrationWarning?: boolean;
 }) {
   const tones: Record<string, string> = {
     default: "bg-zinc-100 text-zinc-700 dark:bg-zinc-800 dark:text-zinc-200",
@@ -201,7 +203,7 @@ export function Stat({
     <span
       className={`inline-flex items-baseline gap-1.5 rounded-lg px-2.5 py-1 font-mono text-xs ${tones[tone]}`}
     >
-      <span className="font-semibold tabular-nums">{value}</span>
+      <span className="font-semibold tabular-nums" suppressHydrationWarning={suppressHydrationWarning}>{value}</span>
       <span className="text-[10px] uppercase tracking-wide opacity-80">{label}</span>
     </span>
   );
