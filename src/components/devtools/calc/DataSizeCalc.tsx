@@ -5,6 +5,8 @@ import { Toolbox, ClearButton, Hint, CopyButton } from "@/components/devtools/sh
 import { BigValue, ErrorBox, NumberField, ResultRow, SelectField, StatusChip, useCalcLog, type CalcLogEntry } from "@/components/devtools/calc/common";
 import { sizeConversions, exactBytes, DECIMAL_UNITS, BINARY_UNITS, type SizeRow } from "@/lib/devcalc/units";
 
+const UNIT_OPTIONS = [...new Set([...DECIMAL_UNITS, ...BINARY_UNITS])] as (typeof DECIMAL_UNITS)[number][];
+
 function UnitTable({ rows }: { rows: SizeRow[] }) {
   return (
     <dl className="grid grid-cols-1 gap-2 sm:grid-cols-3">
@@ -20,7 +22,7 @@ export function DataSizeCalc({ onLog, initValue }: { onLog?: (entry: CalcLogEntr
   const [unit, setUnit] = useState(() => {
     if (initValue) {
       const nu = initValue.split(":")[1];
-      if (nu != null && [...DECIMAL_UNITS, ...BINARY_UNITS].includes(nu as (typeof DECIMAL_UNITS)[number] | (typeof BINARY_UNITS)[number])) return nu;
+      if (nu != null && (UNIT_OPTIONS as readonly string[]).includes(nu)) return nu as (typeof DECIMAL_UNITS)[number];
     }
     return "KiB";
   });
@@ -45,7 +47,7 @@ export function DataSizeCalc({ onLog, initValue }: { onLog?: (entry: CalcLogEntr
       <Toolbox title="Data size" actions={<ClearButton onClick={() => setValue("")} disabled={value.length === 0} />}>
         <div className="flex flex-wrap items-end gap-3">
           <NumberField label="Value" value={value} onChange={setValue} placeholder="1" inputMode="decimal" width="w-28" />
-          <SelectField label="Unit" value={unit} onChange={setUnit} options={[...DECIMAL_UNITS, ...BINARY_UNITS]} width="w-24" />
+          <SelectField label="Unit" value={unit} onChange={setUnit} options={UNIT_OPTIONS} width="w-24" />
         </div>
         <Hint>Decimal units (KB, MB…) use powers of 1,000; binary units (KiB, MiB…) use powers of 1,024. 1 KB = 1,000 bytes ⇔ 1 KiB = 1,024 bytes.</Hint>
       </Toolbox>
