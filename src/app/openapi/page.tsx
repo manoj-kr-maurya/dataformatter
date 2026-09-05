@@ -46,7 +46,7 @@ export default function OpenApiPage() {
               "Schema explorer — list all components.schemas definitions with searchable property tables that resolve $ref links safely, even in circular schemas.",
               "Validation — structural checks report missing response descriptions, duplicate operationIds, unresolved refs and unknown schema types as errors and warnings.",
               "Request code generation — one click from cURL to fetch, Axios, Python, Java, Go or C#, honouring path, query and header parameters and JSON bodies.",
-              "Type generation — turns request and response schemas into TypeScript, Java, C#, Go, Python, Kotlin or Swift declarations by reusing the JSON to Code engine.",
+              "Type generation — turns request and response schemas into TypeScript, Java, C#, Go, Python, Kotlin, Swift or Dart declarations by reusing the JSON to Code engine.",
               "Mock responses — every response status gets a clearly-labelled placeholder body generated from its schema, never presented as real API output.",
             ]}
           />

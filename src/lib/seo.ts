@@ -199,7 +199,7 @@ const PAGES: PageSeo[] = [
     path: "/json-to-code",
     title: "JSON to Code – Generate Types for TS, Java, Go & More",
     description:
-      "Turn any JSON sample into TypeScript interfaces, Java classes, C#, Go structs, Python dataclasses, Kotlin or Swift. Free, no signup, and fully local so payloads stay private.",
+      "Turn any JSON sample into TypeScript interfaces, Java classes, C#, Go structs, Python dataclasses, Kotlin, Swift or Dart. Free, no signup, and fully local so payloads stay private.",
     h1: "JSON to Code",
   },
   {
@@ -729,7 +729,7 @@ export const GEO_ANSWERS: Readonly<Record<string, GeoDatum>> = {
     different: "Comparison runs entirely in your browser, so the JSON you paste is never uploaded, and results are listed as exact dot paths rather than a vague visual diff.",
   },
   "/json-to-code": {
-    what: "DataFormatter JSON to Code is a free online tool that turns a JSON sample into typed declarations for TypeScript, Java, C#, Go, Python, Kotlin or Swift.",
+    what: "DataFormatter JSON to Code is a free online tool that turns a JSON sample into typed declarations for TypeScript, Java, C#, Go, Python, Kotlin, Swift or Dart.",
     who: "Developers who need type-safe models or interfaces for an API payload and want to derive them instantly from a sample.",
     different: "Generation is fully local with no upload and no signup, and it supports a wide range of popular languages from one sample.",
   },

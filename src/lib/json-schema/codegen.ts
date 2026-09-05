@@ -1,5 +1,6 @@
 import {
   type SchemaNode,
+  type JsonSchemaProp,
   ROOT_NAME,
   rootObject,
 } from "@/lib/json-schema/infer";
@@ -324,6 +325,93 @@ const swiftGenerator: CodeGenerator = {
   },
 };
 
+// ------------------------------------------------------------------ Dart
+
+const RESERVED_DART = new Set([
+  "class", "extends", "implements", "static", "final", "const", "var", "new",
+  "void", "null", "true", "false", "this", "super", "if", "else", "for",
+  "while", "switch", "case", "default", "return", "import", "export", "library",
+  "as", "in", "is", "on", "with", "abstract", "async", "await", "yield",
+]);
+
+function dartType(node: SchemaNode, optional: boolean): string {
+  let base: string;
+  switch (node.kind) {
+    case "scalar":
+      switch (node.scalar) {
+        case "boolean": base = "bool"; break;
+        case "integer": base = "int"; break;
+        case "number": base = "double"; break;
+        case "null": base = "Null"; break;
+        case "string": base = "String"; break;
+        default: base = "String"; break;
+      }
+      break;
+    case "array":
+      base = `List<${dartType(node.items ?? { kind: "scalar", scalar: "string" }, false)}>`;
+      break;
+    case "object":
+      base = "Map<String, dynamic>";
+      break;
+  }
+  return optional ? `${base}?` : base;
+}
+
+/** Expression that reads a JSON value for one field in a Dart fromJson factory. */
+function dartFromJsonExpr(p: JsonSchemaProp): string {
+  const ref = `json['${p.name}']`;
+  if (p.node.kind === "array") {
+    const itemType = dartType(p.node.items ?? { kind: "scalar", scalar: "string" }, false);
+    return p.optional
+      ? `(${ref} as List?)?.cast<${itemType}>()`
+      : `(${ref} as List).cast<${itemType}>()`;
+  }
+  if (p.node.kind === "object") {
+    return p.optional ? `${ref} as Map<String, dynamic>?` : `${ref} as Map<String, dynamic>`;
+  }
+  if (p.node.scalar === "number") {
+    return `${ref} == null ? null : (${ref} as num).toDouble()`;
+  }
+  const type = dartType(p.node, p.optional);
+  return `${ref} as ${type}`;
+}
+
+const dartGenerator: CodeGenerator = {
+  id: "dart-class",
+  label: "Dart class",
+  extension: "dart",
+  generate: (node, typeName) => {
+    const className = pascal(typeName);
+    const props = rootObject(node).props ?? [];
+    const fields = props.map((p) => {
+      const name = safe(camel(p.name), RESERVED_DART);
+      return `  final ${dartType(p.node, p.optional)} ${name};`;
+    });
+    const params = props.map((p) => {
+      const name = safe(camel(p.name), RESERVED_DART);
+      return p.optional ? `    this.${name},` : `    required this.${name},`;
+    });
+    const ctor = props.length > 0
+      ? `  ${className}({\n${params.join("\n")}\n  });`
+      : `  ${className}();`;
+    const reads = props.map((p) => {
+      const name = safe(camel(p.name), RESERVED_DART);
+      return `      ${name}: ${dartFromJsonExpr(p)},`;
+    });
+    const factory = props.length > 0
+      ? `  factory ${className}.fromJson(Map<String, dynamic> json) => ${className}(\n${reads.join("\n")}\n  );`
+      : `  factory ${className}.fromJson(Map<String, dynamic> json) => ${className}();`;
+    const writes = props.map((p) => {
+      const name = safe(camel(p.name), RESERVED_DART);
+      return `    '${p.name}': ${name},`;
+    });
+    const toJson = props.length > 0
+      ? `  Map<String, dynamic> toJson() => {\n${writes.join("\n")}\n  };`
+      : `  Map<String, dynamic> toJson() => {};`;
+    return `class ${className} {\n${fields.join("\n")}\n\n${ctor}\n\n${factory}\n\n${toJson}\n}`;
+  },
+};
+
 export const CODE_GENERATORS: readonly CodeGenerator[] = [
   tsGenerator,
   tsTypeGenerator,
@@ -334,6 +422,7 @@ export const CODE_GENERATORS: readonly CodeGenerator[] = [
   pyGenerator,
   kotlinGenerator,
   swiftGenerator,
+  dartGenerator,
 ];
 
 export function generateCode(id: string, node: SchemaNode, typeName = ROOT_NAME): string {

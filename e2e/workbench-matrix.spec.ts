@@ -93,6 +93,14 @@ test.describe("workbench input→output matrix", () => {
     await expect(pre).toContainText("Account");
   });
 
+  test("JSON to Code emits a Dart class with fromJson/toJson", async ({ page }) => {
+    await page.goto("/json-to-code");
+    await page.getByRole("button", { name: "Dart class", exact: true }).click();
+    const pre = page.locator("pre").first();
+    await expect(pre).toContainText("factory User.fromJson");
+    await expect(pre).toContainText("Map<String, dynamic> toJson()");
+  });
+
   test("JSON to Schema derives a validation schema", async ({ page }) => {
     await page.goto("/json-to-schema");
     const pre = page.locator("pre").first();

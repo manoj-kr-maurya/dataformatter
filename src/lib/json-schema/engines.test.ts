@@ -91,3 +91,38 @@ describe("error paths", () => {
     expect(() => generateSchema("nope", infer(parse("{}")))).toThrow();
   });
 });
+
+describe("Dart generator", () => {
+  const node = infer(
+    parse('{"id":42,"name":"Ada","score":9.5,"roles":["admin"],"meta":{"team":"core"}}'),
+  );
+
+  it("emits a class with typed final fields", () => {
+    const out = generateCode("dart-class", node, "User");
+    expect(out).toContain("class User {");
+    expect(out).toContain("final int id;");
+    expect(out).toContain("final String name;");
+    expect(out).toContain("final double score;");
+    expect(out).toContain("final List<String> roles;");
+    expect(out).toContain("final Map<String, dynamic> meta;");
+  });
+
+  it("requires non-optional fields and exposes fromJson/toJson", () => {
+    const out = generateCode("dart-class", node, "User");
+    expect(out).toContain("required this.id");
+    expect(out).toContain("factory User.fromJson");
+    expect(out).toContain("json['id'] as int");
+    expect(out).toContain("(json['roles'] as List).cast<String>()");
+    expect(out).toContain("(json['score'] as num).toDouble()");
+    expect(out).toContain("'name': name,");
+    expect(out).toContain("toJson()");
+  });
+
+  it("handles optional fields as nullable parameters", () => {
+    const node2 = inferAll([parse('{"a":1}'), parse('{"a":2,"b":true}')]);
+    const out = generateCode("dart-class", rootObject(node2), "Sample");
+    expect(out).toContain("final bool? b;");
+    expect(out).toContain("this.b,");
+    expect(out).toContain("json['b'] as bool?");
+  });
+});

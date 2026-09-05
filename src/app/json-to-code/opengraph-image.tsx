@@ -5,5 +5,5 @@ export const size = OG_SIZE;
 export const contentType = OG_CONTENT_TYPE;
 
 export default function Image() {
-  return createToolOgImage(alt, "JSON to Code", "Generate TS, Java, Go & more from JSON — fully local");
+  return createToolOgImage(alt, "JSON to Code", "Generate TS, Java, Go, Dart & more from JSON — fully local");
 }
