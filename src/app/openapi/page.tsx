@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { OpenApiWorkbench } from "@/components/openapi/openapi-workbench";
 import { ToolSeoContent } from "@/components/seo/tool-seo-content";
-import { Section, Bullets, UseCases } from "@/components/seo/content-blocks";
+import { Section, Bullets, UseCases, Glossary } from "@/components/seo/content-blocks";
 import { buildMetadata } from "@/lib/seo";
 
 export const metadata: Metadata = buildMetadata("/openapi");
@@ -34,6 +34,27 @@ export default function OpenApiPage() {
         summary="DataFormatter OpenAPI Workbench is a free, browser-based tool that parses an OpenAPI 3.0/3.1 JSON or YAML document, lists every endpoint and component schema, validates the structure, and generates cURL, fetch, Axios and typed code — with no signup and no upload."
         faqs={faqs}
       >
+        <Section title="OpenAPI 3.0 vs OpenAPI 3.1">
+          <Glossary
+            terms={[
+              {
+                term: "OpenAPI",
+                definition:
+                  "OpenAPI is a vendor-neutral, machine-readable format for describing HTTP APIs. A single JSON or YAML document lists every endpoint, operation, parameter, request body and response schema, so tools can generate docs, mock servers and client code from it.",
+              },
+              {
+                term: "OpenAPI 3.0",
+                definition:
+                  "The 3.0.x line (3.0.0–3.0.4) is the most widely deployed OpenAPI version. It describes operations, servers and components, types nullable values with a separate nullable keyword and bounds with exclusiveMinimum/exclusiveMaximum booleans — the format most published specs use today.",
+              },
+              {
+                term: "OpenAPI 3.1",
+                definition:
+                  "The 3.1.x line stays OpenAPI 3 but aligns validation with JSON Schema 2020-12: type: [\"string\", \"null\"] replaces nullable, minimum bounds become plain numbers, and a top-level webhooks field is added. DataFormatter's workbench accepts both 3.0.x and 3.1.x in JSON or YAML.",
+              },
+            ]}
+          />
+        </Section>
         <Section title="How the OpenAPI workbench helps">
           <p>
             Working from a spec file is much faster when you can explore it without reading raw YAML. Load a document

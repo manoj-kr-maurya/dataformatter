@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { ApiClientWorkbench } from "@/components/api-client/api-client-workbench";
 import { ToolSeoContent } from "@/components/seo/tool-seo-content";
 import { Section, Bullets, UseCases } from "@/components/seo/content-blocks";
@@ -43,6 +44,18 @@ export default function ApiClientPage() {
               "Send directly to the endpoint — no server-side proxy sits between you and the target.",
             ]}
           />
+        </Section>
+
+        <Section title="API Client vs API Tester">
+          <p>
+            DataFormatter offers two doors into the same in-browser request engine. This API Client
+            page and the <Link href="/api-tester">API Tester</Link> both build and send GET, POST,
+            PUT and DELETE requests straight to the endpoint with no proxy — the same tool, presented
+            with slightly different emphasis. Start here for the full story, or reach for the API
+            Tester for a quick send-and-inspect pass. After a response comes back, the{" "}
+            <Link href="/http-header-inspector">HTTP Header Inspector</Link> can analyze its headers
+            for security and caching issues.
+          </p>
         </Section>
 
         <Section title="When to use an in-browser API client">

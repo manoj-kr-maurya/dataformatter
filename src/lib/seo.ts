@@ -288,9 +288,9 @@ const PAGES: PageSeo[] = [
   },
   {
     path: "/developer-calculator",
-    title: "Developer Calculator – Hex, Bytes, Percent & CRC-32 Online",
+    title: "Developer Calculator – Bitwise, Hex, Integer Widths & CRC-32",
     description:
-      "A calculator built for developers: evaluate expressions with hex/binary literals, convert between radices with bit masking, measure byte size, do percent math and compute CRC-32. Local only.",
+      "Evaluate expressions with hex, binary and bitwise operators, convert between radices with masking, model 8/16/32/64-bit integer overflow, estimate latency and API traffic, and measure byte sizes — all locally in your browser.",
     h1: "Developer Calculator",
   },
   {
@@ -323,7 +323,7 @@ const PAGES: PageSeo[] = [
   },
   {
     path: "/api-diff",
-    title: "API Breaking Change Detector – Diff JSON APIs",
+    title: "API Breaking Change Detector – Compare JSON API Contracts",
     description:
       "Compare two JSON APIs or schemas and get every difference classified as breaking, potentially-breaking, non-breaking or informational — new required fields, enum removals and shape flips flagged first. Local and free.",
     h1: "API Breaking Change Detector",
@@ -509,6 +509,8 @@ export const RELATED_LINKS: Readonly<Record<string, ReadonlyArray<{ href: string
   "/api-client": [
     { href: "/json-formatter", label: "JSON Formatter — prettify responses" },
     { href: "/json-validator", label: "JSON Validator — check payloads" },
+    { href: "/api-tester", label: "API Tester — the same engine for quick checks" },
+    { href: "/http-header-inspector", label: "HTTP Header Inspector — analyze response headers" },
     { href: "/jwt-decoder", label: "JWT Decoder — debug bearer tokens" },
     { href: "/compiler", label: "Dart Compiler — generate request scripts" },
     { href: "/openapi", label: "OpenAPI Workbench — explore a documented API" },
@@ -556,11 +558,13 @@ export const RELATED_LINKS: Readonly<Record<string, ReadonlyArray<{ href: string
     { href: "/json-formatter", label: "JSON Formatter — prettify the response" },
     { href: "/json-validator", label: "JSON Validator — verify the payload" },
     { href: "/http-header-inspector", label: "Header Inspector — inspect response headers" },
+    { href: "/api-client", label: "API Client — the full request builder page" },
     { href: "/openapi", label: "OpenAPI Workbench — explore the API definition" },
   ],
   "/openapi": [
     { href: "/api-tester", label: "API Tester — send a request live" },
     { href: "/api-client", label: "API Client — build requests by hand" },
+    { href: "/api-diff", label: "API Breaking Change Detector — compare schemas" },
     { href: "/curl-to-code", label: "cURL to Code — port a command to code" },
     { href: "/json-to-schema", label: "JSON to Schema — derive schemas from samples" },
     { href: "/json-to-code", label: "JSON to Code — generate types from payloads" },
@@ -568,6 +572,7 @@ export const RELATED_LINKS: Readonly<Record<string, ReadonlyArray<{ href: string
   "/http-header-inspector": [
     { href: "/curl-to-code", label: "cURL to Code — reproduce the exact request" },
     { href: "/api-tester", label: "API Tester — hit the endpoint yourself" },
+    { href: "/har", label: "HAR Debugger — analyze captured traffic" },
     { href: "/log-analyzer", label: "Log Analyzer — correlate with server logs" },
     { href: "/env-validator", label: "ENV Validator — keep secrets out of headers" },
   ],
@@ -576,16 +581,19 @@ export const RELATED_LINKS: Readonly<Record<string, ReadonlyArray<{ href: string
     { href: "/regex", label: "Regex Tester — build log line patterns" },
     { href: "/timestamp", label: "Timestamp Converter — read log timestamps" },
     { href: "/http-header-inspector", label: "Header Inspector — debug request quirks" },
+    { href: "/error-workspace", label: "Error Workspace — correlate logs with a trace" },
   ],
   "/stack-trace": [
     { href: "/log-analyzer", label: "Log Analyzer — find which errors repeat" },
     { href: "/regex", label: "Regex Tester — match trace frames" },
     { href: "/json-validator", label: "JSON Validator — validate the payload that failed" },
+    { href: "/error-workspace", label: "Error Workspace — one session for trace, logs & request" },
     { href: "/compiler", label: "Compiler — reproduce the failure in code" },
   ],
   "/har": [
     { href: "/http-header-inspector", label: "Header Inspector — inspect specific header blocks" },
     { href: "/log-analyzer", label: "Log Analyzer — correlate request failures with server logs" },
+    { href: "/curl-to-code", label: "cURL to Code — port a captured request to code" },
     { href: "/api-client", label: "API Client — replay a captured request" },
     { href: "/error-workspace", label: "Error Workspace — dig into one failed exchange" },
   ],
@@ -824,9 +832,9 @@ export const GEO_ANSWERS: Readonly<Record<string, GeoDatum>> = {
     different: "Generation is seeded and reproducible and runs entirely in your browser — no data is generated server-side or uploaded.",
   },
   "/developer-calculator": {
-    what: "DataFormatter Developer Calculator is a free online calculator built for developers: hex/binary literals, radix conversion with bit masking, byte-size measurement, percent math and CRC-32.",
-    who: "Developers who work in hex, bytes and bitwise math and want a calculator that matches their mental model.",
-    different: "It is designed around developer expressions and bit operations, and everything runs locally in your browser.",
+    what: "DataFormatter Developer Calculator is a free online calculator built for developers: evaluate expressions with hex, binary and bitwise operators, model integer widths from 8 to 64 bits with two's-complement behavior, convert between radices with masking, measure byte sizes, compute CRC-32 and estimate latency or API traffic.",
+    who: "Developers who work in hex, bytes and bitwise math and want one calculator for bit-level expressions, integer overflow modeling, size checks and load estimation.",
+    different: "It pairs a bitwise expression engine with an interactive integer-width and two's-complement visualization as well as data-size, latency and API-traffic estimators — everything computes locally in your browser.",
   },
   "/json-to-csv": {
     what: "DataFormatter JSON to CSV Converter is a free online tool that flattens an array of JSON objects into clean CSV with one header column per key, quoted cells and empty cells for missing fields.",

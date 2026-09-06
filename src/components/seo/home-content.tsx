@@ -20,6 +20,20 @@ const popularTools: ReadonlyArray<{ href: string; label: string }> = [
   { href: "/cron", label: "Cron Helper" },
 ];
 
+const apiTools: ReadonlyArray<{ href: string; label: string }> = [
+  { href: "/openapi", label: "OpenAPI Viewer & Workbench" },
+  { href: "/api-diff", label: "API Breaking Change Detector" },
+  { href: "/api-client", label: "API Client" },
+  { href: "/api-tester", label: "API Tester" },
+  { href: "/http-header-inspector", label: "HTTP Header Inspector" },
+  { href: "/har", label: "HAR Debugger" },
+  { href: "/log-analyzer", label: "Log Analyzer" },
+  { href: "/stack-trace", label: "Stack Trace Reader" },
+  { href: "/env-validator", label: "ENV Validator" },
+  { href: "/curl-to-code", label: "cURL to Code" },
+  { href: "/error-workspace", label: "Error Workspace" },
+];
+
 const hubLinks: ReadonlyArray<{ href: string; label: string; blurb: string }> = [
   { href: "/encode-decode", label: "Encoding & Decoding Tools", blurb: "Base32, Base58, Base64, URL, HTML and UTF-8 in one workspace." },
   { href: "/base64", label: "Base64 Tools", blurb: "Images, JSON, hex and binary to Base64 and back again." },
@@ -52,6 +66,21 @@ export function HomeContent() {
       <Section title="Popular developer tools">
         <ul className="mt-2 grid grid-cols-1 gap-2 sm:grid-cols-2">
           {popularTools.map((tool) => (
+            <li key={tool.href}>
+              <Link
+                href={tool.href}
+                className="block rounded-lg border border-zinc-200 bg-white px-3.5 py-2.5 text-sm font-medium text-zinc-800 transition-colors hover:border-violet-400 hover:text-violet-700 dark:border-zinc-800 dark:bg-zinc-950/40 dark:text-zinc-200 dark:hover:border-violet-500 dark:hover:text-violet-300"
+              >
+                {tool.label}
+              </Link>
+            </li>
+          ))}
+        </ul>
+      </Section>
+
+      <Section title="API & debugging tools">
+        <ul className="mt-2 grid grid-cols-1 gap-2 sm:grid-cols-2">
+          {apiTools.map((tool) => (
             <li key={tool.href}>
               <Link
                 href={tool.href}

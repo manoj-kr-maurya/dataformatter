@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { ApiClientWorkbench } from "@/components/api-client/api-client-workbench";
 import { ToolSeoContent } from "@/components/seo/tool-seo-content";
 import { Section, Bullets, UseCases } from "@/components/seo/content-blocks";
@@ -43,6 +44,15 @@ export default function ApiTesterPage() {
               "Work with local, staging or public servers and see results immediately in the browser.",
             ]}
           />
+        </Section>
+
+        <Section title="API Tester vs API Client">
+          <p>
+            The API Tester shares its engine with the <Link href="/api-client">API Client</Link> —
+            the same direct-from-browser, no-proxy request workflow for GET, POST, PUT and DELETE.
+            Use this page for quick checks, or open the API Client for the same workflow alongside
+            the full built-in documentation of every feature.
+          </p>
         </Section>
 
         <Section title="When to use the API Tester">

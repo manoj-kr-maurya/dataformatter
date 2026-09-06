@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { ApiDiffWorkbench } from "@/components/api-diff/api-diff-workbench";
 import { ToolSeoContent } from "@/components/seo/tool-seo-content";
-import { Section, Bullets, UseCases } from "@/components/seo/content-blocks";
+import { Section, Bullets, UseCases, Example } from "@/components/seo/content-blocks";
 import { buildMetadata } from "@/lib/seo";
 
 export const metadata: Metadata = buildMetadata("/api-diff");
@@ -48,6 +48,42 @@ export default function ApiDiffPage() {
               "Shape-flip detection — containers that flip between object and array are called out explicitly instead of being lost in field-level noise.",
               "Prioritized report — changes are sorted breaking → informational, with a count summary, a side-by-side editor, and a filterable list you can search by severity.",
               "Local and private — both documents are analyzed entirely in your browser. Nothing is uploaded or stored.",
+            ]}
+          />
+        </Section>
+        <Section title="A breaking change in practice">
+          <p>
+            Removing a field that consumers already send or read, or tightening a type so the old
+            values stop parsing, is the classic release-blocking problem. Compare these two schema
+            versions and the report walks you through why each change matters.
+          </p>
+          <Example
+            inputLabel="Current version"
+            input={`{
+  "type": "object",
+  "required": ["id", "name", "email"],
+  "properties": {
+    "id": { "type": "integer" },
+    "name": { "type": "string" },
+    "email": { "type": "string", "format": "email" },
+    "age": { "type": "string" }
+  }
+}`}
+            outputLabel="Proposed version"
+            output={`{
+  "type": "object",
+  "required": ["id", "name"],
+  "properties": {
+    "id": { "type": "integer" },
+    "name": { "type": "string" },
+    "age": { "type": "integer" }
+  }
+}`}
+          />
+          <Bullets
+            items={[
+              "Removed field email — classified breaking: clients that post a name + email payload now send an unknown field, and anything that read email back receives nothing.",
+              "Type change on age from string to integer — classified potentially-breaking: existing consumers that sent a numeric string (\"25\") are now invalid and need a code change.",
             ]}
           />
         </Section>
