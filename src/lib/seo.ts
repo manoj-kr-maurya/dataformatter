@@ -359,6 +359,7 @@ export const HEADER_LINKS: ReadonlyArray<{ href: string; label: string }> = [
 /** Full footer navigation — every important crawlable page, kept concise. */
 export const FOOTER_LINKS: ReadonlyArray<{ href: string; label: string }> = [
   { href: "/", label: "DevTools Home" },
+  { href: "/blog", label: "Blog" },
   { href: "/json-formatter", label: "JSON Formatter" },
   { href: "/json-minifier", label: "JSON Minifier" },
   { href: "/json-validator", label: "JSON Validator" },

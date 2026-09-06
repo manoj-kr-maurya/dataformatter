@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import sitemap from "@/app/sitemap";
 import robots from "@/app/robots";
+import { BLOG_PATHS } from "@/lib/blog/registry";
 import {
   BREADCRUMBS,
   FOOTER_LINKS,
@@ -88,14 +89,19 @@ describe("buildMetadata", () => {
 describe("sitemap", () => {
   const entries = sitemap();
 
-  it("lists exactly the registered canonical URLs", () => {
-    expect(entries).toHaveLength(SEO_PAGES.size);
+  it("lists exactly the registered canonical URLs, including every blog page", () => {
+    expect(entries).toHaveLength(SEO_PAGES.size + BLOG_PATHS.length);
     const urls = entries.map((e) => e.url);
     expect(new Set(urls).size).toBe(urls.length);
     expect(urls).toContain(`${SITE_URL}/`);
+    // Every tool page is the self-canonical form of its registered path.
     for (const page of pages) {
       if (page.path === "/") continue;
       expect(urls).toContain(`${SITE_URL}${page.path}`);
+    }
+    // Every blog URL is listed — the hub and each article.
+    for (const path of BLOG_PATHS) {
+      expect(urls).toContain(`${SITE_URL}${path}`);
     }
   });
 
@@ -118,7 +124,7 @@ describe("robots", () => {
 
 describe("internal link graph", () => {
   it("only links between registered routes", () => {
-    const valid = new Set(SEO_PAGES.keys());
+    const valid = new Set([...SEO_PAGES.keys(), ...BLOG_PATHS]);
     for (const links of Object.values(RELATED_LINKS)) {
       for (const link of links) {
         expect(valid.has(link.href), `related href ${link.href} is not a registered page`).toBe(
