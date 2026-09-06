@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import sitemap from "@/app/sitemap";
+import { GET as rssGet } from "@/app/blog/rss.xml/route";
 import { FOOTER_LINKS, SITE_NAME, SEO_PAGES } from "@/lib/seo";
 import { BLOG_CATEGORIES } from "@/lib/blog/types";
 import type { BlogCategory } from "@/lib/blog/types";
@@ -117,6 +118,7 @@ describe("blog metadata and structured data", () => {
   it("builds a self-canonical hub metadata object without robots overrides", () => {
     const meta = buildBlogMetadata();
     expect(meta.alternates?.canonical).toBe("/blog");
+    expect(meta.alternates?.types?.["application/rss+xml"]).toBe("/blog/rss.xml");
     expect(meta.title).toContain("Engineering");
     expect(meta.description).toBeTruthy();
     expect((meta.openGraph as { url: string }).url).toBe("/blog");
@@ -128,6 +130,7 @@ describe("blog metadata and structured data", () => {
     for (const post of posts) {
       const meta = buildBlogMetadata(post.slug);
       expect(meta.alternates?.canonical).toBe(`/blog/${post.slug}`);
+      expect(meta.alternates?.types?.["application/rss+xml"]).toBe("/blog/rss.xml");
       expect(meta.title).toBe(post.title);
       expect(meta.description).toBe(post.description);
       const og = meta.openGraph as {
@@ -206,6 +209,8 @@ describe("blog metadata and structured data", () => {
   });
 });
 
+
+
 describe("blog sitemap + navigation integration", () => {
   it("lists the blog hub and every article in the site sitemap", () => {
     const entries = sitemap();
@@ -221,5 +226,39 @@ describe("blog sitemap + navigation integration", () => {
 
   it("keeps the blog reachable from the shared footer on every page", () => {
     expect(FOOTER_LINKS).toContainEqual({ href: "/blog", label: "Blog" });
+  });
+});
+
+describe("blog RSS feed", () => {
+  it("serves a valid RSS 2.0 document listing every article", async () => {
+    const res = rssGet();
+    expect(res.status).toBe(200);
+    expect(res.headers.get("content-type")).toMatch(/^application\/rss\+xml/);
+
+    const body = await res.text();
+    expect(body).toContain('<?xml version="1.0" encoding="UTF-8"?>');
+    expect(body).toContain('<rss version="2.0"');
+    expect(body).toContain("</rss>");
+    expect(body).toContain("<channel>");
+    expect(body).toContain("</channel>");
+    expect(body).toContain(`<link>https://www.dataformatter.in/blog</link>`);
+    expect(body).toContain(`<dc:creator>DataFormatter</dc:creator>`);
+
+    for (const post of posts) {
+      const url = `https://www.dataformatter.in/blog/${post.slug}`;
+      expect(body, post.slug).toContain(`<link>${url}</link>`);
+      expect(body, post.slug).toContain(`<guid isPermaLink="true">${url}</guid>`);
+      expect(body, post.slug).toContain(`<pubDate>`);
+      expect(body, post.slug).toContain(
+        `<category>${post.category.replace(/&/g, "&amp;")}</category>`,
+      );
+    }
+  });
+
+  it("escapes every ampersand in article copy so the XML stays well-formed", async () => {
+    const body = await rssGet().text();
+    // Every "&" in the document must start a known entity (amp/lt/gt/quot/apos).
+    const bare = body.match(/&(?!(amp|lt|gt|quot|apos);)/g);
+    expect(bare).toBeNull();
   });
 });

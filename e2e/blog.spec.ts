@@ -157,4 +157,43 @@ test.describe("blog metadata", () => {
       expect(body).toContain(`<loc>${FULL_SITE_URL}/blog/${slug}</loc>`);
     }
   });
+
+  test("every article page links to the RSS feed via <link rel=alternate>", async ({ request }) => {
+    const res = await request.get("/blog/how-json-formatter-works");
+    expect(res.status()).toBe(200);
+    const html = await res.text();
+    expect(html).toContain(
+      `<link rel="alternate" type="application/rss+xml" href="${FULL_SITE_URL}/blog/rss.xml"/>`,
+    );
+  });
+});
+
+test.describe("blog social images", () => {
+  test("the hub exposes a static PNG opengraph image", async ({ request }) => {
+    const res = await request.get("/blog/opengraph-image");
+    expect(res.status()).toBe(200);
+    expect(res.headers()["content-type"]).toMatch(/^image\/png/);
+  });
+
+  test("every article exposes a static PNG opengraph image", async ({ request }) => {
+    for (const slug of ARTICLES) {
+      const res = await request.get(`/blog/${slug}/opengraph-image`);
+      expect(res.status(), slug).toBe(200);
+      expect(res.headers()["content-type"], slug).toMatch(/^image\/png/);
+    }
+  });
+});
+
+test.describe("blog RSS feed", () => {
+  test("serves an RSS 2.0 document with the hub link and every article", async ({ request }) => {
+    const res = await request.get("/blog/rss.xml");
+    expect(res.status()).toBe(200);
+    expect(res.headers()["content-type"]).toMatch(/^application\/rss\+xml/);
+    const body = await res.text();
+    expect(body).toContain(`<link>${FULL_SITE_URL}/blog</link>`);
+    for (const slug of ARTICLES) {
+      expect(body, slug).toContain(`<link>${FULL_SITE_URL}/blog/${slug}</link>`);
+      expect(body, slug).toContain(`<guid isPermaLink="true">${FULL_SITE_URL}/blog/${slug}</guid>`);
+    }
+  });
 });

@@ -158,6 +158,9 @@ export function blogCategoryCounts(): Record<BlogArticle["category"], number> {
   return counts;
 }
 
+/** RSS feed for the blog — discoverable from both the hub and every article. */
+const BLOG_FEED_PATH = "/blog/rss.xml";
+
 /** Static metadata for the hub (/blog) or a single article. Mirrors
  *  {@link buildMetadata} for tool pages: self-canonical, never sets robots. */
 export function buildBlogMetadata(slug?: string): Metadata {
@@ -168,7 +171,7 @@ export function buildBlogMetadata(slug?: string): Metadata {
     return {
       title,
       description,
-      alternates: { canonical: "/blog" },
+      alternates: { canonical: "/blog", types: { "application/rss+xml": BLOG_FEED_PATH } },
       openGraph: {
         title: `${title} | ${SITE_NAME}`,
         description,
@@ -190,7 +193,10 @@ export function buildBlogMetadata(slug?: string): Metadata {
   return {
     title: article.title,
     description: article.description,
-    alternates: { canonical: `/blog/${article.slug}` },
+    alternates: {
+      canonical: `/blog/${article.slug}`,
+      types: { "application/rss+xml": BLOG_FEED_PATH },
+    },
     openGraph: {
       title: `${article.title} | ${SITE_NAME}`,
       description: article.description,
