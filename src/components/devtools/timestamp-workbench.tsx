@@ -202,8 +202,9 @@ export function TimestampWorkbench() {
 
   return (
     <div className="flex min-h-full flex-col gap-3 p-3 lg:flex-row">
-      {/* Left · timestamp input */}
-      <section className="flex min-h-0 flex-col overflow-hidden rounded-xl border border-zinc-200 bg-white shadow-sm dark:border-zinc-800 dark:bg-zinc-950/40 lg:w-1/2">
+      {/* Left · input + zone context */}
+      <div className="flex min-h-0 flex-col gap-3 lg:w-1/2 lg:self-start">
+        <section className="flex min-h-0 flex-col overflow-hidden rounded-xl border border-zinc-200 bg-white shadow-sm dark:border-zinc-800 dark:bg-zinc-950/40">
         <div className="flex h-9 shrink-0 items-center justify-between gap-2 border-b border-zinc-200 px-3 dark:border-zinc-800">
           <span className="truncate text-xs font-semibold uppercase tracking-wider text-zinc-400 dark:text-zinc-500">
             Timestamp input
@@ -217,7 +218,7 @@ export function TimestampWorkbench() {
           </div>
         </div>
         <textarea
-          className="w-full flex-1 resize-y bg-transparent px-3 py-2 font-mono text-sm text-zinc-800 placeholder:text-zinc-400 focus:outline-none dark:text-zinc-200 dark:placeholder:text-zinc-500"
+          className="h-24 w-full resize-y bg-transparent px-3 py-2 font-mono text-sm text-zinc-800 placeholder:text-zinc-400 focus:outline-none dark:text-zinc-200 dark:placeholder:text-zinc-500"
           value={input}
           onChange={(e) => handleInput(e.target.value)}
           placeholder="Paste an ISO string, Unix seconds, milliseconds, microseconds or nanoseconds…"
@@ -246,7 +247,15 @@ export function TimestampWorkbench() {
             UTC first, IST second. Zone-less times are read in {mounted ? zoneLine(primaryTz, ms ?? now) : "IST"}.
           </span>
         </div>
-      </section>
+        </section>
+
+        {effective.ok && ms !== null && <ZoneRows ms={ms} primaryTz={primaryTz} accent />}
+
+        <Toolbox title={`Primary timezone · ${primaryTz}`}>
+          <TimeZonePicker value={primaryTz} onChange={setPrimaryTz} label="Primary timezone" />
+          <Hint>UTC and IST are always shown first. Zone-less wall times you enter are interpreted in this timezone, and your choice is remembered.</Hint>
+        </Toolbox>
+      </div>
 
       {/* Right · controls + output */}
       <div className="flex min-h-0 flex-col gap-3 lg:w-1/2">
@@ -266,11 +275,6 @@ export function TimestampWorkbench() {
             <DownloadButton filename="timestamp.txt" text={report} label="Download" disabled={!report} />
           </div>
         </div>
-
-        <Toolbox title={`Primary timezone · ${primaryTz}`}>
-          <TimeZonePicker value={primaryTz} onChange={setPrimaryTz} label="Primary timezone" />
-          <Hint>UTC and IST are always shown first. Zone-less wall times you enter are interpreted in this timezone, and your choice is remembered.</Hint>
-        </Toolbox>
 
         <div className="flex flex-col gap-3">
           {mode === "convert" && (
@@ -393,7 +397,6 @@ function ConvertPanel({
         </WarnBox>
       ) : (
         <>
-          <ZoneRows ms={ms} primaryTz={primaryTz} accent />
           {parsed.dstWarn && (
             <WarnBox title={parsed.dstWarn.text ?? "DST transition"}>
               {parsed.dstWarn.state === "ambiguous" && parsed.dstWarn.ambiguousInstants && (
