@@ -818,9 +818,9 @@ export const GEO_ANSWERS: Readonly<Record<string, GeoDatum>> = {
     different: "It is DST-aware and fully client-side — nothing is uploaded, and you can read schedules in plain English.",
   },
   "/timestamp": {
-    what: "DataFormatter Timestamp Converter is a free online tool that converts Unix seconds or milliseconds, ISO-8601 and HTTP dates into every epoch unit plus readable local and UTC forms.",
-    who: "Developers debugging logs, databases and APIs who need to translate epoch values or dates quickly.",
-    different: "It auto-detects the input format, shows live relative age and computes everything in your browser.",
+    what: "DataFormatter Timestamp Converter is a free online tool that auto-detects Unix seconds, milliseconds, microseconds and nanoseconds, ISO-8601, RFC 1123 and common dates, then converts them across every epoch unit and readable UTC, IST and per-zone forms — with 14 modes for inspection, timezone matrices, DST ambiguity, difference/comparison, batch conversion, live clocks, arithmetic, log extraction, JWT claims and HTTP headers.",
+    who: "Developers debugging logs, databases, caches and APIs who need to translate epoch values, DST-ambiguous wall times or claim times quickly and exactly.",
+    different: "It is BigInt-exact, DST-aware (ambiguous and nonexistent local times are detected), interprets zone-less wall times in your primary timezone, and computes everything in your browser.",
   },
   "/regex": {
     what: "DataFormatter Regex Tester is a free online tool that tests regular expressions with the browser's own engine, showing instant validity, every match with positions and capture groups, plus a per-line mode.",

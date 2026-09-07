@@ -182,11 +182,11 @@ test.describe("workbench input→output matrix", () => {
       if (error.message.includes("Hydration failed")) hydrationErrors.push(error.message);
     });
     await page.goto("/timestamp");
-    await expect(page.getByText("1736956800", { exact: true })).toBeVisible();
-    await expect(page.getByText("2025-01-15T16:00:00.000Z", { exact: true })).toBeVisible();
+    await expect(page.getByText("1736956800", { exact: true }).first()).toBeVisible();
+    await expect(page.getByText("2025-01-15T16:00:00.000Z", { exact: true }).first()).toBeVisible();
 
     await page.getByRole("button", { name: "Unix 0", exact: true }).click();
-    await expect(page.getByText("1970-01-01T00:00:00.000Z", { exact: true })).toBeVisible();
+    await expect(page.getByText("1970-01-01T00:00:00.000Z", { exact: true }).first()).toBeVisible();
     await expect(page.getByText("0", { exact: true }).first()).toBeVisible();
 
     expect(hydrationErrors).toEqual([]);

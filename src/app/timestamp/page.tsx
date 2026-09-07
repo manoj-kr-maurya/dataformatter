@@ -17,28 +17,32 @@ export const metadata: Metadata = buildMetadata("/timestamp");
 
 const faqs = [
   {
-    q: "What formats can it convert?",
-    a: "ISO-8601 strings (with or without milliseconds and time zone), Unix seconds (11 digits or fewer, like 1736956800), Unix milliseconds (13 digits), RFC-1123 HTTP dates (Thu, 15 Jan 2026 12:00:00 GMT), and plain text dates the browser can understand.",
+    q: "What formats can it auto-detect?",
+    a: "Unix seconds, milliseconds, microseconds and nanoseconds (with or without a sign), ISO-8601 strings (with fractional seconds and Z or numeric offsets), RFC-1123 HTTP dates, common US/EU and text-month dates, and the literal \"now\". Recognized zone abbreviations (IST, EST/EDT, CST/CDT, PST/PDT, GMT) are honoured inside pasted wall times.",
   },
   {
     q: "How does it tell seconds from milliseconds?",
-    a: "By length: 11 or fewer digits is treated as seconds, 13 digits as milliseconds. 12-digit values are ambiguous and warned about — 12 digits can't be a seconds timestamp and is too short for most valid millisecond timestamps.",
+    a: "By digit length with a confidence score: 10 or fewer digits is seconds, 13 is milliseconds, 16 is microseconds and 19 is nanoseconds. 11-digit values are honest about the ambiguity — both the seconds and milliseconds interpretations are listed as alternates you can override.",
   },
   {
-    q: "What does each conversion row mean?",
-    a: "Milliseconds, seconds, microseconds and nanoseconds are the epoch units. ISO-8601, UTC and your local time are the readable forms. Relative shows how far the instant is from right now, tagged future or past.",
+    q: "Why are UTC and IST always shown first?",
+    a: "UTC is the unambiguous reference instant and IST (Asia/Kolkata) is the default primary timezone. You can change the primary timezone in the toolbox and zone-less wall times you enter are interpreted in it; the choice is remembered on your device.",
   },
   {
-    q: "How accurate is the 'now' reference?",
-    a: "The clock reference ticks every second, so the past/future label and relative strings stay fresh while you work. The reference zone lets you see the current time in UTC or any listed IANA zone.",
+    q: "What happens with DST-ambiguous wall times?",
+    a: "A wall time that falls inside a fall-back overlap or a spring-forward gap is detected rather than guessed: you get a warning naming the DST event, the two candidate instants for overlaps, and the forward-resolved instant for gaps. The DST mode walks you through a whole transition.",
+  },
+  {
+    q: "Are nanosecond timestamps kept exactly?",
+    a: "Yes. All epoch math is BigInt-exact, so a 19-digit nanosecond value keeps its full precision. A precision report tells you when the value would lose sub-millisecond digits or exceed JavaScript's safe integer or int32/int64 ranges.",
   },
   {
     q: "Is my timestamp uploaded?",
-    a: "No. Parsing and conversion happen entirely in your browser — safe for logs, API responses and other timestamps that might be sensitive.",
+    a: "No. Parsing, timezone math and DST analysis happen entirely in your browser — safe for logs, tokens, API responses and other timestamps that might be sensitive.",
   },
   {
-    q: "Can it handle timestamps far in the past or future?",
-    a: "Yes, up to about year 275760 for ISO dates. Unix numeric input is sanity-checked so overflow and negative-so-far-it's-weird values are reported rather than silently mangled.",
+    q: "What are the extra modes for?",
+    a: "Difference and Compare reason across two or many timestamps (including out-of-order detection), Batch converts one value into many units, Generator builds exact instants, Live draws a set of zone clocks, Arithmetic does now ± 2h style math, and Log/JWT/HTTP panels pull timestamps straight out of log lines, token claims and cache headers.",
   },
 ] as const;
 
@@ -48,26 +52,26 @@ export default function TimestampPage() {
       <TimestampTool />
       <ToolSeoContent
         path="/timestamp"
-        summary="Convert timestamps between epoch units and human-readable formats in your browser. Paste Unix seconds or milliseconds, ISO-8601 or HTTP dates and see every form at once."
+        summary="Convert timestamps between epoch units and human-readable forms in your browser. Paste Unix seconds, milliseconds, microseconds or nanoseconds, ISO-8601 or HTTP dates, or wall-clock times with a zone — and see everything at once, DST-aware and BigInt-exact."
         faqs={faqs}
       >
         <QuickStart
           steps={[
-            "Paste a timestamp — ISO string, Unix seconds (1736956800) or milliseconds.",
-            "Read the Conversions box: milliseconds, seconds, microseconds, nanoseconds.",
-            "See the ISO-8601, UTC and your-local-time columns for the same instant.",
-            "Watch the relative badge (past/future) tick against the live clock reference.",
+            "Paste a timestamp — Unix seconds (1736956800), milliseconds, ISO-8601 or a log line.",
+            "Read the Convert report: every epoch unit, ISO-8601, RFC 1123, UTC, IST and your primary timezone.",
+            "Switch modes with the tabs — Inspect, Zones, Ranges, Difference, Compare, Batch, Generator, Live, Arithmetic.",
+            "Copy the whole report or any row in one click; nothing ever leaves your browser.",
           ]}
         />
 
         <Section title="What the converter produces">
           <Bullets
             items={[
-              "Epoch units: milliseconds, seconds, microseconds and nanoseconds.",
-              "Readable forms: ISO-8601 (Z), full UTC (RFC-1123 style) and your local time.",
-              "A live relative tag — e.g. '2h ago' or 'in 1y' — recomputed every second.",
-              "A per-zone 'now' readout for quick mental arithmetic across time zones.",
-              "Automatic format detection, so one paste converts no matter what you copied.",
+              "Epoch units: seconds, milliseconds, microseconds and nanoseconds — BigInt-exact.",
+              "Readable forms: ISO-8601 (Z), RFC-1123 HTTP text, UTC, IST and your primary timezone.",
+              "A confidence label for auto-detected numeric input, with alternate unit interpretations listed.",
+              "DST warnings when a wall time is ambiguous or does not exist in its zone.",
+              "An int32 / int64 / beyond-2038 and JS-precision report for worried systems.",
             ]}
           />
         </Section>
@@ -75,15 +79,15 @@ export default function TimestampPage() {
         <Section title="How to convert a timestamp online">
           <Bullets
             items={[
-              "Copy the timestamp however you got it — database row, API response, log line, header.",
-              "Paste it in; the input auto-detects seconds vs milliseconds by length.",
-              "Check the Conversions box, then use the ISO string in scripts or the numeric units in queries.",
-              "Use presets (Now, Today 09:00 local, Unix 0) for quick experiments.",
+              "Copy the timestamp however you got it — database row, API response, log line, cache header.",
+              "Paste it in; the input auto-detects numeric unit, ISO/RFC form or wall-clock time.",
+              "Check the Convert report, then use the ISO string in scripts or the numeric units in queries.",
+              "Use the presets (Now, Unix 0, Epoch —) for quick experiments, and add extra time zones to compare.",
             ]}
           />
           <Example
             input={"1736956800000"}
-            output={`ISO-8601  2026-01-15T12:00:00.000Z\nUTC       Thu, 15 Jan 2026 12:00:00 GMT`}
+            output={`ISO-8601  2025-01-15T16:00:00.000Z\nUTC       Wed, 15 Jan 2025 16:00:00 GMT\nIST       2025-01-15 21:30:00 IST`}
             inputLabel="Epoch milliseconds"
             outputLabel="Readable forms"
           />
@@ -94,15 +98,15 @@ export default function TimestampPage() {
             cases={[
               {
                 title: "Reading a database row",
-                body: "\"updated_at\": 1786000000000 means nothing until you convert it. One paste turns it into a human-readable instant you can compare against your incident timeline.",
+                body: "\"updated_at\": 1736956800000 means nothing until you convert it. One paste turns it into a human-readable instant you can compare against your incident timeline.",
               },
               {
-                title: "Writing an API test",
-                body: "Grab the exact milliseconds from an ISO assertion, or produce the ISO form you need for a request body — both copy cleanly from the Conversions box.",
+                title: "Debugging a failing DST deploy",
+                body: "A schedule written as 02:30 in America/New_York lands on 2026-03-08, when that wall time doesn't exist. The tool flags the gap, shows the transition and lets you pick the real instant.",
               },
               {
-                title: "Debugging cache headers",
-                body: "An Expires or Last-Modified header lands in Unix or HTTP form; paste and confirm whether that cache entry really lives for 24 hours.",
+                title: "Auditing token and cache timestamps",
+                body: "Paste a JWT or raw cache headers and the Log/JWT/HTTP panels extract iat, exp, nbf, Date and Retry-After claims, report validity and show each instant in UTC and IST.",
               },
             ]}
           />
@@ -114,16 +118,16 @@ export default function TimestampPage() {
               {
                 error: "Date 47 years off",
                 cause: "A 12-13 digit number is being read as milliseconds when your source is actually seconds rounded, or vice-versa — 12-digit seconds are genuine ambiguity.",
-                fix: "If the number has 12 digits, decide: divide by 1000 for seconds semantics or treat as ms. The length rule is documented, not magic.",
+                fix: "Either interpretation is listed as an alternate with its confidence; click the override to force seconds or milliseconds.",
               },
               {
                 error: "\"Number is too large\"",
-                cause: "A 16+-digit value like a nanosecond timestamp or a random ID pasted in by mistake.",
-                fix: "Nanoseconds aren't supported; convert to microseconds or seconds first. Check you didn't paste a row ID.",
+                cause: "A random ID or a 20+-digit value pasted in by mistake, or a timestamp beyond the representable date range (about year 275760).",
+                fix: "Try the 19-digit nanoseconds form instead, or check you didn't paste a row ID.",
               },
               {
                 error: "Couldn't recognize that format",
-                cause: "A format outside ISO/Unix/HTTP — e.g. '15 Jan 2026', EEE-MMM patterns, or locale strings.",
+                cause: "A format outside ISO/Unix/RFC/common shapes — e.g. a locale-specific string like '15 Jan 2026' in some European locale ordering.",
                 fix: "Normalize to ISO-8601 first, or paste the exact instant as a Unix value.",
               },
             ]}
@@ -133,9 +137,10 @@ export default function TimestampPage() {
         <Section title="Pro tips">
           <ProTips
             tips={[
-              "The relative badge ticks live — leave the page open while a scheduled job approaches and watch it flip from future to past.",
-              "Pair with the Cron tool: schedule an expression, check its next run in UTC, then convert that instant here.",
-              "Epoch units copy in one click from the Conversions box — no manual truncation of milliseconds.",
+              "Keep the Live mode open with your team's zones added — it draws UTC, IST and your extras as ticking clocks.",
+              "Use Arithmetic for 'now + 2w' style deadlines instead of counting days by hand; the result stays exact.",
+              "The DST debugger walks an entire transition hour-by-hour — invaluable when scheduling jobs around a jump.",
+              "Epoch units copy in one click from the Convert report — no manual truncation of milliseconds.",
             ]}
           />
         </Section>

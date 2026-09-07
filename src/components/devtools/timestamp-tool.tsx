@@ -48,7 +48,7 @@ export function TimestampTool() {
             <Logo className="h-7 w-7 rounded-md [&>svg]:h-4 [&>svg]:w-4" />
           </Link>
           <span className="truncate text-sm font-semibold text-zinc-900 dark:text-zinc-50">
-            Timestamp Converter
+            Timestamp Converter &amp; Time Debugger
           </span>
         </div>
         <div className="flex shrink-0 items-center gap-2">
@@ -72,9 +72,7 @@ export function TimestampTool() {
           />
         )}
         <main className="min-h-0 min-w-0 flex-1 overflow-y-auto">
-          <div className="mx-auto w-full max-w-2xl p-3">
-            <TimestampWorkbench />
-          </div>
+          <TimestampWorkbench />
         </main>
       </div>
     </div>
