@@ -469,7 +469,15 @@ function InspectPanel({
 
   return (
     <>
-      <Toolbox title="Timestamp inspector" actions={<CopyButton text={JSON.stringify(parsed)} label="Copy raw" />}>
+      <Toolbox
+        title="Timestamp inspector"
+        actions={
+          <CopyButton
+            text={JSON.stringify(parsed, (_, value) => (typeof value === "bigint" ? value.toString() : value))}
+            label="Copy raw"
+          />
+        }
+      >
         <dl className="flex flex-col gap-2">
           <KeyValue label="Input type" value={parsed.label ?? parsed.kind} caption={parsed.confidence !== undefined ? `${parsed.confidence}% confidence` : undefined} />
           {ms !== null && (
@@ -655,7 +663,7 @@ function ZonesPanel({
             placeholder="e.g. Pacific/Auckland"
           />
           <datalist id="add-zone-list">
-            {["UTC", IST, ...extraZones, ...ZONE_CANDIDATES].map((z) => (
+            {[...new Set(["UTC", IST, ...extraZones, ...ZONE_CANDIDATES])].map((z) => (
               <option key={z} value={z} />
             ))}
           </datalist>
