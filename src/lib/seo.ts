@@ -773,9 +773,9 @@ export const GEO_ANSWERS: Readonly<Record<string, GeoDatum>> = {
     different: "All digests compute in the browser — nothing is uploaded, and the SHA-3 family is included for free.",
   },
   "/compiler": {
-    what: "DataFormatter Online Compiler is a free tool that compiles and runs Dart, JavaScript and TypeScript directly in your browser (Dart via WebAssembly, JS/TS in a sandboxed worker).",
-    who: "Developers who want to prototype or test small code snippets in Dart, JavaScript or TypeScript without installing a toolchain.",
-    different: "There is no signup and code never leaves your machine — execution happens in the browser via WebAssembly and a sandboxed worker.",
+    what: "DataFormatter Online Compiler is a free online Dart compiler and playground that also runs JavaScript and TypeScript. Dart compiles in your browser via WebAssembly (the DDC engine); JavaScript and TypeScript run in a sandboxed Web Worker — no install, no server, no upload.",
+    who: "Developers who want to run Dart code online, prototype or test small snippets in Dart, JavaScript or TypeScript, or try a language feature without installing a local toolchain.",
+    different: "The Dart engine, compiler and sandbox all run inside your tab via WebAssembly, so code never leaves your machine — no signup, no queue, and a persistent compilation session makes re-runs instant.",
   },
   "/api-client": {
     what: "DataFormatter API Client is a free online tool that builds GET, POST, PUT and DELETE requests with headers, auth and JSON bodies and sends them straight from your browser.",
@@ -803,9 +803,9 @@ export const GEO_ANSWERS: Readonly<Record<string, GeoDatum>> = {
     different: "It is entirely browser-based, so server logs with real data never leave your machine, and it handles large inputs locally.",
   },
   "/stack-trace": {
-    what: "DataFormatter Stack Trace Reader is a free online tool that parses Java, JavaScript/Node, Python and Go stack traces and surfaces the exception, the first project frame and a clean call chain.",
-    who: "Developers debugging panics and exceptions who want the failure's root cause and origin frame quickly.",
-    different: "Language detection is automatic, parsing is local, and it normalizes noisy async/framework frames into a readable chain.",
+    what: "DataFormatter Stack Trace Reader is a free online Java stack trace formatter and parser that also handles JavaScript/Node, Python and Go traces. Paste a raw trace and it surfaces the exception, the first project frame and a clean call chain.",
+    who: "Developers debugging Java exceptions, printStackTrace() output or panics in other languages who want the failure's root cause and origin frame quickly.",
+    different: "Language detection is automatic, parsing is local, and it normalizes noisy async/framework frames into a readable chain — so raw Java, Spring or framework-heavy traces become a clear summary without leaving the browser.",
   },
   "/env-validator": {
     what: "DataFormatter ENV Validator is a free online tool that checks .env syntax, duplicates and formatting, then diffs a local file against its .env.example.",
