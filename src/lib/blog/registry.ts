@@ -11,6 +11,7 @@ import howToReadAStackTrace from "@/content/blog/how-to-read-a-stack-trace";
 import httpHeadersDevelopersShouldKnow from "@/content/blog/http-headers-developers-should-know";
 import openapi30vs31 from "@/content/blog/openapi-3-0-vs-3-1";
 import runningCodeInTheBrowser from "@/content/blog/running-code-in-the-browser";
+import howToDecodeAJwt from "@/content/blog/how-to-decode-a-jwt";
 
 const ARTICLE_INPUTS: readonly BlogArticleInput[] = [
   howJsonFormatterWorks,
@@ -23,6 +24,7 @@ const ARTICLE_INPUTS: readonly BlogArticleInput[] = [
   httpHeadersDevelopersShouldKnow,
   openapi30vs31,
   runningCodeInTheBrowser,
+  howToDecodeAJwt,
 ];
 
 const WORDS_PER_MINUTE = 200;

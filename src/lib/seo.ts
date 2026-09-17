@@ -50,7 +50,7 @@ const PAGES: PageSeo[] = [
   },
   {
     path: "/json-formatter",
-    title: "JSON Formatter Online – Free & No Signup",
+    title: "JSON Formatter Online – Beautify, Pretty Print & Validate",
     description:
       "Prettify messy JSON with clean 2-space indentation, then validate or minify it in one place. Runs entirely in your browser — nothing is ever uploaded.",
     h1: "JSON Formatter & Pretty Printer",
@@ -246,7 +246,7 @@ const PAGES: PageSeo[] = [
   },
   {
     path: "/stack-trace",
-    title: "Stack Trace Reader – Parse Java, JS, Python & Go Traces",
+    title: "Stack Trace Formatter & Reader – Parse Java, JS, Python & Go",
     description:
       "Paste a Java, JavaScript/Node, Python or Go stack trace to get the exception, the first project frame and a clean call chain. Detection is automatic and parsing happens locally.",
     h1: "Stack Trace Reader",
@@ -316,7 +316,7 @@ const PAGES: PageSeo[] = [
   },
   {
     path: "/har",
-    title: "HAR Debugger – Analyze & Visualize Network Logs",
+    title: "HAR Viewer & Debugger – Open & Analyze HAR Files Online",
     description:
       "Open a HAR file and get failed and slow requests, timings, status groups, auth and security observations instantly — virtualized list, waterfall bars and privacy-safe sanitize & export. Runs entirely in your browser.",
     h1: "HAR Debugger",
