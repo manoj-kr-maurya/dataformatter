@@ -14,6 +14,11 @@ import runningCodeInTheBrowser from "@/content/blog/running-code-in-the-browser"
 import howToDecodeAJwt from "@/content/blog/how-to-decode-a-jwt";
 import base64VsBase64url from "@/content/blog/base64-vs-base64url";
 import unexpectedTokenInJson from "@/content/blog/unexpected-token-in-json";
+import howToTestAnApiWithoutPostman from "@/content/blog/how-to-test-an-api-without-postman";
+import howToConvertCurlToCode from "@/content/blog/how-to-convert-curl-to-code";
+import howToDebugCorsErrors from "@/content/blog/how-to-debug-cors-errors";
+import howToInspectAnOpenapiSpec from "@/content/blog/how-to-inspect-an-openapi-spec";
+import howToDebugAJsonApiResponse from "@/content/blog/how-to-debug-a-json-api-response";
 
 const ARTICLE_INPUTS: readonly BlogArticleInput[] = [
   howJsonFormatterWorks,
@@ -29,6 +34,11 @@ const ARTICLE_INPUTS: readonly BlogArticleInput[] = [
   howToDecodeAJwt,
   base64VsBase64url,
   unexpectedTokenInJson,
+  howToTestAnApiWithoutPostman,
+  howToConvertCurlToCode,
+  howToDebugCorsErrors,
+  howToInspectAnOpenapiSpec,
+  howToDebugAJsonApiResponse,
 ];
 
 const WORDS_PER_MINUTE = 200;

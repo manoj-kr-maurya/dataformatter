@@ -9,7 +9,7 @@ export const metadata: Metadata = buildMetadata("/");
 export default function Home() {
   return (
     <>
-      <DevToolsShell tools={HOME_TOOL_ORDER} activeHref="/" heading="Privacy-First Developer Tools" />
+      <DevToolsShell tools={HOME_TOOL_ORDER} activeHref="/" />
       <HomeContent />
     </>
   );

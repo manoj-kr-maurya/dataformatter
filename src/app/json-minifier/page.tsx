@@ -82,6 +82,23 @@ export default function JsonMinifierPage() {
         />
       </Section>
 
+      <Section title="What minification removes — and what it never touches">
+        <p>
+          Minification deletes only layout whitespace: the spaces, tabs and newlines used for
+          indentation. Keys, values, structure and even the whitespace inside string values are all
+          preserved byte-for-byte, so the minified output is the exact same JSON on one line. This
+          also means minifying is lossless — format the result again and you get your pretty JSON
+          back.
+        </p>
+        <Bullets
+          items={[
+            "Removed: indentation and line breaks between tokens, as in the example above.",
+            "Kept: everything inside quoted strings, including spaces like \"first name\".",
+            "Formatter vs minifier — the two are exact opposites: a formatter adds indentation for readability, a minifier strips it for size. Both produce identical data; the JSON Formatter un-minifies, the JSON Minifier re-compacts.",
+          ]}
+        />
+      </Section>
+
       <Section title="How to minify JSON online">
         <Bullets
           items={[

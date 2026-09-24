@@ -95,6 +95,46 @@ export default function DevCalcPage() {
           />
         </Section>
 
+        <Section title="Number systems: hex, binary and decimal in one expression">
+          <p>
+            The calculator reads <code className="rounded bg-zinc-100 px-1 font-mono text-[10px] dark:bg-zinc-800">0x</code>{" "}
+            (hexadecimal), <code className="rounded bg-zinc-100 px-1 font-mono text-[10px] dark:bg-zinc-800">0b</code>{" "}
+            (binary) and <code className="rounded bg-zinc-100 px-1 font-mono text-[10px] dark:bg-zinc-800">0o</code>{" "}
+            (octal) literals, so one expression can mix formats:{" "}
+            <code className="rounded bg-zinc-100 px-1 font-mono text-[10px] dark:bg-zinc-800">0xFF + 1</code>{" "}
+            evaluates to 256. The Radix tool shows the same value across all four bases and its
+            signed interpretations — 255, <code className="rounded bg-zinc-100 px-1 font-mono text-[10px] dark:bg-zinc-800">0xFF</code>{" "}
+            and <code className="rounded bg-zinc-100 px-1 font-mono text-[10px] dark:bg-zinc-800">0b11111111</code>{" "}
+            are one number written three ways.
+          </p>
+          <Bullets
+            items={[
+              "Hexadecimal (base 16) — the compact form used for byte values, color codes and memory addresses; each pair of hex digits is one byte.",
+              "Binary (base 2) — bit patterns for masks, flags and hardware register work, where reading a single set bit matters more than its magnitude.",
+              "Decimal (base 10) — the familiar result you paste into configs and tickets.",
+              "Negative and sized values — the Integer types and Two's complement tabs show how a value looks at Int8/16/32/64 and where it wraps.",
+            ]}
+          />
+        </Section>
+
+        <Section title="Byte and encoding sizes: from UTF-8 to Base64">
+          <p>
+            Before you ship a payload, size matters. The Bytes and Encoding size tools answer the
+            recurring question of how big data really is: text in UTF-8 is one byte per ASCII
+            character and 2–4 bytes for most other scripts, Base64 adds roughly a third ({" "}
+            <code className="rounded bg-zinc-100 px-1 font-mono text-[10px] dark:bg-zinc-800">SGVsbG8=</code>{" "}
+            is the 8-character encoding of the 5-byte string Hello), and JSON size compares your
+            pretty-printed body against the minified form you would actually send.
+          </p>
+          <Bullets
+            items={[
+              "Encoding size — UTF-8/16, hex, Base64 and URL-encoded byte counts for the same string side by side.",
+              "JSON size — pretty vs minified bytes, so you can quote the real saving to a reviewer.",
+              "CRC-32 — a fast, deterministic digest (shown as both the unsigned integer and hex) to confirm two payloads are byte-identical.",
+            ]}
+          />
+        </Section>
+
         <Section title="Who reaches for a dev calculator — and when">
           <UseCases
             cases={[

@@ -30,8 +30,9 @@ interface DevToolsShellProps {
     | "/random-generators"
     | "/string-functions"
     | "/cryptography-tools";
-  /** Accessible page heading — the only <h1> on the route. */
-  heading: string;
+  /** Accessible page heading rendered as the route's only <h1>. Omit when the
+   *  page renders a visible <h1> of its own (the homepage via HomeContent). */
+  heading?: string;
 }
 
 export function DevToolsShell({ tools, activeHref, heading }: DevToolsShellProps) {
@@ -67,7 +68,7 @@ export function DevToolsShell({ tools, activeHref, heading }: DevToolsShellProps
 
   return (
     <div className="flex h-dvh flex-col">
-      <h1 className="sr-only">{heading}</h1>
+      {heading && <h1 className="sr-only">{heading}</h1>}
       <header className="flex h-12 shrink-0 items-center justify-between gap-3 border-b border-zinc-200 bg-zinc-50/80 px-3 dark:border-zinc-800 dark:bg-zinc-900/40">
         <div className="flex min-w-0 items-center gap-2">
           <button

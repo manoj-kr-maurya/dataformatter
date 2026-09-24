@@ -248,7 +248,7 @@ export function HarDebuggerWorkbench({ activeHref = "/har" }: { activeHref?: Pag
           >
             <Logo className="h-7 w-7 rounded-md [&>svg]:h-4 [&>svg]:w-4" />
           </Link>
-          <h1 className="truncate text-sm font-semibold text-zinc-900 dark:text-zinc-50">HAR Debugger</h1>
+          <h2 className="truncate text-sm font-semibold text-zinc-900 dark:text-zinc-50">HAR Debugger</h2>
         </div>
         <div className="flex shrink-0 items-center gap-2">
           <span className="hidden items-center gap-1 rounded-md border border-emerald-500/30 bg-emerald-50 px-2 py-1 text-[11px] font-medium text-emerald-700 sm:inline-flex dark:bg-emerald-500/10 dark:text-emerald-300">

@@ -77,8 +77,11 @@ describe("buildMetadata", () => {
       expect((meta.openGraph as { url: string }).url).toBe(page.path);
       expect((meta.openGraph as { siteName: string }).siteName).toBe(SITE_NAME);
       expect((meta.twitter as { card: string }).card).toBe("summary_large_image");
-      // Indexability comes from the layout defaults — never overridden here.
-      expect(meta).not.toHaveProperty("robots");
+      // Every page is explicitly indexable — robots is never set to noindex.
+      expect((meta.robots as { index: boolean }).index).toBe(true);
+      expect((meta.robots as { follow: boolean }).follow).toBe(true);
+      // Twitter cards point at the route's generated OG image.
+      expect(meta.twitter).toHaveProperty("images");
     }
   });
 

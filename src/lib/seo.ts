@@ -386,10 +386,10 @@ export const SEO_PAGE_PATHS: readonly string[] = PAGES.map((page) => page.path);
  * Meaningful content changes bump a page's date; the dates never auto-move.
  */
 export const PAGE_LAST_MODIFIED: Readonly<Record<string, string>> = {
-  "/": "2026-09-15",
-  "/json-formatter": "2026-08-23",
-  "/json-minifier": "2026-08-23",
-  "/json-validator": "2026-08-23",
+  "/": "2026-09-24",
+  "/json-formatter": "2026-09-24",
+  "/json-minifier": "2026-09-24",
+  "/json-validator": "2026-09-24",
   "/base64-encoder": "2026-08-23",
   "/base64-decoder": "2026-08-23",
   "/jwt-decoder": "2026-08-23",
@@ -419,18 +419,18 @@ export const PAGE_LAST_MODIFIED: Readonly<Record<string, string>> = {
   "/stack-trace": "2026-09-15",
   "/env-validator": "2026-09-05",
   "/cron": "2026-08-30",
-  "/timestamp": "2026-09-07",
+  "/timestamp": "2026-09-24",
   "/regex": "2026-09-05",
   "/fake-data": "2026-08-30",
-  "/developer-calculator": "2026-09-05",
+  "/developer-calculator": "2026-09-24",
   "/json-to-csv": "2026-08-30",
   "/json-to-yaml": "2026-08-30",
   "/json-to-xml": "2026-09-24",
   "/json-to-java": "2026-09-24",
   "/uuid-generator": "2026-08-30",
-  "/har": "2026-09-02",
-  "/api-diff": "2026-09-06",
-  "/error-workspace": "2026-09-02",
+  "/har": "2026-09-24",
+  "/api-diff": "2026-09-24",
+  "/error-workspace": "2026-09-24",
   "/md5-generator": "2026-09-24",
   "/sha256-generator": "2026-09-24",
 };
@@ -507,17 +507,22 @@ export const RELATED_LINKS: Readonly<Record<string, ReadonlyArray<{ href: string
   "/json-formatter": [
     { href: "/json-validator", label: "JSON Validator — check syntax" },
     { href: "/json-minifier", label: "JSON Minifier — compress for production" },
+    { href: "/json-diff", label: "JSON Diff — compare two documents" },
+    { href: "/json-to-csv", label: "JSON to CSV — flatten to tables" },
+    { href: "/json-to-yaml", label: "JSON to YAML — switch config styles" },
     { href: "/api-client", label: "API Client — send JSON in requests" },
     { href: "/parsers", label: "JSON Parser — typed tree view" },
   ],
   "/json-minifier": [
     { href: "/json-formatter", label: "JSON Formatter — make it readable again" },
     { href: "/json-validator", label: "JSON Validator — verify before shipping" },
+    { href: "/json-diff", label: "JSON Diff — compare compact payloads" },
     { href: "/json-converter", label: "JSON Converters — to XML, YAML, CSV" },
   ],
   "/json-validator": [
     { href: "/json-formatter", label: "JSON Formatter — fix indentation" },
     { href: "/json-minifier", label: "JSON Minifier — shrink valid JSON" },
+    { href: "/json-diff", label: "JSON Diff — pinpoint what changed" },
     { href: "/api-client", label: "API Client — test the endpoint yourself" },
     { href: "/parsers", label: "Parsers — inspect URL, XML & YAML" },
   ],
@@ -745,6 +750,8 @@ export const RELATED_LINKS: Readonly<Record<string, ReadonlyArray<{ href: string
   "/timestamp": [
     { href: "/cron", label: "Cron Helper — schedule against these instants" },
     { href: "/log-analyzer", label: "Log Analyzer — read message timestamps" },
+    { href: "/api-tester", label: "API Tester — call the endpoint behind the timestamp" },
+    { href: "/developer-calculator", label: "Developer Calculator — compute with the values" },
     { href: "/regex", label: "Regex Tester — pull timestamps out of logs" },
     { href: "/json-formatter", label: "JSON Formatter — pretty-print dated payloads" },
   ],
@@ -1027,10 +1034,15 @@ export const GEO_ANSWERS: Readonly<Record<string, GeoDatum>> = {
 /** Every canonical tool page carries a GEO answer block (mirrors the registry). */
 export const GEO_KEYS: readonly string[] = Object.keys(GEO_ANSWERS);
 
+function ogImagePath(path: string): string {
+  return `${SITE_URL}${path === "/" ? "" : path}/opengraph-image`;
+}
+
 /**
  * Build complete static page metadata from the registry: unique title,
- * description, self-canonical, Open Graph and Twitter cards. Exported as a
- * plain object so it stays valid static metadata (no runtime work).
+ * description, self-canonical, explicit index/follow directive, Open Graph and
+ * Twitter cards (including the route's generated OG image for twitter:image).
+ * Exported as a plain object so it stays valid static metadata (no runtime work).
  */
 export function buildMetadata(path: string): Metadata {
   const page = SEO_PAGES.get(path);
@@ -1041,6 +1053,7 @@ export function buildMetadata(path: string): Metadata {
   return {
     title: page.title,
     description: page.description,
+    robots: { index: true, follow: true },
     alternates: { canonical: page.path },
     openGraph: {
       title: ogTitle,
@@ -1053,6 +1066,7 @@ export function buildMetadata(path: string): Metadata {
       card: "summary_large_image",
       title: ogTitle,
       description: page.description,
+      images: [ogImagePath(page.path)],
     },
   };
 }

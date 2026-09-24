@@ -76,6 +76,32 @@ export default function TimestampPage() {
           />
         </Section>
 
+        <Section title="Unix time explained — seconds, milliseconds, UTC, IST and ISO 8601">
+          <p>
+            A <strong>Unix timestamp</strong> (or epoch time) counts whole seconds since the epoch —
+            1 January 1970 00:00:00 UTC — so one number identifies an exact instant on Earth.
+            Milliseconds, the most common form in JS ({" "}
+            <code className="rounded bg-zinc-100 px-1 font-mono text-[10px] dark:bg-zinc-800">Date.now()</code>
+            ) and most APIs, are simply the same count scaled by 1000. Because the epoch is defined
+            in UTC, a timestamp always converts to an unambiguous instant; the local zone (such as IST)
+            is only a display choice on top of that instant.
+          </p>
+          <Bullets
+            items={[
+              "Seconds vs milliseconds — the same instant: 1736956800 seconds equals 1736956800000 milliseconds. A 12-13 digit value is the millisecond form; 10 digits is the second form.",
+              "UTC — the reference clock: 1736956800 is the same instant everywhere, always 2025-01-15T16:00:00Z no matter where you read it.",
+              "IST (UTC+05:30) — the Indian Standard Time rendering of that instant is 2025-01-15 21:30:00, five and a half hours ahead of UTC.",
+              "ISO 8601 — the text form 2025-01-15T16:00:00.000Z is the interchange format for API payloads and logs; the trailing Z pins it to UTC.",
+            ]}
+          />
+          <Example
+            input={"0"}
+            output={`ISO-8601  1970-01-01T00:00:00.000Z\nUTC       Thu, 01 Jan 1970 00:00:00 GMT\nIST       1970-01-01 05:30:00 IST`}
+            inputLabel="Epoch 0 (Unix seconds)"
+            outputLabel="The epoch instant"
+          />
+        </Section>
+
         <Section title="How to convert a timestamp online">
           <Bullets
             items={[
