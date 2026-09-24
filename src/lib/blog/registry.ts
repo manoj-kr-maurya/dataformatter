@@ -12,6 +12,8 @@ import httpHeadersDevelopersShouldKnow from "@/content/blog/http-headers-develop
 import openapi30vs31 from "@/content/blog/openapi-3-0-vs-3-1";
 import runningCodeInTheBrowser from "@/content/blog/running-code-in-the-browser";
 import howToDecodeAJwt from "@/content/blog/how-to-decode-a-jwt";
+import base64VsBase64url from "@/content/blog/base64-vs-base64url";
+import unexpectedTokenInJson from "@/content/blog/unexpected-token-in-json";
 
 const ARTICLE_INPUTS: readonly BlogArticleInput[] = [
   howJsonFormatterWorks,
@@ -25,6 +27,8 @@ const ARTICLE_INPUTS: readonly BlogArticleInput[] = [
   openapi30vs31,
   runningCodeInTheBrowser,
   howToDecodeAJwt,
+  base64VsBase64url,
+  unexpectedTokenInJson,
 ];
 
 const WORDS_PER_MINUTE = 200;

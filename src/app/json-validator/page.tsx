@@ -95,7 +95,7 @@ export default function JsonValidatorPage() {
         />
         <Example
           input={'{\n  "name": "John",\n  "age": 30,\n}'}
-          output={"Error at line 4, column 1:\nUnexpected token }"}
+          output={'Invalid JSON — Line 4, Column 1: Expected double-quoted property name in JSON at position 33 (line 4 column 1)'}
           inputLabel="Invalid JSON"
           outputLabel="Validation report"
         />
@@ -124,14 +124,19 @@ export default function JsonValidatorPage() {
         <Troubleshooting
           items={[
             {
-              error: "Unexpected token < in JSON at position 0",
-              cause: "You pasted HTML (often an error page) instead of JSON — the response body started with a tag like <html>.",
+              error: 'Unexpected token \'<\', "<html>…" is not valid JSON',
+              cause: "You pasted HTML (often an error page) instead of JSON — the response body started with a tag like <html>. This is the message modern Chrome/V8 reports since Chrome 123.",
               fix: "Check the request actually returned JSON; an API Client will show status codes and headers so you can see redirects or 500 pages.",
             },
             {
-              error: "Unexpected token } in JSON at position …",
-              cause: "Usually a trailing comma before the closing brace — legal in JavaScript objects, forbidden in JSON.",
-              fix: "Delete the comma after the final property at or just before the reported position.",
+              error: 'JSON Parse error: Unexpected token \'<\'',
+              cause: "The same HTML-instead-of-JSON situation, reported by Safari/WebKit — the message names the token at the failure point without a position number.",
+              fix: "Confirm the endpoint's content type is application/json and that it isn't serving a login page or error document.",
+            },
+            {
+              error: 'JSON.parse: expected property name or \'}\' at line 1 column 2 of the JSON data',
+              cause: "Firefox's phrasing of a structure error — usually a missing quote on a key, a stray comma, or an extra closing brace just before the reported position.",
+              fix: "Read the reported line and column, then look one character before it: most structure errors come from a missing comma or an unclosed key.",
             },
             {
               error: "Unexpected end of JSON input",

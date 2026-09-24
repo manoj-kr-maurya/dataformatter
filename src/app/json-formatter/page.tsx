@@ -150,14 +150,24 @@ export default function JsonFormatterPage() {
         <Troubleshooting
           items={[
             {
-              error: "Unexpected token '}' , ..." ,
-              cause: "A trailing comma after the last property, or an extra closing brace left over from deleted content.",
+              error: 'Unexpected token \'}\', "{…}" is not valid JSON',
+              cause: "A trailing comma after the last property, or an extra closing brace left over from deleted content. This is the message modern Chrome/V8 reports since Chrome 123.",
               fix: "Remove the comma or brace at the reported position, or paste the text into the JSON Validator to jump straight to it.",
             },
             {
-              error: "Unexpected token ' in JSON",
+              error: 'Unexpected token \'\'\', "{"a":\'x\'}" is not valid JSON',
               cause: "Single quotes around keys or values — valid JavaScript, but not valid JSON.",
               fix: "Replace all single quotes with double quotes; escape any inner double quotes with a backslash.",
+            },
+            {
+              error: "JSON.parse: expected double-quoted property name at line … column … of the JSON data",
+              cause: "Firefox's phrasing of the same problem — a key that isn't wrapped in double quotes.",
+              fix: "Quote every key and string with double quotes, then re-validate before formatting.",
+            },
+            {
+              error: "JSON Parse error: Unexpected token …",
+              cause: "Safari/WebKit's compact phrasing of any JSON syntax error; the token named is what the parser hit when it stopped.",
+              fix: "Look at the named token — a quote, bracket or comma — and correct the construct just before it.",
             },
             {
               error: "Nothing happens when I paste",

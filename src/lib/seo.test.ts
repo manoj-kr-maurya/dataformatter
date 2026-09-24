@@ -7,6 +7,7 @@ import {
   FOOTER_LINKS,
   GEO_ANSWERS,
   HEADER_LINKS,
+  PAGE_LAST_MODIFIED,
   RELATED_LINKS,
   SEO_PAGES,
   SITE_NAME,
@@ -112,6 +113,23 @@ describe("sitemap", () => {
       expect(entry.url.toLowerCase().includes("share")).toBe(false);
     }
   });
+
+  it("emits honest, content-derived lastmod dates and no deprecated hints", () => {
+    // Google ignores changefreq/priority and has deprecated both — the
+    // sitemap must stay free of them so freshness signals come only from
+    // real <lastmod> values.
+    for (const entry of entries) {
+      expect(entry.lastModified).toBeInstanceOf(Date);
+      expect(entry).not.toHaveProperty("changeFrequency");
+      expect(entry).not.toHaveProperty("priority");
+    }
+    for (const page of pages) {
+      const entry = entries.find((e) => e.url === `${SITE_URL}${page.path}`);
+      expect(entry, page.path).toBeDefined();
+      const lastModified = new Date(`${PAGE_LAST_MODIFIED[page.path]}T00:00:00Z`);
+      expect((entry!.lastModified as Date).toISOString(), page.path).toBe(lastModified.toISOString());
+    }
+  });
 });
 
 describe("robots", () => {
@@ -194,7 +212,7 @@ describe("GEO answers", () => {
   // Every tool page (all registered pages except home/about/contact) must carry
   // a concise, complete GEO answer block so AI systems and featured snippets
   // can answer what / who-for / differentiator directly from the page.
-  const NON_TOOL = new Set(["/", "/about", "/contact"]);
+  const NON_TOOL = new Set(["/", "/about", "/contact", "/privacy"]);
 
   it("covers every tool page with a complete GEO answer", () => {
     for (const page of pages) {

@@ -54,8 +54,22 @@ export default function JsonConverterPage() {
         tableHeaders={["Destination", "What you get"]}
         tableCaption="JSON conversion targets and their typical uses"
         tableRows={[
-          ["Java", "POJO-style classes mirroring your JSON structure"],
-          ["XML", "Elements with attributes/children mapped from keys and arrays"],
+          [
+            <>
+              <Link key="java" href="/json-to-java" className="text-violet-600 underline-offset-2 hover:underline dark:text-violet-400">
+                Java
+              </Link>
+            </>,
+            "POJO-style classes mirroring your JSON structure",
+          ],
+          [
+            <>
+              <Link key="xml" href="/json-to-xml" className="text-violet-600 underline-offset-2 hover:underline dark:text-violet-400">
+                XML
+              </Link>
+            </>,
+            "Elements with attributes/children mapped from keys and arrays",
+          ],
           [
             <>
               <Link key="yaml" href="/json-to-yaml" className="text-violet-600 underline-offset-2 hover:underline dark:text-violet-400">

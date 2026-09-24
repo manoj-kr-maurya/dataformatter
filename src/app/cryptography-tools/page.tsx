@@ -50,12 +50,28 @@ export default function CryptographyToolsPage() {
         tableHeaders={["Family", "Digest sizes", "Use today"]}
         tableCaption="Supported hash algorithm families and their recommended uses"
         tableRows={[
-          ["MD5", "128-bit", "Legacy checksums and non-security deduplication"],
-          ["SHA-1", "160-bit", "Verify old signatures only — deprecated for new designs"],
           [
             <>
-              <Link key="hg" href="/hash-generator" className="text-violet-600 underline-offset-2 hover:underline dark:text-violet-400">
-                Quick SHA-256 workflow
+              <Link key="md5" href="/md5-generator" className="text-violet-600 underline-offset-2 hover:underline dark:text-violet-400">
+                MD5
+              </Link>
+            </>,
+            "128-bit",
+            "Legacy checksums and non-security deduplication",
+          ],
+          [
+            <>
+              <Link key="sha1" href="/hash-generator" className="text-violet-600 underline-offset-2 hover:underline dark:text-violet-400">
+                SHA-1
+              </Link>
+            </>,
+            "160-bit",
+            "Verify old signatures only — deprecated for new designs",
+          ],
+          [
+            <>
+              <Link key="hg" href="/sha256-generator" className="text-violet-600 underline-offset-2 hover:underline dark:text-violet-400">
+                SHA-256
               </Link>
             </>,
             "224 / 256 / 384 / 512-bit",

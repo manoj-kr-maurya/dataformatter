@@ -161,6 +161,20 @@ const PAGES: PageSeo[] = [
     h1: "Cryptography Tools",
   },
   {
+    path: "/md5-generator",
+    title: "MD5 Generator – Create MD5 Hash Online",
+    description:
+      "Generate an MD5 checksum of any text instantly as a 32-character lowercase hex string. The digest is computed in your browser — nothing you paste is ever uploaded.",
+    h1: "MD5 Generator",
+  },
+  {
+    path: "/sha256-generator",
+    title: "SHA-256 Generator – Hash & Verify Online",
+    description:
+      "Compute a SHA-256 hash of any text in your browser — a 64-character lowercase hex digest, instant as you type. Free, no signup, and your input never leaves the page.",
+    h1: "SHA-256 Generator",
+  },
+  {
     path: "/compiler",
     title: "Online Dart, JS & TypeScript Compiler – Run in Browser",
     description:
@@ -187,6 +201,13 @@ const PAGES: PageSeo[] = [
     description:
       "Found a bug, have a feature idea or just want to say hi? Open an issue on the DataFormatter repository — every report lands in front of the maintainer who builds the tools.",
     h1: "Contact DataFormatter",
+  },
+  {
+    path: "/privacy",
+    title: "Privacy Policy – DataFormatter Keeps Your Data in Your Browser",
+    description:
+      "DataFormatter runs entirely in your browser: no server-side processing, no analytics, no cookies, no accounts and nothing you paste is ever transmitted. Read the simple privacy policy.",
+    h1: "Privacy Policy",
   },
   {
     path: "/json-diff",
@@ -308,6 +329,20 @@ const PAGES: PageSeo[] = [
     h1: "JSON to YAML Converter",
   },
   {
+    path: "/json-to-xml",
+    title: "JSON to XML Converter – Generate XML from JSON",
+    description:
+      "Turn JSON into well-formed XML: object keys become element names, arrays become repeated tags, text and names are escaped automatically. Paste once and convert — free, private and 100% in-browser.",
+    h1: "JSON to XML Converter",
+  },
+  {
+    path: "/json-to-java",
+    title: "JSON to Java – Generate POJO Classes Online",
+    description:
+      "Convert a JSON object into Java POJO classes with private fields, constructors and getters/setters. Nested objects and arrays become nested classes and List<T> — free, local and no upload.",
+    h1: "JSON to Java",
+  },
+  {
     path: "/uuid-generator",
     title: "UUID Generator – Create Random UUID v4 Online",
     description:
@@ -344,6 +379,62 @@ export const SEO_PAGES: ReadonlyMap<string, PageSeo> = new Map(
 /** Every indexable canonical path — drives sitemap.xml. */
 export const SEO_PAGE_PATHS: readonly string[] = PAGES.map((page) => page.path);
 
+/**
+ * Real last-modified dates per page (YYYY-MM-DD), derived from the last commit
+ * that touched each page directory. These drive the sitemap's <lastmod> so
+ * crawlers get honest freshness signals instead of "today on every request".
+ * Meaningful content changes bump a page's date; the dates never auto-move.
+ */
+export const PAGE_LAST_MODIFIED: Readonly<Record<string, string>> = {
+  "/": "2026-09-15",
+  "/json-formatter": "2026-08-23",
+  "/json-minifier": "2026-08-23",
+  "/json-validator": "2026-08-23",
+  "/base64-encoder": "2026-08-23",
+  "/base64-decoder": "2026-08-23",
+  "/jwt-decoder": "2026-08-23",
+  "/url-encoder": "2026-08-23",
+  "/url-decoder": "2026-08-23",
+  "/hash-generator": "2026-08-23",
+  "/encode-decode": "2026-08-23",
+  "/base64": "2026-08-23",
+  "/json-converter": "2026-08-30",
+  "/parsers": "2026-08-23",
+  "/random-generators": "2026-08-30",
+  "/string-functions": "2026-08-23",
+  "/cryptography-tools": "2026-08-23",
+  "/compiler": "2026-09-15",
+  "/api-client": "2026-09-06",
+  "/about": "2026-08-25",
+  "/contact": "2026-08-25",
+  "/privacy": "2026-09-24",
+  "/json-diff": "2026-09-05",
+  "/json-to-code": "2026-09-05",
+  "/json-to-schema": "2026-09-05",
+  "/curl-to-code": "2026-09-05",
+  "/api-tester": "2026-09-06",
+  "/openapi": "2026-09-06",
+  "/http-header-inspector": "2026-08-30",
+  "/log-analyzer": "2026-09-05",
+  "/stack-trace": "2026-09-15",
+  "/env-validator": "2026-09-05",
+  "/cron": "2026-08-30",
+  "/timestamp": "2026-09-07",
+  "/regex": "2026-09-05",
+  "/fake-data": "2026-08-30",
+  "/developer-calculator": "2026-09-05",
+  "/json-to-csv": "2026-08-30",
+  "/json-to-yaml": "2026-08-30",
+  "/json-to-xml": "2026-09-24",
+  "/json-to-java": "2026-09-24",
+  "/uuid-generator": "2026-08-30",
+  "/har": "2026-09-02",
+  "/api-diff": "2026-09-06",
+  "/error-workspace": "2026-09-02",
+  "/md5-generator": "2026-09-24",
+  "/sha256-generator": "2026-09-24",
+};
+
 /** Compact primary nav shown in the header of content/tool landing pages. */
 export const HEADER_LINKS: ReadonlyArray<{ href: string; label: string }> = [
   { href: "/", label: "Home" },
@@ -369,6 +460,8 @@ export const FOOTER_LINKS: ReadonlyArray<{ href: string; label: string }> = [
   { href: "/url-encoder", label: "URL Encoder" },
   { href: "/url-decoder", label: "URL Decoder" },
   { href: "/hash-generator", label: "Hash Generator" },
+  { href: "/md5-generator", label: "MD5 Generator" },
+  { href: "/sha256-generator", label: "SHA-256 Generator" },
   { href: "/encode-decode", label: "Encoding Tools" },
   { href: "/base64", label: "Base64 Tools" },
   { href: "/json-converter", label: "JSON Converters" },
@@ -380,6 +473,7 @@ export const FOOTER_LINKS: ReadonlyArray<{ href: string; label: string }> = [
   { href: "/api-client", label: "API Client" },
   { href: "/about", label: "About" },
   { href: "/contact", label: "Contact" },
+  { href: "/privacy", label: "Privacy" },
   { href: "/json-diff", label: "JSON Diff" },
   { href: "/json-to-code", label: "JSON to Code" },
   { href: "/json-to-schema", label: "JSON to Schema" },
@@ -397,6 +491,8 @@ export const FOOTER_LINKS: ReadonlyArray<{ href: string; label: string }> = [
   { href: "/developer-calculator", label: "Dev Calculator" },
   { href: "/json-to-csv", label: "JSON to CSV" },
   { href: "/json-to-yaml", label: "JSON to YAML" },
+  { href: "/json-to-xml", label: "JSON to XML" },
+  { href: "/json-to-java", label: "JSON to Java" },
   { href: "/uuid-generator", label: "UUID Generator" },
   { href: "/har", label: "HAR Debugger" },
   { href: "/api-diff", label: "API Breaking Change Detector" },
@@ -457,6 +553,8 @@ export const RELATED_LINKS: Readonly<Record<string, ReadonlyArray<{ href: string
   ],
   "/hash-generator": [
     { href: "/cryptography-tools", label: "All Cryptography Tools" },
+    { href: "/md5-generator", label: "MD5 Generator — dedicated page" },
+    { href: "/sha256-generator", label: "SHA-256 Generator — dedicated page" },
     { href: "/string-functions", label: "Password Generator — strong secrets" },
     { href: "/random-generators", label: "UUID Generator — unique identifiers" },
     { href: "/api-client", label: "API Client — sign & send webhook payloads" },
@@ -477,6 +575,8 @@ export const RELATED_LINKS: Readonly<Record<string, ReadonlyArray<{ href: string
     { href: "/json-formatter", label: "JSON Formatter — tidy input first" },
     { href: "/json-validator", label: "JSON Validator — check syntax" },
     { href: "/parsers", label: "Parsers — JSON tree view" },
+    { href: "/json-to-xml", label: "JSON to XML — dedicated converter page" },
+    { href: "/json-to-java", label: "JSON to Java — dedicated converter page" },
     { href: "/json-to-csv", label: "JSON to CSV — dedicated converter page" },
     { href: "/json-to-yaml", label: "JSON to YAML — dedicated converter page" },
   ],
@@ -499,8 +599,22 @@ export const RELATED_LINKS: Readonly<Record<string, ReadonlyArray<{ href: string
   ],
   "/cryptography-tools": [
     { href: "/hash-generator", label: "Hash Generator — quick SHA-256" },
+    { href: "/md5-generator", label: "MD5 Generator — legacy checksums" },
+    { href: "/sha256-generator", label: "SHA-256 Generator — secure default" },
     { href: "/jwt-decoder", label: "JWT Decoder — inspect signed tokens" },
     { href: "/string-functions", label: "Password Generator" },
+  ],
+  "/md5-generator": [
+    { href: "/cryptography-tools", label: "All Cryptography Tools" },
+    { href: "/sha256-generator", label: "SHA-256 Generator — stronger integrity" },
+    { href: "/hash-generator", label: "Hash Generator — every digest family" },
+    { href: "/jwt-decoder", label: "JWT Decoder — inspect signed tokens" },
+  ],
+  "/sha256-generator": [
+    { href: "/hash-generator", label: "Hash Generator — quick digests" },
+    { href: "/md5-generator", label: "MD5 Generator — legacy checksums" },
+    { href: "/cryptography-tools", label: "All Cryptography Tools" },
+    { href: "/fake-data", label: "Fake Data — hash test fixtures" },
   ],
   "/compiler": [
     { href: "/api-client", label: "API Client — hit live endpoints" },
@@ -528,6 +642,12 @@ export const RELATED_LINKS: Readonly<Record<string, ReadonlyArray<{ href: string
     { href: "/base64-decoder", label: "Base64 Decoder" },
     { href: "/jwt-decoder", label: "JWT Decoder" },
   ],
+  "/privacy": [
+    { href: "/about", label: "About DataFormatter — how the tools work" },
+    { href: "/contact", label: "Contact — feedback & bug reports" },
+    { href: "/jwt-decoder", label: "JWT Decoder — decode tokens safely" },
+    { href: "/json-formatter", label: "JSON Formatter — the flagship tool" },
+  ],
   "/json-diff": [
     { href: "/json-formatter", label: "JSON Formatter — pretty-print before diffing" },
     { href: "/json-validator", label: "JSON Validator — confirm both sides parse" },
@@ -536,6 +656,7 @@ export const RELATED_LINKS: Readonly<Record<string, ReadonlyArray<{ href: string
   ],
   "/json-to-code": [
     { href: "/json-to-schema", label: "JSON to Schema — validation instead of types" },
+    { href: "/json-to-java", label: "JSON to Java — POJO classes" },
     { href: "/json-formatter", label: "JSON Formatter — tidy the input sample" },
     { href: "/json-diff", label: "JSON Diff — see how the contract changed" },
     { href: "/compiler", label: "Compiler — run generated scripts" },
@@ -647,15 +768,29 @@ export const RELATED_LINKS: Readonly<Record<string, ReadonlyArray<{ href: string
   ],
   "/json-to-csv": [
     { href: "/json-to-yaml", label: "JSON to YAML — keep the structure" },
+    { href: "/json-to-xml", label: "JSON to XML — markup output" },
     { href: "/json-converter", label: "JSON Converters — TSV, YAML, XML & Excel" },
     { href: "/json-formatter", label: "JSON Formatter — tidy the source first" },
     { href: "/fake-data", label: "Fake Data — generate CSV rows" },
   ],
   "/json-to-yaml": [
     { href: "/json-to-csv", label: "JSON to CSV — tabular output instead" },
+    { href: "/json-to-xml", label: "JSON to XML — markup output" },
     { href: "/json-converter", label: "JSON Converters — every output target" },
     { href: "/env-validator", label: "ENV Validator — shop config-style files" },
     { href: "/json-formatter", label: "JSON Formatter — clean input first" },
+  ],
+  "/json-to-xml": [
+    { href: "/json-to-java", label: "JSON to Java — classes instead of markup" },
+    { href: "/json-converter", label: "JSON Converters — every output target" },
+    { href: "/json-validator", label: "JSON Validator — check syntax first" },
+    { href: "/json-formatter", label: "JSON Formatter — tidy input first" },
+  ],
+  "/json-to-java": [
+    { href: "/json-to-xml", label: "JSON to XML — markup instead of classes" },
+    { href: "/json-to-code", label: "JSON to Code — TypeScript, Go, C# & more" },
+    { href: "/json-converter", label: "JSON Converters — CSV, YAML, XML & Excel" },
+    { href: "/api-client", label: "API Client — test the payload you modeled" },
   ],
   "/uuid-generator": [
     { href: "/fake-data", label: "Fake Data — realistic rows with UUIDs" },
@@ -772,6 +907,16 @@ export const GEO_ANSWERS: Readonly<Record<string, GeoDatum>> = {
     who: "Developers and security-conscious users generating checksums or verifying integrity locally.",
     different: "All digests compute in the browser — nothing is uploaded, and the SHA-3 family is included for free.",
   },
+  "/md5-generator": {
+    what: "DataFormatter MD5 Generator is a free online tool that computes the 128-bit MD5 digest of any text as a 32-character lowercase hex string.",
+    who: "Developers verifying legacy checksums, comparing small payloads or computing deduplication keys without reaching for a command line.",
+    different: "The digest is computed locally in your browser — sensitive input is never uploaded — with no signup and no rate limit.",
+  },
+  "/sha256-generator": {
+    what: "DataFormatter SHA-256 Generator is a free online tool that computes the SHA-256 digest of any text as a 64-character lowercase hex string.",
+    who: "Developers and security-conscious users verifying file or payload integrity and generating fingerprints for cache keys or webhook requests.",
+    different: "Hashing runs entirely in your browser — nothing is uploaded — and the SHA-2 and SHA-3 families are available in the same workspace.",
+  },
   "/compiler": {
     what: "DataFormatter Online Compiler is a free online Dart compiler and playground that also runs JavaScript and TypeScript. Dart compiles in your browser via WebAssembly (the DDC engine); JavaScript and TypeScript run in a sandboxed Web Worker — no install, no server, no upload.",
     who: "Developers who want to run Dart code online, prototype or test small snippets in Dart, JavaScript or TypeScript, or try a language feature without installing a local toolchain.",
@@ -846,6 +991,16 @@ export const GEO_ANSWERS: Readonly<Record<string, GeoDatum>> = {
     what: "DataFormatter JSON to YAML Converter is a free online tool that turns JSON into indentation-based YAML for Docker Compose, Kubernetes manifests, CI configs and Ansible.",
     who: "Developers and platform engineers converting JSON config into YAML for tools that expect YAML or prefer it by convention.",
     different: "It handles nested objects, arrays and quoting correctly, and runs free and locally in your tab with no upload.",
+  },
+  "/json-to-xml": {
+    what: "DataFormatter JSON to XML Converter is a free online tool that turns a JSON document into well-formed XML, mapping object keys to element names and arrays to repeated elements with text escaped automatically.",
+    who: "Developers and integrators feeding JSON data into XML-based systems, legacy APIs, feeds or SOAP-style consumers.",
+    different: "It escapes text and names correctly, reports invalid JSON clearly, and runs entirely in your browser so nothing is uploaded.",
+  },
+  "/json-to-java": {
+    what: "DataFormatter JSON to Java is a free online tool that converts a JSON object into Java POJO classes — private fields, constructors, getters and setters — with nested objects and arrays mapped to nested classes and List<T>.",
+    who: "Java developers who need model classes for an API response or JSON-structured config and want them derived instantly from a sample.",
+    different: "It infers Long vs Double, names files and fields cleanly (avoiding Java keywords), and generates everything locally with no upload and no signup.",
   },
   "/uuid-generator": {
     what: "DataFormatter UUID Generator is a free online tool that creates one or more random RFC 4122 UUID v4 identifiers directly in your browser.",
@@ -959,6 +1114,16 @@ export const BREADCRUMBS: Readonly<Record<string, ReadonlyArray<{ name: string; 
     { name: "Cryptography Tools", href: "/cryptography-tools" },
     { name: "Hash Generator", href: "/hash-generator" },
   ],
+  "/md5-generator": [
+    { name: "Home", href: "/" },
+    { name: "Cryptography Tools", href: "/cryptography-tools" },
+    { name: "MD5 Generator", href: "/md5-generator" },
+  ],
+  "/sha256-generator": [
+    { name: "Home", href: "/" },
+    { name: "Cryptography Tools", href: "/cryptography-tools" },
+    { name: "SHA-256 Generator", href: "/sha256-generator" },
+  ],
   "/base64": [
     { name: "Home", href: "/" },
     { name: "Base64 Tools", href: "/base64" },
@@ -994,6 +1159,10 @@ export const BREADCRUMBS: Readonly<Record<string, ReadonlyArray<{ name: string; 
   "/contact": [
     { name: "Home", href: "/" },
     { name: "Contact", href: "/contact" },
+  ],
+  "/privacy": [
+    { name: "Home", href: "/" },
+    { name: "Privacy Policy", href: "/privacy" },
   ],
   "/json-diff": [
     { name: "Home", href: "/" },
@@ -1064,6 +1233,16 @@ export const BREADCRUMBS: Readonly<Record<string, ReadonlyArray<{ name: string; 
     { name: "Home", href: "/" },
     { name: "JSON Converters", href: "/json-converter" },
     { name: "JSON to YAML", href: "/json-to-yaml" },
+  ],
+  "/json-to-xml": [
+    { name: "Home", href: "/" },
+    { name: "JSON Converters", href: "/json-converter" },
+    { name: "JSON to XML", href: "/json-to-xml" },
+  ],
+  "/json-to-java": [
+    { name: "Home", href: "/" },
+    { name: "JSON Converters", href: "/json-converter" },
+    { name: "JSON to Java", href: "/json-to-java" },
   ],
   "/uuid-generator": [
     { name: "Home", href: "/" },
